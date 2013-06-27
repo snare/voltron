@@ -8,7 +8,7 @@ I got sick of GDB's (lack of) UI, so I built this. fG!'s [gdbinit](https://githu
 
 It's basically held together by sticky tape, so don't expect too much.
 
-[![voltron example](http://github.com/snare/voltron/raw/master/example.png)](#example)
+[![voltron example](http://github.com/snarez/voltron/raw/master/example.png)](#example)
 
 Requirements
 ------------
