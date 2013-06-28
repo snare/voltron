@@ -173,7 +173,7 @@ if in_gdb:
             if self.running:
                 print("There are {} clients attached".format(len(clients)))
                 for client in clients:
-                    print("{} registered for: {}".format(client, client.registration['for_types']))
+                    print("{} registered with config: {}".format(client, str(client.registration['config'])))
             else:
                 print("Not running")
 
