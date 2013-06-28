@@ -104,6 +104,11 @@ def main():
         sp.set_defaults(func=DisasmView)
         sp = subparsers.add_parser('bt', description='backtrace view')
         sp.set_defaults(func=BacktraceView)
+        sp = subparsers.add_parser('cmd', description='command view')
+        sp.add_argument('command', action='store', help='command to run')
+        sp.add_argument('--header', '-e', action='store_true', help='print header', default=False)
+        sp.add_argument('--footer', '-f', action='store_true', help='print footer', default=False)
+        sp.set_defaults(func=CommandView)
         args = parser.parse_args()
 
         if args.debug:
@@ -173,6 +178,7 @@ if in_gdb:
                 print("Not running")
 
         def get_registers(self):
+            log.debug('Getting registers')
             regs = ['rax','rbx','rcx','rdx','rbp','rsp','rdi','rsi','rip','r8','r9','r10','r11','r12','r13','r14','r15','cs','ds','es','fs','gs','ss']
             vals = {}
             for reg in regs:
@@ -185,45 +191,52 @@ if in_gdb:
             log.debug('Got registers: ' + str(vals))
             return vals
 
+        def get_register(self, reg):
+            log.debug('Getting register: ' + reg)
+            return int(gdb.parse_and_eval('(long long)$'+reg)) & 0xFFFFFFFFFFFFFFFF
+
         def get_disasm(self):
+            log.debug('Getting disasm')
             res = gdb.execute('x/{}i $rip'.format(DISASM_MAX), to_string=True)
             return res
 
         def get_stack(self):
+            log.debug('Getting stack')
             rsp = int(gdb.parse_and_eval('(long long)$rsp')) & 0xFFFFFFFFFFFFFFFF
             res = str(gdb.selected_inferior().read_memory(rsp, STACK_MAX*16))
             return res
 
         def get_backtrace(self):
+            log.debug('Getting backtrace')
             res = gdb.execute('bt', to_string=True)
+            return res
+
+        def get_cmd_output(self, cmd=None):
+            if cmd:
+                log.debug('Getting command output: ' + cmd)
+                res = gdb.execute(cmd, to_string=True)
+            else:
+                res = "<No command>"
             return res
 
         def stop_handler(self, event):
             log.debug('Stop handler')
 
-            # Get registers
-            log.debug('Getting registers')
-            regs = self.get_registers()
-            event = {'msg_type': 'update', 'update_type': 'register', 'data': regs}
-            queue.put(event)
+            for client in filter(lambda c: c.registration['config']['update_on'] == 'stop', clients):
+                event = {'msg_type': 'update', }
 
-            # Disassemble code at PC
-            log.debug('Getting disasm')
-            disasm = self.get_disasm()
-            event = {'msg_type': 'update', 'update_type': 'disasm', 'data': disasm}
-            queue.put(event)
-
-            # Get a stack snippet
-            log.debug('Getting stack')
-            stack = self.get_stack()
-            event = {'msg_type': 'update', 'update_type': 'stack', 'data': {'data': stack, 'sp': regs['rsp'] } }
-            queue.put(event)
-
-            # Get a backtrace
-            log.debug('Getting backtrace')
-            bt = self.get_backtrace()
-            event = {'msg_type': 'update', 'update_type': 'bt', 'data': bt }
-            queue.put(event)
+                if client.registration['config']['type'] == 'cmd':
+                    event['data'] = self.get_cmd_output(client.registration['config']['cmd'])
+                elif client.registration['config']['type'] == 'register':
+                    event['data'] = self.get_registers()
+                elif client.registration['config']['type'] == 'disasm':
+                    event['data'] = self.get_disasm()
+                elif client.registration['config']['type'] == 'stack':
+                    event['data'] = {'data': self.get_stack(), 'sp': self.get_register('rsp')}
+                elif client.registration['config']['type'] == 'bt':
+                    event['data'] = self.get_backtrace()
+                    
+                queue.put((client, event))
 
 
 
@@ -244,7 +257,7 @@ class ClientHandler (asyncore.dispatcher):
                 log.error('Invalid message type: ' + msg['msg_type'])
 
     def handle_register(self, msg):
-        log.debug('Registering client {} for types: {}'.format(self, msg['for_types']))
+        log.debug('Registering client {} with config: {}'.format(self, str(msg['config'])))
         self.registration = msg
 
     def send_event(self, event):
@@ -292,14 +305,11 @@ class ServerThread (threading.Thread):
 
             # Process any events in the queue
             while not queue.empty():
-                event = queue.get()
-                for client in clients:
-                    if event['msg_type'] == 'update' and event['update_type'] in client.registration['for_types']:
-                        client.send_event(event)
+                client, event = queue.get()
+                client.send_event(event)
 
         # Clean up
         serv.close()
-
 
     def should_exit(self):
         self.lock.acquire()
@@ -319,16 +329,17 @@ class ServerThread (threading.Thread):
 
 # Socket to register with the server and receive messages, calls view's render() method when a message comes in
 class Client (asyncore.dispatcher):
-    def __init__(self, view=None, types=None):
+    def __init__(self, view=None, config={}):
         asyncore.dispatcher.__init__(self)
         self.view = view
-        self.types = types
+        self.config = config
+        self.reg_info = None
         self.create_socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.connect(SOCK)
 
     def register(self):
-        log.debug('Client {} registering for types: {}'.format(self, self.types))
-        msg = {'msg_type': 'register', 'for_types': self.types}
+        log.debug('Client {} registering with config: {}'.format(self, str(self.config)))
+        msg = {'msg_type': 'register', 'config': self.config}
         log.debug('Sending: ' + str(msg))
         self.send(pickle.dumps(msg))
 
@@ -345,12 +356,25 @@ class Client (asyncore.dispatcher):
 
 # Parent class for all views
 class VoltronView (object):
-    def __init__(self, args=None):
+    DEFAULT_CONFIG = {
+        'type': 'base',
+        'clear': True,
+        'show_header': True,
+        'show_footer': True,
+        'update_on': 'stop'
+    }
+
+    def __init__(self, args={}, config={}):
         log.debug('Loading view: ' + self.__class__.__name__)
         self.client = None
-        self.types = None
+        self.config = config
         self.args = args
         os.system('tput civis')
+        self.setup()
+        self.connect()
+
+    def setup(self):
+        log.debug('Base view class setup')
 
     def cleanup(self):
         log.debug('Cleaning up view')
@@ -358,7 +382,8 @@ class VoltronView (object):
 
     def connect(self):
         try:
-            self.client = Client(view=self, types=self.types)
+            self.config = dict(self.DEFAULT_CONFIG.items() + self.config.items())
+            self.client = Client(view=self, config=self.config)
             self.client.register()
         except Exception as e:
             log.error('Exception connecting: ' + str(e))
@@ -396,6 +421,8 @@ class VoltronView (object):
         return ''.join(lines).strip()
 
     def format_header(self, title=None, left=None, right=None):
+        if not self.config['show_header']: return
+
         height, width = self.window_size()
 
         # Left data
@@ -415,6 +442,8 @@ class VoltronView (object):
         return header
 
     def format_footer(self, title=None, left=None, right=None):
+        if not self.config['show_footer']: return
+
         height, width = self.window_size()
         dashlen = width
         footer = '-' * dashlen
@@ -481,10 +510,8 @@ class RegisterView (VoltronView):
 
     last_regs = None
 
-    def __init__(self, args=None):
-        super(RegisterView, self).__init__(args)
-        self.types = ['register']
-        self.connect()
+    def setup(self):
+        self.config['type'] = 'register'
 
     def render(self, msg=None):
         self.clear()
@@ -535,10 +562,8 @@ class DisasmView (VoltronView):
     DISASM_SHOW_LINES = 16
     DISASM_SEP_WIDTH = 90
 
-    def __init__(self, args=None):
-        super(DisasmView, self).__init__(args)
-        self.types = ['disasm']
-        self.connect()
+    def setup(self):
+        self.config['type'] = 'disasm'
 
     def render(self, msg=None):
         self.clear()
@@ -567,10 +592,8 @@ class StackView (VoltronView):
     STACK_SHOW_LINES = 16
     STACK_SEP_WIDTH = 90
 
-    def __init__(self, args=None):
-        super(StackView, self).__init__(args)
-        self.types = ['stack']
-        self.connect()
+    def setup(self):
+        self.config['type'] = 'stack'
 
     def render(self, msg=None):
         self.clear()
@@ -596,10 +619,8 @@ class StackView (VoltronView):
 
 
 class BacktraceView (VoltronView):
-    def __init__(self, args=None):
-        super(BacktraceView, self).__init__(args)
-        self.types = ['bt']
-        self.connect()
+    def setup(self):
+        self.config['type'] = 'bt'
 
     def render(self, msg=None):
         self.clear()
@@ -619,7 +640,20 @@ class BacktraceView (VoltronView):
             print('\n' * pad) 
         print(self.format_footer(), end='')
         sys.stdout.flush()
-        
+
+
+class CommandView (VoltronView):
+    def setup(self):
+        self.config['type'] = 'cmd'
+        self.config['cmd'] = self.args.command
+
+    def render(self, msg=None):
+        self.clear()
+        print(self.format_header('[cmd:' + self.config['cmd'] + ']'))
+        print(msg['data'].strip())
+        print(self.format_footer(), end='')
+        sys.stdout.flush()
+
 
 if __name__ == "__main__":
     main()
