@@ -93,22 +93,8 @@ def main():
         parser = argparse.ArgumentParser()
         parser.add_argument('--debug', '-d', action='store_true', help='print debug logging')
         subparsers = parser.add_subparsers(title='subcommands', description='valid subcommands', help='additional help')
-        sp = subparsers.add_parser('reg', description='register view')
-        sp.set_defaults(func=RegisterView)
-        g = sp.add_mutually_exclusive_group()
-        g.add_argument('--horizontal', '-o', action='store_true', help='horizontal orientation (default)', default=False)
-        g.add_argument('--vertical', '-v', action='store_true', help='vertical orientation', default=True)
-        sp = subparsers.add_parser('stack', description='stack view')
-        sp.set_defaults(func=StackView)
-        sp = subparsers.add_parser('disasm', description='disassembly view')
-        sp.set_defaults(func=DisasmView)
-        sp = subparsers.add_parser('bt', description='backtrace view')
-        sp.set_defaults(func=BacktraceView)
-        sp = subparsers.add_parser('cmd', description='command view')
-        sp.add_argument('command', action='store', help='command to run')
-        sp.add_argument('--header', '-e', action='store_true', help='print header', default=False)
-        sp.add_argument('--footer', '-f', action='store_true', help='print footer', default=False)
-        sp.set_defaults(func=CommandView)
+        for cls in VoltronView.__subclasses__():
+            cls.configure_subparser(subparsers)
         args = parser.parse_args()
 
         if args.debug:
@@ -421,7 +407,7 @@ class VoltronView (object):
         return ''.join(lines).strip()
 
     def format_header(self, title=None, left=None, right=None):
-        if not self.config['show_header']: return
+        if not self.config['show_header']: return ''
 
         height, width = self.window_size()
 
@@ -442,7 +428,7 @@ class VoltronView (object):
         return header
 
     def format_footer(self, title=None, left=None, right=None):
-        if not self.config['show_footer']: return
+        if not self.config['show_footer']: return ''
 
         height, width = self.window_size()
         dashlen = width
@@ -510,6 +496,14 @@ class RegisterView (VoltronView):
 
     last_regs = None
 
+    @classmethod
+    def configure_subparser(cls, subparsers):
+        sp = subparsers.add_parser('reg', description='register view')
+        sp.set_defaults(func=RegisterView)
+        g = sp.add_mutually_exclusive_group()
+        g.add_argument('--horizontal', '-o', action='store_true', help='horizontal orientation (default)', default=False)
+        g.add_argument('--vertical', '-v', action='store_true', help='vertical orientation', default=True)
+
     def setup(self):
         self.config['type'] = 'register'
 
@@ -562,6 +556,11 @@ class DisasmView (VoltronView):
     DISASM_SHOW_LINES = 16
     DISASM_SEP_WIDTH = 90
 
+    @classmethod
+    def configure_subparser(cls, subparsers):
+        sp = subparsers.add_parser('disasm', description='disassembly view')
+        sp.set_defaults(func=DisasmView)
+
     def setup(self):
         self.config['type'] = 'disasm'
 
@@ -592,6 +591,11 @@ class StackView (VoltronView):
     STACK_SHOW_LINES = 16
     STACK_SEP_WIDTH = 90
 
+    @classmethod
+    def configure_subparser(cls, subparsers):
+        sp = subparsers.add_parser('stack', description='stack view')
+        sp.set_defaults(func=StackView)
+
     def setup(self):
         self.config['type'] = 'stack'
 
@@ -619,6 +623,11 @@ class StackView (VoltronView):
 
 
 class BacktraceView (VoltronView):
+    @classmethod
+    def configure_subparser(cls, subparsers):
+        sp = subparsers.add_parser('bt', description='backtrace view')
+        sp.set_defaults(func=BacktraceView)
+
     def setup(self):
         self.config['type'] = 'bt'
 
@@ -643,6 +652,14 @@ class BacktraceView (VoltronView):
 
 
 class CommandView (VoltronView):
+    @classmethod
+    def configure_subparser(cls, subparsers):
+        sp = subparsers.add_parser('cmd', description='command view')
+        sp.add_argument('command', action='store', help='command to run')
+        sp.add_argument('--header', '-e', action='store_true', help='print header', default=False)
+        sp.add_argument('--footer', '-f', action='store_true', help='print footer', default=False)
+        sp.set_defaults(func=CommandView)
+
     def setup(self):
         self.config['type'] = 'cmd'
         self.config['cmd'] = self.args.command
