@@ -1,10 +1,12 @@
 voltron
 =======
 
-A half-arsed UI module for GDB. 
-------------------------------
+A half-arsed UI module for GDB & LLDB. 
+--------------------------------------
 
 I got sick of GDB's (lack of) UI, so I built this. fG!'s [gdbinit](https://github.com/gdbinit/Gdbinit) makes GDB slightly more bearable, and this does a similar job in a different way. `voltron` allows you to attach views running in other terminal windows to a GDB session, resulting in a more modular and flexible UI like you get in a GUI debugger like WinDbg, Immunity Debugger, OllyDbg, etc. It's not in the same league as a proper GUI debugger, but it does make GDB more bearable.
+
+I initially built this to work with GDB but with the idea that I'd add LLDB support at some point. That point is now! Voltron now works with LLDB as well.
 
 It's basically held together by sticky tape, so don't expect too much.
 
@@ -15,17 +17,23 @@ Requirements
 
 `voltron` only works with GDB version 7 and later as it uses the Python API. If you're using Apple's GDB v6 you're out of luck; however, there is a project in the works to port some of Apple's hacks to version 7, so keep an eye out for that.
 
+`voltron` also supports LLDB's python API.
+
 Usage
 -----
 
-1. Put the following in your .gdbinit (or .gdbinit.local if you're using fG!'s gdbinit):
+1. Load `voltron` into your debugger (these could go in your `.gdbinit` or `.lldbinit`)
 
-		source /path/to/voltron.py
+		source /path/to/voltron.py 						# for GDB
+		command script import /path/to/voltron.py 		# for LLDB
 
-2. Fire up GDB and start the `voltron` server thread (you could also put this in your .gdbinit)
+2. Fire up the debugger and start the `voltron` server thread (you could also put this in your `.gdbinit`/`.lldbinit`)
 
 		$ gdb whatever
 		gdb$ voltron start
+
+		$ lldb whatever
+		(lldb) voltron start
 
 3. In another terminal (I use iTerm panes) start one of the UI views
 
@@ -33,11 +41,12 @@ Usage
 		$ voltron.py stack
 		$ voltron.py disasm
 		$ voltron.py bt
-		$ voltron.py cmd 'x/32x $rip'
+		$ voltron.py cmd 'x/32x $rip'	# GDB
+		$ voltron.py cmd 'reg read' 	# LLDB
 
 4. The UI view code will attach to the server (via a domain socket) and refresh every time the debugger is stopped. So, set a break point and let the debugger hit it and everything should be updated.
 
-5. Before you exit GDB, execute the following command or GDB will hang since the domain socket will still be open.
+5. Before you exit the debugger, execute the following command or GDB will hang since the domain socket will still be open. LLDB seems to handle this OK.
 
 		gdb$ voltron stop
 
@@ -61,7 +70,7 @@ Things I probably will do at some stage in the not too distant future:
 
 Feel free to add to it and send a pull request.
 
-If you want to add a new view type you'll just need to add a new subclass of `VoltronView` (see the others for examples) that registers and renders data your own message type, and add some code to `VoltronCommand.stop_handler` to grab the necessary data and cram it into a message with that type.
+If you want to add a new view type you'll just need to add a new subclass of `VoltronView` (see the others for examples) that registers and renders data your own message type, and potentially add some code to `VoltronCommand`/`VoltronGDBCommand`/`VoltronLLDBCommand` to grab the necessary data and cram it into an update message.
 
 License
 -------

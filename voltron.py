@@ -13,6 +13,8 @@ import logging.config
 import Queue
 import termcolor
 
+from collections import defaultdict
+
 try:
     import cPickle as pickle
 except:
@@ -23,6 +25,12 @@ try:
     in_gdb = True
 except:
     in_gdb = False
+
+try:
+    import lldb
+    in_lldb = True
+except:
+    in_lldb = False
 
 try:
     import pygments
@@ -73,9 +81,10 @@ STACK_MAX = 64
 log = None
 clients = []
 queue = None
+inst = None
 
-def main():
-    global log, queue
+def main(debugger=None, dict=None):
+    global log, queue, inst
 
     # Configure logging
     logging.config.dictConfig(LOG_CONFIG)
@@ -87,7 +96,12 @@ def main():
     if in_gdb:
         # Load GDB command
         log.debug('Loading GDB command')
-        VoltronCommand()
+        print("Voltron loaded.")
+        inst = VoltronGDBCommand()
+    elif in_lldb:
+        # Load LLDB command
+        log.debug('Loading LLDB command')
+        inst = VoltronLLDBCommand(debugger, dict)
     else:
         # Parse command line args
         parser = argparse.ArgumentParser()
@@ -113,55 +127,98 @@ def main():
 # Server side code
 #
 
+class VoltronCommand (object):
+    running = False
+
+    def handle_command(self, command):
+        global log
+        if "start" in command:
+            if 'debug' in command:
+                log.setLevel(logging.DEBUG)
+            self.start()
+        elif "stop" in command:
+            self.stop()
+        elif "status" in command:
+            self.status()
+        elif "update" in command:
+            self.update()
+        else:
+            print("Usage: voltron <start|stop|update|status>")
+
+    def start(self):
+        if not self.running:
+            print("Starting voltron")
+            self.running = True
+            self.register_hooks()
+            self.thread = ServerThread()
+            self.thread.start()
+        else:
+            print("Already running")
+
+    def stop(self):
+        if self.running:
+            print("Stopping voltron")
+            self.unregister_hooks()
+            self.thread.set_should_exit(True)
+            self.thread.join(10)
+            if self.thread.isAlive():
+                print("Failed to stop voltron :<")
+            self.running = False
+        else:
+            print("Not running")
+
+    def status(self):
+        if self.running:
+            print("There are {} clients attached".format(len(clients)))
+            for client in clients:
+                print("{} registered with config: {}".format(client, str(client.registration['config'])))
+        else:
+            print("Not running")
+
+    def update(self):
+        log.debug("Updating clients")
+
+        for client in filter(lambda c: c.registration['config']['update_on'] == 'stop', clients):
+            event = {'msg_type': 'update', }
+
+            if client.registration['config']['type'] == 'cmd':
+                event['data'] = self.get_cmd_output(client.registration['config']['cmd'])
+            elif client.registration['config']['type'] == 'register':
+                event['data'] = self.get_registers()
+            elif client.registration['config']['type'] == 'disasm':
+                event['data'] = self.get_disasm()
+            elif client.registration['config']['type'] == 'stack':
+                event['data'] = {'data': self.get_stack(), 'sp': self.get_register('rsp')}
+            elif client.registration['config']['type'] == 'bt':
+                event['data'] = self.get_backtrace()
+                
+            queue.put((client, event))
+
+    def register_hooks(self):
+        pass
+
+    def unregister_hooks(self):
+        pass
+
+
 # This is the actual GDB command. Should be able to just add an LLDB version I guess.
 if in_gdb:
-    class VoltronCommand (gdb.Command):
+    class VoltronGDBCommand (VoltronCommand, gdb.Command):
         def __init__(self):
             super(VoltronCommand, self).__init__("voltron", gdb.COMMAND_NONE, gdb.COMPLETE_NONE)
             self.running = False
 
         def invoke(self, arg, from_tty):
-            global log
-            if arg.startswith("start"):
-                if 'debug' in arg:
-                    log.setLevel(logging.DEBUG)
-                self.start()
-            elif arg == "stop":
-                self.stop()
-            elif arg == "status":
-                self.status()
-            else:
-                print("Usage: voltron <start|stop|status>")
+            self.handle_command(arg)
 
-        def start(self):
-            if not self.running:
-                print("Starting voltron")
-                self.running = True
-                gdb.events.stop.connect(self.stop_handler)
-                self.thread = ServerThread()
-                self.thread.start()
-            else:
-                print("Already running")
+        def register_hooks(self):
+            gdb.events.stop.connect(self.stop_handler)
 
-        def stop(self):
-            if self.running:
-                print("Stopping voltron")
-                gdb.events.stop.disconnect(self.stop_handler)
-                self.thread.set_should_exit(True)
-                self.thread.join(10)
-                if self.thread.isAlive():
-                    print("Failed to stop voltron :<")
-                self.running = False
-            else:
-                print("Not running")
+        def unregister_hooks(self):
+            gdb.events.stop.disconnect(self.stop_handler)
 
-        def status(self):
-            if self.running:
-                print("There are {} clients attached".format(len(clients)))
-                for client in clients:
-                    print("{} registered with config: {}".format(client, str(client.registration['config'])))
-            else:
-                print("Not running")
+        def stop_handler(self, event):
+            self.update()
 
         def get_registers(self):
             log.debug('Getting registers')
@@ -173,7 +230,7 @@ if in_gdb:
                 except:
                     log.debug('Failed getting reg: ' + reg)
                     vals[reg] = 'N/A'
-            vals['eflags'] = str(gdb.parse_and_eval('$eflags'))
+            vals['rflags'] = str(gdb.parse_and_eval('$eflags'))
             log.debug('Got registers: ' + str(vals))
             return vals
 
@@ -205,25 +262,73 @@ if in_gdb:
                 res = "<No command>"
             return res
 
-        def stop_handler(self, event):
-            log.debug('Stop handler')
 
-            for client in filter(lambda c: c.registration['config']['update_on'] == 'stop', clients):
-                event = {'msg_type': 'update', }
+if in_lldb:
+    # LLDB's initialisation routine
+    def __lldb_init_module(debugger, dict):
+        main(debugger, dict)
 
-                if client.registration['config']['type'] == 'cmd':
-                    event['data'] = self.get_cmd_output(client.registration['config']['cmd'])
-                elif client.registration['config']['type'] == 'register':
-                    event['data'] = self.get_registers()
-                elif client.registration['config']['type'] == 'disasm':
-                    event['data'] = self.get_disasm()
-                elif client.registration['config']['type'] == 'stack':
-                    event['data'] = {'data': self.get_stack(), 'sp': self.get_register('rsp')}
-                elif client.registration['config']['type'] == 'bt':
-                    event['data'] = self.get_backtrace()
-                    
-                queue.put((client, event))
+    def lldb_invoke(debugger, command, result, dict):
+        inst.invoke(debugger, command, result, dict)
 
+    class VoltronLLDBCommand (VoltronCommand):
+        debugger = None
+
+        def __init__(self, debugger, dict):
+            self.debugger = debugger
+            debugger.HandleCommand('command script add -f voltron.lldb_invoke voltron')
+            self.running = False
+
+        def invoke(self, debugger, command, result, dict):
+            self.debugger = debugger
+            self.handle_command(command)
+
+        def register_hooks(self):
+            self.debugger.HandleCommand('target stop-hook add -o \'voltron update\'')
+
+        def unregister_hooks(self):
+            # XXX: Fix this so it only removes our stop-hook
+            self.debugger.HandleCommand('target stop-hook delete')
+
+        def get_frame(self):
+            return self.debugger.GetTargetAtIndex(0).process.selected_thread.GetFrameAtIndex(0)
+
+        def get_registers(self):
+            log.debug('Getting registers')
+            frame = self.get_frame()
+            regs = {x.name:int(x.value, 16) for x in list(list(frame.GetRegisters())[0])}
+            return regs
+
+        def get_register(self, reg):
+            log.debug('Getting register: ' + reg)
+            return self.get_registers()[reg]
+
+        def get_disasm(self):
+            log.debug('Getting disasm')
+            res = self.get_cmd_output('disassemble -c {}'.format(DISASM_MAX))
+            return res
+
+        def get_stack(self):
+            log.debug('Getting stack')
+            rsp = self.get_register('rsp')
+            error = lldb.SBError()
+            res = lldb.debugger.GetTargetAtIndex(0).process.ReadMemory(rsp, STACK_MAX*16, error)
+            return res
+
+        def get_backtrace(self):
+            log.debug('Getting backtrace')
+            res = self.get_cmd_output('bt')
+            return res
+
+        def get_cmd_output(self, cmd=None):
+            if cmd:
+                log.debug('Getting command output: ' + cmd)
+                res = lldb.SBCommandReturnObject()
+                self.debugger.GetCommandInterpreter().HandleCommand(cmd, res)
+                res = res.GetOutput()
+            else:
+                res = "<No command>"
+            return res
 
 
 # Socket for talking to an individual client
@@ -462,7 +567,7 @@ class RegisterView (VoltronView):
                 'value_colour_mod': COLOURS['modified']
             },
             {
-                'regs':             ['eflags'],
+                'regs':             ['rflags'],
                 'value_format':     '{0}',
                 'value_mod':        None
             },
@@ -491,7 +596,7 @@ class RegisterView (VoltronView):
         "{r8l} {r8}\n{r9l} {r9}\n{r10l} {r10}\n{r11l} {r11}\n{r12l} {r12}\n"
         "{r13l} {r13}\n{r14l} {r14}\n{r15l} {r15}\n"
         "{csl}  {cs}  {dsl}  {ds}\n{esl}  {es}  {fsl}  {fs}\n{gsl}  {gs}  {ssl}  {ss}\n"
-        "    {eflags}\n"
+        "    {rflags}\n"
     )
 
     last_regs = None
@@ -514,7 +619,8 @@ class RegisterView (VoltronView):
         template = self.TEMPLATE_V if self.args.vertical else self.TEMPLATE_H
 
         # Process formatting settings
-        data = msg['data']
+        data = defaultdict(lambda: '<n/a>')
+        data.update(msg['data'])
         formats = self.FORMAT_INFO['x64']
         formatted = {}
         for fmt in formats:
