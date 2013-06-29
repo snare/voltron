@@ -33,6 +33,7 @@ Usage
 		$ voltron.py stack
 		$ voltron.py disasm
 		$ voltron.py bt
+		$ voltron.py cmd 'x/32x $rip'
 
 4. The UI view code will attach to the server (via a domain socket) and refresh every time the debugger is stopped. So, set a break point and let the debugger hit it and everything should be updated.
 
