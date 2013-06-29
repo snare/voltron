@@ -70,7 +70,7 @@ Things I probably will do at some stage in the not too distant future:
 
 Feel free to add to it and send a pull request.
 
-If you want to add a new view type you'll just need to add a new subclass of `VoltronView` (see the others for examples) that registers and renders data your own message type, and potentially add some code to `VoltronCommand`/`VoltronGDBCommand`/`VoltronLLDBCommand` to grab the necessary data and cram it into an update message.
+If you want to add a new view type you'll just need to add a new subclass of `VoltronView` (see the others for examples) that registers for updates and renders data for your own message type, and potentially add some code to `VoltronCommand`/`VoltronGDBCommand`/`VoltronLLDBCommand` to grab the necessary data and cram it into an update message.
 
 License
 -------
