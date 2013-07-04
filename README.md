@@ -24,7 +24,7 @@ Usage - GDBv7
 
 		source /path/to/voltron.py
 
-2. Fire up the debugger and start the **voltron** server thread (you could also put this in your `.gdbinit`/`.lldbinit`)
+2. Fire up the debugger and start the **voltron** server thread (you could also put this in your `.gdbinit`)
 
 		$ gdb whatever
 		gdb$ voltron start
@@ -54,7 +54,7 @@ A `hook-stop` macro is included - if you have your own custom one (e.g. fG!'s) y
 
 		source /path/to/voltron.gdb
 
-2. Fire up the debugger and start the *voltron* server thread (you could also put this in your `.gdbinit`/`.lldbinit`)
+2. Fire up the debugger and start the **voltron** server thread (you could also put this in your `.gdbinit`/)
 
 		$ gdb whatever
 		gdb$ voltron_start
@@ -77,7 +77,7 @@ Usage - LLDB
 
 		command script import /path/to/voltron.py
 
-2. Fire up the debugger and start the **voltron** server thread (you could also put this in your `.gdbinit`/`.lldbinit`)
+2. Fire up the debugger and start the **voltron** server thread (you could also put this in your `.lldbinit`)
 
 		$ lldb whatever
 		(lldb) voltron start
