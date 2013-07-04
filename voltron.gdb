@@ -38,7 +38,7 @@ end
 
 define voltron_update_registers
     voltron_dump_registers_x64
-    shell ~/.gdb/voltron/voltron.py -d gdb6proxy reg
+    shell ~/.gdb/voltron/voltron.py gdb6proxy reg
     shell rm /tmp/voltron.reg.*
 end
 
@@ -51,7 +51,7 @@ end
 
 define voltron_start
     if $voltron_running == 0
-        shell ~/.gdb/voltron/voltron.py -d server & ; echo $! >/tmp/voltron.pid
+        shell ~/.gdb/voltron/voltron.py server & ; echo $! >/tmp/voltron.pid
         set $voltron_running = 1
     else
         echo Already running\n
