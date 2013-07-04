@@ -37,7 +37,9 @@ Usage - GDBv7
 		$ voltron.py bt
 		$ voltron.py cmd 'x/32x $rip'
 
-4. The UI view code will attach to the server (via a domain socket) and refresh every time the debugger is stopped. So, set a break point and let the debugger hit it and everything should be updated.
+4. The UI view code will attach to the server (via a domain socket) and refresh every time the debugger is stopped. So, set a break point and let the debugger hit it and everything should be updated. A forced update can be triggered with the following command: 
+
+		gdb$ voltron update
 
 5. Before you exit the debugger, execute the following command or GDB will hang since the domain socket will still be open.
 
@@ -64,7 +66,9 @@ A `hook-stop` macro is included - if you have your own custom one (e.g. fG!'s) y
 		$ voltron.py reg -v
 		$ voltron.py stack
 
-4. The UI view code will attach to the server (via a domain socket) and refresh every time the debugger is stopped. So, set a break point and let the debugger hit it and everything should be updated.
+4. The UI view code will attach to the server (via a domain socket) and refresh every time the debugger is stopped. So, set a break point and let the debugger hit it and everything should be updated. A forced update can be triggered with the following command: 
+
+		gdb$ voltron_update
 
 5. Before you exit the debugger, execute the following command the server process will be left running in the background.
 
@@ -90,7 +94,9 @@ Usage - LLDB
 		$ voltron.py bt
 		$ voltron.py cmd 'reg read'
 
-4. The UI view code will attach to the server (via a domain socket) and refresh every time the debugger is stopped. So, set a break point and let the debugger hit it and everything should be updated.
+4. The UI view code will attach to the server (via a domain socket) and refresh every time the debugger is stopped. So, set a break point and let the debugger hit it and everything should be updated. A forced update can be triggered with the following command: 
+
+		(lldb) voltron update
 
 Bugs
 ----
