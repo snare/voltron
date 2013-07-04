@@ -12,6 +12,7 @@ import logging
 import logging.config
 import Queue
 import termcolor
+import struct
 
 from collections import defaultdict
 
@@ -103,24 +104,33 @@ def main(debugger=None, dict=None):
         log.debug('Loading LLDB command')
         inst = VoltronLLDBCommand(debugger, dict)
     else:
-        # Parse command line args
+        # Set up command line arg parser
         parser = argparse.ArgumentParser()
         parser.add_argument('--debug', '-d', action='store_true', help='print debug logging')
         subparsers = parser.add_subparsers(title='subcommands', description='valid subcommands', help='additional help')
+
+        # Set up a subcommand for each view class 
         for cls in VoltronView.__subclasses__():
             cls.configure_subparser(subparsers)
-        args = parser.parse_args()
 
+        # And subcommands for the loathsome red-headed stepchildren
+        StandaloneServer.configure_subparser(subparsers)
+        GDB6Proxy.configure_subparser(subparsers)
+
+        # Parse args
+        args = parser.parse_args()
         if args.debug:
             log.setLevel(logging.DEBUG)
 
-        # Run the appropriate view
+        # Instantiate and run the appropriate module
+        inst = args.func(args)
         try:
-            view = args.func(args)
-            view.run()
-            view.cleanup()
+            inst.run()
         except Exception as e:
-            log.error(e)
+            log.error("Exception running module {}: {}".format(inst.__class__.__name__, str(e)))
+        except KeyboardInterrupt:
+            pass
+        inst.cleanup()
 
 
 #
@@ -331,25 +341,64 @@ if in_lldb:
             return res
 
 
+class StandaloneServer (object):
+    @classmethod
+    def configure_subparser(cls, subparsers):
+        sp = subparsers.add_parser('server', help='standalone server for debuggers without python support')
+        sp.set_defaults(func=StandaloneServer)
+
+    def __init__(self, args={}):
+        self.args = args
+
+    def run(self):
+        log.debug("Starting standalone server")
+        self.thread = ServerThread()
+        self.thread.start()
+        while True: pass
+
+    def cleanup(self):
+        log.info("Exiting")
+        self.thread.set_should_exit(True)
+        self.thread.join(10)
+
+
 # Socket for talking to an individual client
 class ClientHandler (asyncore.dispatcher):
+    def __init__(self, sock):
+        asyncore.dispatcher.__init__(self, sock)
+        self.registration = None
+
     def handle_read(self):
         data = self.recv(READ_MAX)
         if data.strip() != "":
             try:
-                log.debug('Received msg: ' + data)
                 msg = pickle.loads(data)
+                log.debug('Received msg: ' + str(msg))
             except:
                 log.error('Invalid message data: ' + data)
 
             if msg['msg_type'] == 'register':
                 self.handle_register(msg)
+            elif msg['msg_type'] == 'push_update':
+                self.handle_push_update(msg)
             else:
                 log.error('Invalid message type: ' + msg['msg_type'])
 
     def handle_register(self, msg):
         log.debug('Registering client {} with config: {}'.format(self, str(msg['config'])))
         self.registration = msg
+
+    def handle_push_update(self, msg):
+        log.debug('Got a push update from client {} of type {} with data: {}'.format(self, msg['update_type'], str(msg['data'])))
+        event = {'msg_type': 'update', 'data': msg['data']}
+        for client in clients:
+            if client.registration != None and client.registration['config']['type'] == msg['update_type']:
+                queue.put((client, event))
+        self.send(pickle.dumps({'msg_type': 'ack'}))
+
+    def handle_close(self):
+        self.close()
+        clients.remove(self)
 
     def send_event(self, event):
         log.debug('Sending event to client {}: {}'.format(self, event))
@@ -373,9 +422,11 @@ class Server (asyncore.dispatcher):
         pair = self.accept()
         if pair is not None:
             sock, addr = pair
-            client = ClientHandler(sock)
-            log.debug('Received connection: ' + str(client))
-            clients.append(client)
+            try:
+                client = ClientHandler(sock)
+                clients.append(client)
+            except Exception as e:
+                log.error("Exception handling accept: " + str(e))
 
 
 # Thread spun off when the plugin is started to listen for incoming client connections, and send out any
@@ -547,7 +598,7 @@ class RegisterView (VoltronView):
     FORMAT_INFO = {
         'x64': [
             {
-                'regs':             ['rax','rbx','rcx','rdx','rbp','rsp','rdi','rsi','rip','r8','r9','r10','r11', 'r12','r13','r14','r15'],
+                'regs':             ['rax','rbx','rcx','rdx','rbp','rsp','rdi','rsi','rip','r8','r9','r10','r11','r12','r13','r14','r15'],
                 'label_format':     '{0:3s}:',
                 'label_mod':        str.upper,
                 'label_colour':     COLOURS['label'],
@@ -603,7 +654,7 @@ class RegisterView (VoltronView):
 
     @classmethod
     def configure_subparser(cls, subparsers):
-        sp = subparsers.add_parser('reg', description='register view')
+        sp = subparsers.add_parser('reg', help='register view')
         sp.set_defaults(func=RegisterView)
         g = sp.add_mutually_exclusive_group()
         g.add_argument('--horizontal', '-o', action='store_true', help='horizontal orientation (default)', default=False)
@@ -664,7 +715,7 @@ class DisasmView (VoltronView):
 
     @classmethod
     def configure_subparser(cls, subparsers):
-        sp = subparsers.add_parser('disasm', description='disassembly view')
+        sp = subparsers.add_parser('disasm', help='disassembly view')
         sp.set_defaults(func=DisasmView)
 
     def setup(self):
@@ -699,7 +750,7 @@ class StackView (VoltronView):
 
     @classmethod
     def configure_subparser(cls, subparsers):
-        sp = subparsers.add_parser('stack', description='stack view')
+        sp = subparsers.add_parser('stack', help='stack view')
         sp.set_defaults(func=StackView)
 
     def setup(self):
@@ -731,7 +782,7 @@ class StackView (VoltronView):
 class BacktraceView (VoltronView):
     @classmethod
     def configure_subparser(cls, subparsers):
-        sp = subparsers.add_parser('bt', description='backtrace view')
+        sp = subparsers.add_parser('bt', help='backtrace view')
         sp.set_defaults(func=BacktraceView)
 
     def setup(self):
@@ -760,7 +811,7 @@ class BacktraceView (VoltronView):
 class CommandView (VoltronView):
     @classmethod
     def configure_subparser(cls, subparsers):
-        sp = subparsers.add_parser('cmd', description='command view')
+        sp = subparsers.add_parser('cmd', help='command view - specify a command to be run each time the debugger stops')
         sp.add_argument('command', action='store', help='command to run')
         sp.add_argument('--header', '-e', action='store_true', help='print header', default=False)
         sp.add_argument('--footer', '-f', action='store_true', help='print footer', default=False)
@@ -776,6 +827,75 @@ class CommandView (VoltronView):
         print(msg['data'].strip())
         print(self.format_footer(), end='')
         sys.stdout.flush()
+
+
+# This class is called from the command line by GDBv6's stop-hook. The dumped registers and stack are collected,
+# parsed and sent to the voltron standalone server, which then sends the updates out to any registered clients.
+# I hate that this exists. Fuck GDBv6.
+class GDB6Proxy (asyncore.dispatcher):
+    REGISTERS = ['rax','rbx','rcx','rdx','rbp','rsp','rdi','rsi','rip','r8','r9','r10','r11','r12','r13','r14','r15','eflags']
+
+    @classmethod
+    def configure_subparser(cls, subparsers):
+        sp = subparsers.add_parser('gdb6proxy', help='import a dump from GDBv6 and send it to the server')
+        sp.add_argument('type', action='store', help='the type to proxy - reg or stack')
+        sp.set_defaults(func=GDB6Proxy)
+
+    def __init__(self, args={}):
+        asyncore.dispatcher.__init__(self)
+        self.args = args
+        self.create_socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.connect(SOCK)
+
+    def run(self):
+        asyncore.loop()
+
+    def handle_connect(self):
+        if self.args.type == "reg":
+            event = self.read_registers()
+        elif self.args.type == "stack":
+            event = self.read_stack()
+        else:
+            log.error("Invalid proxy type")
+        log.debug("Pushing update to server")
+        log.debug(str(event))
+        self.send(pickle.dumps(event))
+
+    def handle_read(self):
+        data = self.recv(READ_MAX)
+        msg = pickle.loads(data)
+        if msg['msg_type'] != 'ack':
+            log.error("Did not get ack: " + str(msg))
+        self.close()
+
+    def read_registers(self):
+        log.debug("Parsing register data")
+        data = {}
+        for reg in GDB6Proxy.REGISTERS:
+            try:
+                with open('/tmp/voltron.reg.'+reg, 'r+b') as f:
+                    if reg == 'eflags':
+                        (val,) = struct.unpack('<L', f.read())
+                    else:
+                        (val,) = struct.unpack('<Q', f.read())
+                data[reg] = val
+            except Exception as e:
+                log.warning("Exception reading register {}: {}".format(reg, str(e)))
+                data[reg] = '<fail>'
+        event = {'msg_type': 'push_update', 'update_type': 'register', 'data': data}
+        return event
+
+    def read_stack(self):
+        log.debug("Parsing stack data")
+        with open('/tmp/voltron.stack', 'r+b') as f:
+            data = f.read()
+        with open('/tmp/voltron.reg.rsp', 'r+b') as f:
+            (rsp,) = struct.unpack('<Q', f.read())
+        event = {'msg_type': 'push_update', 'update_type': 'stack', 'data': {'sp': rsp, 'data': data}}
+        return event
+
+    def cleanup(self):
+        pass
 
 
 if __name__ == "__main__":
