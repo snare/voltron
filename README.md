@@ -54,7 +54,7 @@ A `hook-stop` macro is included - if you have your own custom one (e.g. fG!'s) y
 
 		source /path/to/voltron.gdb
 
-2. Fire up the debugger and start the **voltron** server thread (you could also put this in your `.gdbinit`/)
+2. Fire up the debugger and start the **voltron** server thread (you could also put this in your `.gdbinit`)
 
 		$ gdb whatever
 		gdb$ voltron_start
@@ -66,7 +66,7 @@ A `hook-stop` macro is included - if you have your own custom one (e.g. fG!'s) y
 
 4. The UI view code will attach to the server (via a domain socket) and refresh every time the debugger is stopped. So, set a break point and let the debugger hit it and everything should be updated.
 
-5. Before you exit the debugger, execute the following command or GDB will hang since the domain socket will still be open. LLDB seems to handle this OK.
+5. Before you exit the debugger, execute the following command the server process will be left running in the background.
 
 		gdb$ voltron_stop
 
@@ -102,7 +102,7 @@ There are probably others.
 Development
 -----------
 
-I initially hacked this together in a night as a "do the bare minimum to make my life better" project, as larger projects of this nature that I start never get finished. A few people expressed interest in it, so I've added a few bits and pieces to it and will continue to sometimes. Maybe.
+I initially hacked this together in a night as a "do the bare minimum to make my life better" project, as larger projects of this nature that I start never get finished. A few people have expressed interest in it, so I've added a few bits and pieces to it and will probably continue to add to it occasionally.
 
 Things I probably will do at some stage in the not too distant future:
 
