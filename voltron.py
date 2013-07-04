@@ -131,6 +131,7 @@ def main(debugger=None, dict=None):
         except KeyboardInterrupt:
             pass
         inst.cleanup()
+        log.info('Exiting')
 
 
 #
@@ -490,10 +491,10 @@ class Client (asyncore.dispatcher):
         try:
             msg = pickle.loads(data)
             log.debug('Received message: ' + str(msg))
+            if self.view:
+                self.view.render(msg)
         except:
             log.debug('Invalid message: ' + data)
-        if self.view:
-            self.view.render(msg)
 
 
 # Parent class for all views
