@@ -46,7 +46,7 @@ READ_MAX = 0xFFFF
 LOG_CONFIG = {
         'version': 1,
         'formatters': {
-            'standard': {'format': '[%(levelname)s]: %(message)s'}
+            'standard': {'format': 'voltron: [%(levelname)s] %(message)s'}
         },
         'handlers': {
             'default': {
@@ -241,7 +241,11 @@ if in_gdb:
                 except:
                     log.debug('Failed getting reg: ' + reg)
                     vals[reg] = 'N/A'
-            vals['rflags'] = str(gdb.parse_and_eval('$eflags'))
+            try:
+                vals['rflags'] = int(gdb.execute('info reg $eflags', to_string=True).split()[1], 16)
+            except:
+                log.debug('Failed getting reg: eflags')
+                vals['rflags'] = 'N/A'
             log.debug('Got registers: ' + str(vals))
             return vals
 
@@ -491,10 +495,15 @@ class Client (asyncore.dispatcher):
         try:
             msg = pickle.loads(data)
             log.debug('Received message: ' + str(msg))
+        except Exception as e:
+            log.error('Exception parsing message: ' + str(e))
+            log.error('Invalid message: ' + data)
+
+        try:
             if self.view:
                 self.view.render(msg)
-        except:
-            log.debug('Invalid message: ' + data)
+        except Exception as e:
+            log.error('Error rendering view: ' + str(e))
 
 
 # Parent class for all views
@@ -596,46 +605,37 @@ class VoltronView (object):
 
 # Class to actually render the view
 class RegisterView (VoltronView):
+    FORMAT_DEFAULTS = {
+        'label_format':     '{0}:',
+        'label_func':       str.upper,
+        'label_colour':     COLOURS['label'],
+        'label_colour_en':  True,
+        'value_format':     ADDR_FORMAT_64,
+        'value_func':       None,
+        'value_colour':     COLOURS['value'],
+        'value_colour_mod': COLOURS['modified'],
+        'value_colour_en':  True
+    }
     FORMAT_INFO = {
         'x64': [
             {
                 'regs':             ['rax','rbx','rcx','rdx','rbp','rsp','rdi','rsi','rip','r8','r9','r10','r11','r12','r13','r14','r15'],
                 'label_format':     '{0:3s}:',
-                'label_mod':        str.upper,
-                'label_colour':     COLOURS['label'],
-                'value_format':     ADDR_FORMAT_64,
-                'value_mod':        None,
-                'value_colour':     COLOURS['value'],
-                'value_colour_mod': COLOURS['modified']
             },
             {
                 'regs':             ['cs','ds','es','fs','gs','ss'],
-                'label_format':     '{0}:',
-                'label_mod':        str.upper,
-                'label_colour':     COLOURS['label'],
                 'value_format':     SEGM_FORMAT_16,
-                'value_mod':        None,
-                'value_colour':     COLOURS['value'],
-                'value_colour_mod': COLOURS['modified']
             },
             {
                 'regs':             ['rflags'],
-                'value_format':     '{0}',
-                'value_mod':        None
-            },
+                'value_format':     '{}',
+                'value_func':       'format_flags',
+                'value_colour_en':  False
+            }
         ]
     }
-    FORMAT_DEFAULTS = {
-        'label_format':     '{}:',
-        'label_mod':        str.upper,
-        'label_colour':     COLOURS['label'],
-        'value_format':     ADDR_FORMAT_64,
-        'value_mod':        None,
-        'value_colour':     COLOURS['value'],
-        'value_colour_mod': COLOURS['modified']
-    }
     TEMPLATE_H = (
-        "{raxl} {rax}  {rbxl} {rbx}  {rbpl} {rbp}  {rspl} {rsp}  {eflags}\n"
+        "{raxl} {rax}  {rbxl} {rbx}  {rbpl} {rbp}  {rspl} {rsp}  {rflags}\n"
         "{rdil} {rdi}  {rsil} {rsi}  {rdxl} {rdx}  {rcxl} {rcx}  {ripl} {rip}\n"
         "{r8l} {r8}  {r9l} {r9}  {r10l} {r10}  {r11l} {r11}  {r12l} {r12}\n"
         "{r13l} {r13}  {r14l} {r14}  {r15l} {r15}\n"
@@ -648,10 +648,13 @@ class RegisterView (VoltronView):
         "{r8l} {r8}\n{r9l} {r9}\n{r10l} {r10}\n{r11l} {r11}\n{r12l} {r12}\n"
         "{r13l} {r13}\n{r14l} {r14}\n{r15l} {r15}\n"
         "{csl}  {cs}  {dsl}  {ds}\n{esl}  {es}  {fsl}  {fs}\n{gsl}  {gs}  {ssl}  {ss}\n"
-        "    {rflags}\n"
+        " {rflags}\n"
     )
+    FLAG_BITS = {'c': 0, 'p': 2, 'a': 4, 'z': 6, 's': 7, 't': 8, 'i': 9, 'd': 10, 'o': 11}
+    FLAG_TEMPLATE = "[ {o} {d} {i} {t} {s} {z} {a} {p} {c} ]"
 
     last_regs = None
+    last_flags = None
 
     @classmethod
     def configure_subparser(cls, subparsers):
@@ -666,9 +669,8 @@ class RegisterView (VoltronView):
 
     def render(self, msg=None):
         self.clear()
-
         # Grab the appropriate template
-        template = self.TEMPLATE_V if self.args.vertical else self.TEMPLATE_H
+        template = self.TEMPLATE_H if self.args.horizontal else self.TEMPLATE_V
 
         # Process formatting settings
         data = defaultdict(lambda: '<n/a>')
@@ -683,9 +685,10 @@ class RegisterView (VoltronView):
             for reg in fmt['regs']:
                 # Format the label
                 label = fmt['label_format'].format(reg)
-                if fmt['label_mod'] != None:
-                    label = fmt['label_mod'](label)
-                formatted[reg+'l'] =  termcolor.colored(label, fmt['label_colour'])
+                if fmt['label_func'] != None:
+                    formatted[reg+'l'] = fmt['label_func'](label)
+                if fmt['label_colour_en']:
+                    formatted[reg+'l'] =  termcolor.colored(formatted[reg+'l'], fmt['label_colour'])
 
                 # Format the value
                 val = data[reg]
@@ -695,10 +698,14 @@ class RegisterView (VoltronView):
                     colour = fmt['value_colour']
                     if self.last_regs == None or self.last_regs != None and val != self.last_regs[reg]:
                         colour = fmt['value_colour_mod']
-                    val = fmt['value_format'].format(val)
-                    if fmt['value_mod'] != None:
-                        val = fmt['value_mod'](val)
-                    formatted[reg] = termcolor.colored(val, colour)
+                    formatted[reg] = fmt['value_format'].format(val)
+                    if fmt['value_func'] != None:
+                        if type(fmt['value_func']) == str:
+                            formatted[reg] = getattr(self, fmt['value_func'])(formatted[reg])
+                        else:
+                            formatted[reg] = fmt['value_func'](formatted[reg])
+                    if fmt['value_colour_en']:
+                        formatted[reg] = termcolor.colored(formatted[reg], colour)
 
         log.debug('Formatted: ' + str(formatted))
         print(self.format_header('[regs]'))
@@ -708,6 +715,30 @@ class RegisterView (VoltronView):
 
         # Store the regs
         self.last_regs = data
+
+    def format_flags(self, val):
+        values = {}
+
+        # Get formatting info for flags
+        fmt = dict(self.FORMAT_DEFAULTS.items() + filter(lambda x: 'rflags' in x['regs'], self.FORMAT_INFO['x64'])[0].items())
+
+        # Handle each flag bit
+        val = int(val, 16)
+        formatted = {}
+        for flag in self.FLAG_BITS.keys():
+            values[flag] = val & (1 << self.FLAG_BITS[flag])
+            formatted[flag] = str.upper(flag) if values[flag] else flag
+            if self.last_flags != None and self.last_flags[flag] != values[flag]:
+                colour = fmt['value_colour_mod']
+            else:
+                colour = fmt['value_colour']
+            formatted[flag] = termcolor.colored(formatted[flag], colour)
+
+        # Store the flag values for comparison
+        self.last_flags = values
+
+        # Format with template
+        return self.FLAG_TEMPLATE.format(**formatted)
 
 
 class DisasmView (VoltronView):
@@ -834,7 +865,7 @@ class CommandView (VoltronView):
 # parsed and sent to the voltron standalone server, which then sends the updates out to any registered clients.
 # I hate that this exists. Fuck GDBv6.
 class GDB6Proxy (asyncore.dispatcher):
-    REGISTERS = ['rax','rbx','rcx','rdx','rbp','rsp','rdi','rsi','rip','r8','r9','r10','r11','r12','r13','r14','r15','eflags']
+    REGISTERS = ['rax','rbx','rcx','rdx','rbp','rsp','rdi','rsi','rip','r8','r9','r10','r11','r12','r13','r14','r15','eflags','cs','ds','es','fs','gs','ss']
 
     @classmethod
     def configure_subparser(cls, subparsers):
@@ -843,8 +874,11 @@ class GDB6Proxy (asyncore.dispatcher):
         sp.set_defaults(func=GDB6Proxy)
 
     def __init__(self, args={}):
+        global log
         asyncore.dispatcher.__init__(self)
         self.args = args
+        if not args.debug:
+            log.setLevel(logging.WARNING)
         self.create_socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.connect(SOCK)
 
@@ -875,7 +909,7 @@ class GDB6Proxy (asyncore.dispatcher):
         for reg in GDB6Proxy.REGISTERS:
             try:
                 with open('/tmp/voltron.reg.'+reg, 'r+b') as f:
-                    if reg == 'eflags':
+                    if reg in ['eflags','cs','ds','es','fs','gs','ss']:
                         (val,) = struct.unpack('<L', f.read())
                     else:
                         (val,) = struct.unpack('<Q', f.read())
@@ -883,6 +917,7 @@ class GDB6Proxy (asyncore.dispatcher):
             except Exception as e:
                 log.warning("Exception reading register {}: {}".format(reg, str(e)))
                 data[reg] = '<fail>'
+        data['rflags'] = data['eflags']
         event = {'msg_type': 'push_update', 'update_type': 'register', 'data': data}
         return event
 
