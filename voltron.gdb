@@ -38,14 +38,22 @@ end
 
 define voltron_update_registers
     voltron_dump_registers_x64
-    shell ~/.gdb/voltron/voltron.py gdb6proxy reg
+    if $argc == 0
+        shell ~/.gdb/voltron/voltron.py gdb6proxy reg
+    else
+        shell ~/.gdb/voltron/voltron.py -d gdb6proxy reg
+    end
     shell rm /tmp/voltron.reg.*
 end
 
 define voltron_update_stack
     dump memory /tmp/voltron.stack $rsp ($rsp+$VOLTRON_STACK_SIZE)
     dump value /tmp/voltron.reg.rsp $rsp
-    shell ~/.gdb/voltron/voltron.py gdb6proxy stack
+    if $argc == 0
+        shell ~/.gdb/voltron/voltron.py gdb6proxy stack
+    else
+        shell ~/.gdb/voltron/voltron.py -d gdb6proxy stack
+    end
     shell rm /tmp/voltron.stack
 end
 
@@ -86,8 +94,13 @@ Get the status of the voltron server.
 end
 
 define voltron_update
-    voltron_update_registers
-    voltron_update_stack
+    if $argc == 0
+        voltron_update_registers
+        voltron_update_stack
+    else
+        voltron_update_registers 1
+        voltron_update_stack 1
+    end
 end
 document voltron_update
 Send an update to the voltron server.
