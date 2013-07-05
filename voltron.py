@@ -723,10 +723,11 @@ class RegisterView (VoltronView):
         fmt = dict(self.FORMAT_DEFAULTS.items() + filter(lambda x: 'rflags' in x['regs'], self.FORMAT_INFO['x64'])[0].items())
 
         # Handle each flag bit
-        val = int(val, 16)
+        val = int(val, 10)
         formatted = {}
         for flag in self.FLAG_BITS.keys():
-            values[flag] = val & (1 << self.FLAG_BITS[flag])
+            values[flag] = (val & (1 << self.FLAG_BITS[flag]) > 0)
+            log.debug("Flag {} value {} (for rflags 0x{})".format(flag, values[flag], val))
             formatted[flag] = str.upper(flag) if values[flag] else flag
             if self.last_flags != None and self.last_flags[flag] != values[flag]:
                 colour = fmt['value_colour_mod']
