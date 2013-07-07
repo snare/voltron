@@ -86,7 +86,9 @@ def main(debugger=None, dict=None):
     log = logging.getLogger('')
 
     # Load config
-    config = json.loads(file(os.path.expanduser('~/.voltron')).read())
+    config_data = file(os.path.expanduser('~/.voltron')).read()
+    lines = filter(lambda x: len(x) != 0 and x[0] != '#', config_data.split('\n'))
+    config = json.loads('\n'.join(lines))
 
     # Set up queue
     queue = Queue.Queue()
