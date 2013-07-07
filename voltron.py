@@ -882,6 +882,7 @@ class StackView (TerminalView):
     @classmethod
     def configure_subparser(cls, subparsers):
         sp = subparsers.add_parser('stack', help='stack view')
+        sp.add_argument('--bytes', '-b', action='store', type=int, help='bytes per line (default 16)', default=16)
         sp.set_defaults(func=StackView)
 
     def setup(self):
@@ -898,10 +899,10 @@ class StackView (TerminalView):
         data = msg['data']
         stack_raw = data['data']
         sp = data['sp']
-        stack_raw = stack_raw[:(self.body_height())*16]
+        stack_raw = stack_raw[:(self.body_height())*self.args.bytes]
 
         # Hexdump it
-        lines = self.hexdump(stack_raw, offset=sp).split('\n')
+        lines = self.hexdump(stack_raw, offset=sp, length=self.args.bytes).split('\n')
         lines.reverse()
         stack = '\n'.join(lines)
 
