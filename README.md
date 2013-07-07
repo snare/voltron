@@ -17,6 +17,13 @@ Requirements
 
 **voltron** supports GDB version 7, LLDB, and has limited support for GDB version 6.
 
+Configuration
+-------------
+
+A sample configuration file is included in the repo. Copy it to `~/.voltron` and mess with it and you should get the idea. Header and footer positions, visbility and colours are configurable along with other view-specific items (e.g. colours for labels and values in the register view).
+
+In the example config at the top level, the "all_views" section sets up a base configuration to apply to all views. Each view can be configured individually overriding these settings. For example, the "stack_view" section in the example config overrides a number of these settings to reposition the title and info labels. The "register_view" section in the example config contains some settings overriding the default colours for the register view. Have a look at the source for other items in "FORMAT_DEFAULTS" that can be overridden in this section of the config.
+
 Usage - GDBv7
 -------------
 
@@ -113,12 +120,11 @@ I initially hacked this together in a night as a "do the bare minimum to make my
 Things I probably will do at some stage in the not too distant future:
 
 * Better colour support throughout all views like in the register view
-* Move a bunch of the colour and template stuff to a config file
 * Do something better than use Pygments with the sucky GDB lexer
 
 Feel free to add to it and send a pull request.
 
-If you want to add a new view type you'll just need to add a new subclass of `VoltronView` (see the others for examples) that registers for updates and renders data for your own message type, and potentially add some code to `VoltronCommand`/`VoltronGDBCommand`/`VoltronLLDBCommand` to grab the necessary data and cram it into an update message.
+If you want to add a new view type you'll just need to add a new subclass of `TerminalView` (see the others for examples) that registers for updates and renders data for your own message type, and potentially add some code to `VoltronCommand`/`VoltronGDBCommand`/`VoltronLLDBCommand` to grab the necessary data and cram it into an update message.
 
 License
 -------
