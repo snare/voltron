@@ -940,7 +940,7 @@ class BacktraceView (TerminalView):
         self.footer = self.format_footer()
 
         # Call parent's render method
-        super(StackView, self).render()
+        super(BacktraceView, self).render()
 
 
 class CommandView (TerminalView):
