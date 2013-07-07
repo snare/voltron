@@ -1064,9 +1064,8 @@ class CommandView (TerminalView):
             pad = 0
 
         # Build output
-        self.header = self.format_header('[cmd:' + self.config['cmd'] + ']')
+        self.title = '[cmd:' + self.config['cmd'] + ']'
         self.body = data.rstrip() + pad*'\n'
-        self.footer = self.format_footer()
 
         # Call parent's render method
         super(CommandView, self).render()
