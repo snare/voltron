@@ -11,12 +11,12 @@ import argparse
 import logging
 import logging.config
 import Queue
-import termcolor
 import struct
 import json
 import curses
 
 from collections import defaultdict
+from termcolor import colored
 
 try:
     import cPickle as pickle
@@ -65,6 +65,7 @@ LOG_CONFIG = {
         }
 }
 
+ADDR_FORMAT_128 = '0x{0:0=32X}'
 ADDR_FORMAT_64 = '0x{0:0=16X}'
 ADDR_FORMAT_32 = '0x{0:0=8X}'
 ADDR_FORMAT_16 = '0x{0:0=4X}'
@@ -136,6 +137,14 @@ def main(debugger=None, dict=None):
             pass
         inst.cleanup()
         log.info('Exiting')
+
+def merge(d1, d2):
+    for k1,v1 in d1.iteritems():
+        if isinstance(v1, dict) and k1 in d2.keys() and isinstance(d2[k1], dict):
+            merge(v1, d2[k1])
+        else:
+            d2[k1] = v1
+    return d2
 
 
 #
@@ -237,7 +246,9 @@ if in_gdb:
 
         def get_registers(self):
             log.debug('Getting registers')
-            regs = ['rax','rbx','rcx','rdx','rbp','rsp','rdi','rsi','rip','r8','r9','r10','r11','r12','r13','r14','r15','cs','ds','es','fs','gs','ss']
+            regs = ['rax','rbx','rcx','rdx','rbp','rsp','rdi','rsi','rip','r8','r9','r10','r11','r12','r13','r14','r15',
+                    'cs','ds','es','fs','gs','ss','xmm0','xmm1','xmm2','xmm3','xmm4','xmm5','xmm6','xmm7','xmm8',
+                    'xmm9','xmm10','xmm11','xmm12','xmm13','xmm14','xmm15']
             vals = {}
             for reg in regs:
                 try:
@@ -513,13 +524,54 @@ class Client (asyncore.dispatcher):
 # Parent class for all views
 class VoltronView (object):
     DEFAULT_CONFIG = {
-        'update_on': 'stop',
-        'clear': True,
-        'show_header': True,
-        'show_footer': False,
-        'header_colour': 'blue',
-        'footer_colour': 'blue'
+        "update_on": "stop",
+        "clear": True,
+        "header": {
+            "show":         True,
+            "pad":          " ",
+            "colour":       "blue",
+            "bg_colour":    "grey",
+            "attrs":        [],
+            "label_left": {
+                "name":         "info",
+                "colour":       "blue",
+                "bg_colour":    "grey",
+                "attrs":        []
+            },
+            "label_right": {
+                "name":         "title",
+                "colour":       "blue",
+                "bg_colour":    "grey",
+                "attrs":        ["bold"]
+            }
+        },
+        "footer": {
+            "show":         True,
+            "pad":          " ",
+            "colour":       "blue",
+            "bg_colour":    "grey",
+            "attrs":        [],
+            "label_left": {
+                "name":         None,
+                "colour":       "blue",
+                "bg_colour":    "grey",
+                "attrs":        []
+            },
+            "label_right": {
+                "name":         None,
+                "colour":       "blue",
+                "bg_colour":    "grey",
+                "attrs":        ["bold"],
+            }
+        }
     }
+
+    @classmethod
+    def add_generic_arguments(cls, sp):
+        sp.add_argument('--show-header', '-e', dest="header", action='store_true', help='show header', default=None)
+        sp.add_argument('--hide-header', '-E', dest="header", action='store_false', help='hide header', default=None)
+        sp.add_argument('--show-footer', '-f', dest="footer", action='store_true', help='show footer', default=None)
+        sp.add_argument('--hide-footer', '-F', dest="footer", action='store_false', help='hide footer', default=None)
 
     def __init__(self, args={}):
         global config
@@ -527,20 +579,34 @@ class VoltronView (object):
         self.client = None
         self.args = args
 
+        # Common set by render method for header and footer formatting
+        self.title = ''
+        self.info = ''
+
         # Set config defaults
+        self.config = self.DEFAULT_CONFIG
         try:
-            self.config = dict(self.DEFAULT_CONFIG.items() + dict(config['all_views']).items())
+            merge(config['all_views'], self.config)
         except:
-            self.config = self.DEFAULT_CONFIG.items()
+            pass
 
         # Let subclass set stuff up
         self.setup()
 
         # Load subclass view config
         try:
-            self.config = dict(self.config.items() + config[self.config['type']+'_view'].items())
+            merge(config[self.config['type']+'_view'], self.config)
         except:
             pass
+
+        # Override settings from command line args
+        if self.args.header != None:
+            self.config['header']['show'] = self.args.header
+        if self.args.footer != None:
+            self.config['footer']['show'] = self.args.footer
+
+        log.debug("View config: " + str(self.config))
+        log.debug("Args: " + str(self.args))
 
         # Initialise window
         self.init_window()        
@@ -579,30 +645,44 @@ class VoltronView (object):
             lines.append("%s:  %-*s  |%s|\n" % (ADDR_FORMAT_64.format(offset+c), length*3, hex, printable))
         return ''.join(lines).strip()
 
-    def format_header(self, title=None, left=None, right=None):
+    def format_header(self):
         height, width = self.window_size()
 
-        # Left data
-        header = ''
-        if left != None:
-            header = left
+        # Get values for labels
+        l = getattr(self, self.config['header']['label_left']['name']) if self.config['header']['label_left']['name'] != None else ''
+        r = getattr(self, self.config['header']['label_right']['name']) if self.config['header']['label_right']['name'] != None else ''
+        p = self.config['header']['pad']
+        llen = len(l)
+        rlen = len(r)
 
-        # Dashes
-        dashlen = width - len(header) - len(title)
-        if dashlen < 0:
-            dashlen = 1
-        header += '-' * dashlen
+        # Add colour
+        l = colored(l, self.config['header']['label_left']['colour'], 'on_' + self.config['header']['label_left']['bg_colour'], self.config['header']['label_left']['attrs'])
+        r = colored(r, self.config['header']['label_right']['colour'], 'on_' + self.config['header']['label_right']['bg_colour'], self.config['header']['label_right']['attrs'])
+        p = colored(p, self.config['header']['colour'], 'on_' + self.config['header']['bg_colour'], self.config['header']['attrs'])
 
-        # Title
-        header = termcolor.colored(header, self.config['header_colour']) + termcolor.colored(title, 'white', attrs=['bold'])
+        # Build header
+        header = l + (width - llen - rlen)*p + r
         
         return header
 
-    def format_footer(self, title=None, left=None, right=None):
+    def format_footer(self):
         height, width = self.window_size()
-        dashlen = width
-        footer = '-' * dashlen
-        footer = termcolor.colored(footer, self.config['footer_colour']) 
+
+        # Get values for labels
+        l = getattr(self, self.config['footer']['label_left']['name']) if self.config['footer']['label_left']['name'] != None else ''
+        r = getattr(self, self.config['footer']['label_right']['name']) if self.config['footer']['label_right']['name'] != None else ''
+        p = self.config['footer']['pad']
+        llen = len(l)
+        rlen = len(r)
+
+        # Add colour
+        l = colored(l, self.config['footer']['label_left']['colour'], 'on_' + self.config['footer']['label_left']['bg_colour'], self.config['footer']['label_left']['attrs'])
+        r = colored(r, self.config['footer']['label_right']['colour'], 'on_' + self.config['footer']['label_right']['bg_colour'], self.config['footer']['label_right']['attrs'])
+        p = colored(p, self.config['footer']['colour'], 'on_' + self.config['footer']['bg_colour'], self.config['footer']['attrs'])
+
+        # Build header and footer
+        footer = l + (width - llen - rlen)*p + r
+        
         return footer
 
 
@@ -620,11 +700,11 @@ class TerminalView (VoltronView):
 
     def render(self, msg=None):
         self.clear()
-        if self.config['show_header']:
-            print(self.header)
+        if self.config['header']['show']:
+            print(self.format_header())
         print(self.body, end='')
-        if self.config['show_footer']:
-            print('\n' + self.footer, end='')
+        if self.config['footer']['show']:
+            print('\n' + self.format_footer(), end='')
         sys.stdout.flush()
 
     def window_size(self):
@@ -635,9 +715,9 @@ class TerminalView (VoltronView):
 
     def body_height(self):
         height, width = self.window_size()
-        if self.config['show_header']:
+        if self.config['header']['show']:
             height -= 1
-        if self.config['show_footer']:
+        if self.config['footer']['show']:
             height -= 1
         return height
 
@@ -651,18 +731,9 @@ class CursesView (VoltronView):
         curses.endwin()
 
     def render(self, msg=None):
-        self.clear()
-        if self.config['show_header']:
-            print(self.header)
-        print(self.body, end='')
-        if self.config['show_footer']:
-            print('\n' + self.footer, end='')
-        sys.stdout.flush()
-
-    def render(self, msg=None):
         self.screen.clear()
         y = 0
-        if self.config['show_header']:
+        if self.config['header']['show']:
             self.screen.addstr(0, 0, self.header)
             y = 1
         self.screen.addstr(0, y, self.body)
@@ -681,9 +752,9 @@ class CursesView (VoltronView):
 
     def body_height(self):
         height, width = self.window_size()
-        if self.config['show_header']:
+        if self.config['header']['show']:
             height -= 1
-        if self.config['show_footer']:
+        if self.config['footer']['show']:
             height -= 1
         return height
 
@@ -704,12 +775,18 @@ class RegisterView (TerminalView):
     FORMAT_INFO = {
         'x64': [
             {
-                'regs':             ['rax','rbx','rcx','rdx','rbp','rsp','rdi','rsi','rip','r8','r9','r10','r11','r12','r13','r14','r15'],
+                'regs':             ['rax','rbx','rcx','rdx','rbp','rsp','rdi','rsi','rip',
+                                     'r8','r9','r10','r11','r12','r13','r14','r15'],
                 'label_format':     '{0:3s}:',
             },
             {
                 'regs':             ['cs','ds','es','fs','gs','ss'],
                 'value_format':     SEGM_FORMAT_16,
+            },
+            {
+                'regs':             ['xmm0','xmm1','xmm2','xmm3','xmm4','xmm5','xmm6','xmm7','xmm8',
+                                     'xmm9','xmm10','xmm11','xmm12','xmm13','xmm14','xmm15'],
+                'value_format':     ADDR_FORMAT_128,
             },
             {
                 'regs':             ['rflags'],
@@ -724,43 +801,64 @@ class RegisterView (TerminalView):
         "{rdil} {rdi}  {rsil} {rsi}  {rdxl} {rdx}  {rcxl} {rcx}  {ripl} {rip}\n"
         "{r8l} {r8}  {r9l} {r9}  {r10l} {r10}  {r11l} {r11}  {r12l} {r12}\n"
         "{r13l} {r13}  {r14l} {r14}  {r15l} {r15}\n"
-        "{csl} {cs}  {dsl} {ds}  {esl} {es}  {fsl} {fs}  {gsl} {gs}  {ssl} {ss}\n"
+        "{csl} {cs}  {dsl} {ds}  {esl} {es}  {fsl} {fs}  {gsl} {gs}  {ssl} {ss}"
     )
     TEMPLATE_V = (
-        "{ripl} {rip}\n\n"
+        " {rflags}\n"
+        "{ripl} {rip}\n"
         "{raxl} {rax}\n{rbxl} {rbx}\n{rbpl} {rbp}\n{rspl} {rsp}\n"
         "{rdil} {rdi}\n{rsil} {rsi}\n{rdxl} {rdx}\n{rcxl} {rcx}\n"
         "{r8l} {r8}\n{r9l} {r9}\n{r10l} {r10}\n{r11l} {r11}\n{r12l} {r12}\n"
         "{r13l} {r13}\n{r14l} {r14}\n{r15l} {r15}\n"
-        "{csl}  {cs}  {dsl}  {ds}\n{esl}  {es}  {fsl}  {fs}\n{gsl}  {gs}  {ssl}  {ss}\n"
-        " {rflags}\n"
+        "{csl}  {cs}  {dsl}  {ds}\n{esl}  {es}  {fsl}  {fs}\n{gsl}  {gs}  {ssl}  {ss}"
     )
     FLAG_BITS = {'c': 0, 'p': 2, 'a': 4, 'z': 6, 's': 7, 't': 8, 'i': 9, 'd': 10, 'o': 11}
     FLAG_TEMPLATE = "[ {o} {d} {i} {t} {s} {z} {a} {p} {c} ]"
-
+    SSE_TEMPLATE_H = (
+        "{xmm0l}  {xmm0} {xmm1l}  {xmm1} {xmm2l}  {xmm2}\n"
+        "{xmm3l}  {xmm3} {xmm4l}  {xmm4} {xmm5l}  {xmm5}\n"
+        "{xmm6l}  {xmm6} {xmm7l}  {xmm7} {xmm8l}  {xmm8}\n"
+        "{xmm9l}  {xmm9} {xmm10l} {xmm10} {xmm11l} {xmm11}\n"
+        "{xmm12l} {xmm12} {xmm13l} {xmm13} {xmm14l} {xmm14}\n"
+        "{xmm15l} {xmm15}\n"
+    )
+    SSE_TEMPLATE_V = (
+        "{xmm0l}  {xmm0}\n{xmm1l}  {xmm1}\n{xmm2l}  {xmm2}\n{xmm3l}  {xmm3}\n"
+        "{xmm4l}  {xmm4}\n{xmm5l}  {xmm5}\n{xmm6l}  {xmm6}\n{xmm7l}  {xmm7}\n"
+        "{xmm8l}  {xmm8}\n{xmm9l}  {xmm9}\n{xmm10l} {xmm10}\n{xmm11l} {xmm11}\n"
+        "{xmm12l} {xmm12}\n{xmm13l} {xmm13}\n{xmm14l} {xmm14}\n{xmm15l} {xmm15}"
+    )
     last_regs = None
     last_flags = None
 
     @classmethod
     def configure_subparser(cls, subparsers):
         sp = subparsers.add_parser('reg', help='register view')
+        VoltronView.add_generic_arguments(sp)
         sp.set_defaults(func=RegisterView)
         g = sp.add_mutually_exclusive_group()
         g.add_argument('--horizontal', '-o', action='store_true', help='horizontal orientation (default)', default=False)
         g.add_argument('--vertical', '-v', action='store_true', help='vertical orientation', default=True)
+        sp.add_argument('--sse', '-s', action='store_true', help='show sse registers', default=False)
 
     def setup(self):
         global config
         self.config['type'] = 'register'
         try:
-            self.config = dict(self.config.items() + config['register_view'].items())
-            self.format_defaults = dict(self.FORMAT_DEFAULTS.items() + config['register_view']['format_defaults'].items())
+            self.format_defaults = dict(self.FORMAT_DEFAULTS.items() + self.config['format_defaults'].items())
         except:
             self.format_defaults = self.FORMAT_DEFAULTS
 
     def render(self, msg=None):
         # Grab the appropriate template
-        template = self.TEMPLATE_H if self.args.horizontal else self.TEMPLATE_V
+        if self.args.horizontal:
+            template = self.TEMPLATE_H
+            if self.args.sse:
+                template += '\n' + self.SSE_TEMPLATE_H
+        else:
+            template = self.TEMPLATE_V
+            if self.args.sse:
+                template += '\n' + self.SSE_TEMPLATE_V
 
         # Process formatting settings
         data = defaultdict(lambda: '<n/a>')
@@ -778,12 +876,15 @@ class RegisterView (TerminalView):
                 if fmt['label_func'] != None:
                     formatted[reg+'l'] = fmt['label_func'](label)
                 if fmt['label_colour_en']:
-                    formatted[reg+'l'] =  termcolor.colored(formatted[reg+'l'], fmt['label_colour'])
+                    formatted[reg+'l'] =  colored(formatted[reg+'l'], fmt['label_colour'])
 
                 # Format the value
                 val = data[reg]
                 if type(val) == str:
-                    formatted[reg] = termcolor.colored(val, fmt['value_colour'])
+                    temp = fmt['value_format'].format(0)
+                    if len(val) < len(temp):
+                        val += (len(temp) - len(val))*' '
+                    formatted[reg] = colored(val, fmt['value_colour'])
                 else:
                     colour = fmt['value_colour']
                     if self.last_regs == None or self.last_regs != None and val != self.last_regs[reg]:
@@ -795,13 +896,19 @@ class RegisterView (TerminalView):
                         else:
                             formatted[reg] = fmt['value_func'](formatted[reg])
                     if fmt['value_colour_en']:
-                        formatted[reg] = termcolor.colored(formatted[reg], colour)
+                        formatted[reg] = colored(formatted[reg], colour)
 
         # Prepare output
         log.debug('Formatted: ' + str(formatted))
-        self.header = self.format_header('[regs]')
+        self.title = '[regs]'
         self.body = template.format(**formatted)
-        self.footer = self.format_footer()
+
+        # Pad
+        lines = self.body.split('\n')
+        pad = self.body_height() - len(lines)
+        if pad < 0:
+            pad = 0
+        self.body += pad*'\n'
 
         # Store the regs
         self.last_regs = data
@@ -826,7 +933,7 @@ class RegisterView (TerminalView):
                 colour = fmt['value_colour_mod']
             else:
                 colour = fmt['value_colour']
-            formatted[flag] = termcolor.colored(formatted[flag], colour)
+            formatted[flag] = colored(formatted[flag], colour)
 
         # Store the flag values for comparison
         self.last_flags = values
@@ -842,14 +949,11 @@ class DisasmView (TerminalView):
     @classmethod
     def configure_subparser(cls, subparsers):
         sp = subparsers.add_parser('disasm', help='disassembly view')
+        VoltronView.add_generic_arguments(sp)
         sp.set_defaults(func=DisasmView)
 
     def setup(self):
         self.config['type'] = 'disasm'
-        try:
-            self.config = dict(self.config.items() + config['disasm_view'].items())
-        except:
-            pass
 
     def render(self, msg=None):
         height, width = self.window_size()
@@ -867,9 +971,8 @@ class DisasmView (TerminalView):
                 log.warning('Failed to highlight disasm: ' + str(e))
 
         # Build output
-        self.header = self.format_header('[code]')
+        self.title = '[code]'
         self.body = disasm.rstrip()
-        self.footer = self.format_footer()
 
         # Call parent's render method
         super(DisasmView, self).render()
@@ -882,15 +985,12 @@ class StackView (TerminalView):
     @classmethod
     def configure_subparser(cls, subparsers):
         sp = subparsers.add_parser('stack', help='stack view')
+        VoltronView.add_generic_arguments(sp)
         sp.add_argument('--bytes', '-b', action='store', type=int, help='bytes per line (default 16)', default=16)
         sp.set_defaults(func=StackView)
 
     def setup(self):
         self.config['type'] = 'stack'
-        try:
-            self.config = dict(self.config.items() + config['stack_view'].items())
-        except:
-            pass
 
     def render(self, msg=None):
         height, width = self.window_size()
@@ -907,10 +1007,9 @@ class StackView (TerminalView):
         stack = '\n'.join(lines)
 
         # Build output
-        sp_addr = '[0x{0:0=4x}:'.format(len(stack_raw)) + ADDR_FORMAT_64.format(sp) + ']'
-        self.header = self.format_header('[stack]', left=sp_addr)
+        self.title = "[stack]"
+        self.info = '[0x{0:0=4x}:'.format(len(stack_raw)) + ADDR_FORMAT_64.format(sp) + ']'
         self.body = stack.strip()
-        self.footer = self.format_footer()
 
         # Call parent's render method
         super(StackView, self).render()
@@ -920,6 +1019,7 @@ class BacktraceView (TerminalView):
     @classmethod
     def configure_subparser(cls, subparsers):
         sp = subparsers.add_parser('bt', help='backtrace view')
+        VoltronView.add_generic_arguments(sp)
         sp.set_defaults(func=BacktraceView)
 
     def setup(self):
@@ -931,14 +1031,13 @@ class BacktraceView (TerminalView):
         # Get the back trace data
         data = msg['data']
         lines = data.split('\n')
-        pad = self.body_height() - len(lines)
+        pad = self.body_height() - len(lines) + 1
         if pad < 0:
             pad = 0
 
         # Build output
-        self.header = self.format_header('[backtrace]')
-        self.body = data.strip()
-        self.footer = self.format_footer()
+        self.title = '[backtrace]'
+        self.body = data.strip() + pad*'\n'
 
         # Call parent's render method
         super(BacktraceView, self).render()
@@ -948,9 +1047,8 @@ class CommandView (TerminalView):
     @classmethod
     def configure_subparser(cls, subparsers):
         sp = subparsers.add_parser('cmd', help='command view - specify a command to be run each time the debugger stops')
+        VoltronView.add_generic_arguments(sp)
         sp.add_argument('command', action='store', help='command to run')
-        sp.add_argument('--header', '-e', action='store_true', help='print header', default=False)
-        sp.add_argument('--footer', '-f', action='store_true', help='print footer', default=False)
         sp.set_defaults(func=CommandView)
 
     def setup(self):
@@ -958,13 +1056,20 @@ class CommandView (TerminalView):
         self.config['cmd'] = self.args.command
 
     def render(self, msg=None):
+        # Get the command output
+        data = msg['data']
+        lines = data.split('\n')
+        pad = self.body_height() - len(lines) + 1
+        if pad < 0:
+            pad = 0
+
         # Build output
         self.header = self.format_header('[cmd:' + self.config['cmd'] + ']')
-        self.body = msg['data'].strip()
+        self.body = data.rstrip() + pad*'\n'
         self.footer = self.format_footer()
 
         # Call parent's render method
-        super(StackView, self).render()
+        super(CommandView, self).render()
 
 
 # This class is called from the command line by GDBv6's stop-hook. The dumped registers and stack are collected,
