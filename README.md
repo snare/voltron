@@ -17,9 +17,17 @@ Requirements
 
 **voltron** supports GDB version 7, LLDB, and has limited support for GDB version 6.
 
-1. Requires termcolor
+Requires the termcolor python module.
 
-    sudo easy_install termcolor
+
+Installation
+------------
+
+A standard python setup script is included.
+
+        # python setup.py install
+
+This will install the voltron egg wherever that happens on your system, and an executable named `voltron` to `/usr/local/bin/`. You should also be able to use this without installing it by changing the paths used below to wherever you put the source. This won't work for the GDBv6 macros as it calls the `voltron` command without an absolute path, so you'll have to modify the macros.
 
 Configuration
 -------------
@@ -31,83 +39,85 @@ In the example config at the top level, the "all_views" section sets up a base c
 Usage - GDBv7
 -------------
 
-1. Load **voltron** into your debugger (this could go in your `.gdbinit`)
+1. Load **voltron** into your debugger (this could go in your `.gdbinit`). The full path will be inside the **voltron** egg. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron-0.1-py2.7.egg/voltron/gdbcmd.py*.
 
-		source /path/to/voltron.py
+        source /path/to/voltron/gdbcmd.py
 
 2. Fire up the debugger and start the **voltron** server thread (you could also put this in your `.gdbinit`)
 
-		$ gdb whatever
-		gdb$ voltron start
+        $ gdb whatever
+        gdb$ voltron start
 
 3. In another terminal (I use iTerm panes) start one of the UI views
 
-		$ voltron.py reg -v
-		$ voltron.py stack
-		$ voltron.py disasm
-		$ voltron.py bt
-		$ voltron.py cmd 'x/32x $rip'
+        $ voltron reg -v
+        $ voltron stack
+        $ voltron disasm
+        $ voltron bt
+        $ voltron cmd 'x/32x $rip'
 
 4. The UI view code will attach to the server (via a domain socket) and refresh every time the debugger is stopped. So, set a break point and let the debugger hit it and everything should be updated. A forced update can be triggered with the following command: 
 
-		gdb$ voltron update
+        gdb$ voltron update
 
 5. Before you exit the debugger, execute the following command or GDB will hang since the domain socket will still be open.
 
-		gdb$ voltron stop
+        gdb$ voltron stop
 
 Usage - GDBv6
 -------------
 
 **Note:** **voltron** only has limited support for GDBv6 as it's tough to get useful data out of GDB without the Python API. A set of GDB macros are included to interact with **voltron** (which in this case runs as a background process started by the `voltron_start` macro). Only the register and stack views are supported.
 
-A `hook-stop` macro is included - if you have your own custom one (e.g. fG!'s) you should just add `voltron_update` to your own and comment out the one in `voltron.gdb`
+A `hook-stop` macro is included - if you have your own custom one (e.g. fG!'s) you should just add `voltron_update` to your own and comment out the one in `voltron.gdb`.
+
+The macro file will be inside the **voltron** egg. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron-0.1-py2.7.egg/voltron.gdb*.
 
 1. Load the macros into your debugger (this could go in your `.gdbinit`)
 
-		source /path/to/voltron.gdb
+        source /path/to/voltron.gdb
 
 2. Fire up the debugger and start the **voltron** server thread (you could also put this in your `.gdbinit`)
 
-		$ gdb whatever
-		gdb$ voltron_start
+        $ gdb whatever
+        gdb$ voltron_start
 
 3. In another terminal (I use iTerm panes) start one of the UI views
 
-		$ voltron.py reg -v
-		$ voltron.py stack
+        $ voltron reg -v
+        $ voltron stack
 
 4. The UI view code will attach to the server (via a domain socket) and refresh every time the debugger is stopped. So, set a break point and let the debugger hit it and everything should be updated. A forced update can be triggered with the following command: 
 
-		gdb$ voltron_update
+        gdb$ voltron_update
 
 5. Before you exit the debugger, execute the following command the server process will be left running in the background.
 
-		gdb$ voltron_stop
+        gdb$ voltron_stop
 
 Usage - LLDB
 -------------
 
-1. Load **voltron** into your debugger (this could go in your `.lldbinit`)
+1. Load **voltron** into your debugger (this could go in your `.lldbinit`). The full path will be inside the **voltron** egg. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron-0.1-py2.7.egg/voltron/lldbcmd.py*.
 
-		command script import /path/to/voltron.py
+        command script import /path/to/voltron/lldbcmd.py
 
 2. Fire up the debugger and start the **voltron** server thread (you could also put this in your `.lldbinit`)
 
-		$ lldb whatever
-		(lldb) voltron start
+        $ lldb whatever
+        (lldb) voltron start
 
 3. In another terminal (I use iTerm panes) start one of the UI views
 
-		$ voltron.py reg -v
-		$ voltron.py stack
-		$ voltron.py disasm
-		$ voltron.py bt
-		$ voltron.py cmd 'reg read'
+        $ voltron reg -v
+        $ voltron stack
+        $ voltron disasm
+        $ voltron bt
+        $ voltron cmd 'reg read'
 
 4. The UI view code will attach to the server (via a domain socket) and refresh every time the debugger is stopped. So, set a break point and let the debugger hit it and everything should be updated. A forced update can be triggered with the following command: 
 
-		(lldb) voltron update
+        (lldb) voltron update
 
 Bugs
 ----
