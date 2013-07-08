@@ -521,7 +521,7 @@ class Client (asyncore.dispatcher):
             log.error('Error rendering view: ' + str(e))
 
     def writable(self):
-        return False; 
+        return False
 
 # Parent class for all views
 class VoltronView (object):
