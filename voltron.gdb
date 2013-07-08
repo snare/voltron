@@ -39,9 +39,9 @@ end
 define voltron_update_registers
     voltron_dump_registers_x64
     if $argc == 0
-        shell ~/.gdb/voltron/voltron.py gdb6proxy reg
+        shell voltron gdb6proxy reg
     else
-        shell ~/.gdb/voltron/voltron.py -d gdb6proxy reg
+        shell voltron gdb6proxy reg
     end
     shell rm /tmp/voltron.reg.*
 end
@@ -50,16 +50,16 @@ define voltron_update_stack
     dump memory /tmp/voltron.stack $rsp ($rsp+$VOLTRON_STACK_SIZE)
     dump value /tmp/voltron.reg.rsp $rsp
     if $argc == 0
-        shell ~/.gdb/voltron/voltron.py gdb6proxy stack
+        shell voltron gdb6proxy stack
     else
-        shell ~/.gdb/voltron/voltron.py -d gdb6proxy stack
+        shell voltron -d gdb6proxy stack
     end
     shell rm /tmp/voltron.stack
 end
 
 define voltron_start
     if $voltron_running == 0
-        shell ~/.gdb/voltron/voltron.py server & ; echo $! >/tmp/voltron.pid
+        shell voltron server & ; echo $! >/tmp/voltron.pid
         set $voltron_running = 1
     else
         echo Already running\n
