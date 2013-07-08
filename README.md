@@ -27,7 +27,9 @@ A standard python setup script is included.
 
         # python setup.py install
 
-This will install the voltron egg wherever that happens on your system, and an executable named `voltron` to `/usr/local/bin/`. You should also be able to use this without installing it by changing the paths used below to wherever you put the source. This won't work for the GDBv6 macros as it calls the `voltron` command without an absolute path, so you'll have to modify the macros.
+This will install the **voltron** egg wherever that happens on your system, and an executable named `voltron` to `/usr/local/bin/`.
+
+You should also be able to use **voltron** without installing it by changing the paths used below to wherever you put the source. This won't work for the GDBv6 macros as it calls the `voltron` command without an absolute path, so you'll have to modify the macros if you don't want to install it and want to use it with GDBv6.
 
 Configuration
 -------------
