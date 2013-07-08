@@ -119,6 +119,48 @@ Usage - LLDB
 
         (lldb) voltron update
 
+Help
+----
+
+**voltron** uses the `argparse` module with subcommands, so the command line interface should be relatively familiar. Top-level help, including a list of available subcommands, will be output with `-h`:
+
+        $ voltron -h
+        usage: voltron [-h] [--debug] {reg,disasm,stack,bt,cmd,server,gdb6proxy} ...
+
+        optional arguments:
+          -h, --help            show this help message and exit
+          --debug, -d           print debug logging
+
+        subcommands:
+          valid subcommands
+
+          {reg,disasm,stack,bt,cmd,server,gdb6proxy}
+                                additional help
+            reg                 register view
+            disasm              disassembly view
+            stack               stack view
+            bt                  backtrace view
+            cmd                 command view - specify a command to be run each time
+                                the debugger stops
+            server              standalone server for debuggers without python support
+            gdb6proxy           import a dump from GDBv6 and send it to the server
+
+View/module-specific help works the same way - whichever subcommand, followed by `-h`:
+
+        $ voltron reg -h
+        usage: voltron reg [-h] [--show-header] [--hide-header] [--show-footer]
+                           [--hide-footer] [--horizontal | --vertical] [--sse]
+
+        optional arguments:
+          -h, --help         show this help message and exit
+          --show-header, -e  show header
+          --hide-header, -E  hide header
+          --show-footer, -f  show footer
+          --hide-footer, -F  hide footer
+          --horizontal, -o   horizontal orientation
+          --vertical, -v     vertical orientation (default)
+          --sse, -s          show sse registers
+
 Bugs
 ----
 
