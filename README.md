@@ -19,7 +19,7 @@ Requirements
 
 1. Requires termcolor
 
-    sudo easy_install termcolor
+		sudo easy_install termcolor
 
 Configuration
 -------------
