@@ -17,6 +17,10 @@ Requirements
 
 **voltron** supports GDB version 7, LLDB, and has limited support for GDB version 6.
 
+1. Requires termcolor
+
+		sudo easy_install termcolor
+
 Configuration
 -------------
 
