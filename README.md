@@ -36,6 +36,56 @@ A sample configuration file is included in the repo. Copy it to `~/.voltron` and
 
 In the example config at the top level, the "all_views" section sets up a base configuration to apply to all views. Each view can be configured individually overriding these settings. For example, the "stack_view" section in the example config overrides a number of these settings to reposition the title and info labels. The "register_view" section in the example config contains some settings overriding the default colours for the register view. Have a look at the source for other items in "FORMAT_DEFAULTS" that can be overridden in this section of the config.
 
+There is also support for named view configurations for each type. The example configuration contains a config section called "some_named_stack_view", which is a modified version of the example stack view configuration. If you specify this name with the `-n` option, this named configuration will be added to the existing config for that view type:
+
+        $ voltron stack -n "some_named_stack_view"
+
+Some options specified in the configuration file can also be overridden by command line arguments. At this stage, just the show/hide header/footer options.
+
+So the resulting order of precedence for configuration is: defaults -> all_views -> view-specific -> named view -> command line args. Each configuration level is added to the previous level, and only the options specified in this level override the previous level.
+
+Help
+----
+
+**voltron** uses the `argparse` module with subcommands, so the command line interface should be relatively familiar. Top-level help, including a list of available subcommands, will be output with `-h`:
+
+        $ voltron -h
+        usage: voltron [-h] [--debug] {reg,disasm,stack,bt,cmd,server,gdb6proxy} ...
+
+        optional arguments:
+          -h, --help            show this help message and exit
+          --debug, -d           print debug logging
+
+        subcommands:
+          valid subcommands
+
+          {reg,disasm,stack,bt,cmd,server,gdb6proxy}
+                                additional help
+            reg                 register view
+            disasm              disassembly view
+            stack               stack view
+            bt                  backtrace view
+            cmd                 command view - specify a command to be run each time
+                                the debugger stops
+            server              standalone server for debuggers without python support
+            gdb6proxy           import a dump from GDBv6 and send it to the server
+
+View/module-specific help works the same way - whichever subcommand, followed by `-h`:
+
+        $ voltron reg -h
+        usage: voltron reg [-h] [--show-header] [--hide-header] [--show-footer]
+                           [--hide-footer] [--horizontal | --vertical] [--sse]
+
+        optional arguments:
+          -h, --help         show this help message and exit
+          --show-header, -e  show header
+          --hide-header, -E  hide header
+          --show-footer, -f  show footer
+          --hide-footer, -F  hide footer
+          --horizontal, -o   horizontal orientation
+          --vertical, -v     vertical orientation (default)
+          --sse, -s          show sse registers
+
 Usage - GDBv7
 -------------
 
@@ -118,48 +168,6 @@ Usage - LLDB
 4. The UI view code will attach to the server (via a domain socket) and refresh every time the debugger is stopped. So, set a break point and let the debugger hit it and everything should be updated. A forced update can be triggered with the following command: 
 
         (lldb) voltron update
-
-Help
-----
-
-**voltron** uses the `argparse` module with subcommands, so the command line interface should be relatively familiar. Top-level help, including a list of available subcommands, will be output with `-h`:
-
-        $ voltron -h
-        usage: voltron [-h] [--debug] {reg,disasm,stack,bt,cmd,server,gdb6proxy} ...
-
-        optional arguments:
-          -h, --help            show this help message and exit
-          --debug, -d           print debug logging
-
-        subcommands:
-          valid subcommands
-
-          {reg,disasm,stack,bt,cmd,server,gdb6proxy}
-                                additional help
-            reg                 register view
-            disasm              disassembly view
-            stack               stack view
-            bt                  backtrace view
-            cmd                 command view - specify a command to be run each time
-                                the debugger stops
-            server              standalone server for debuggers without python support
-            gdb6proxy           import a dump from GDBv6 and send it to the server
-
-View/module-specific help works the same way - whichever subcommand, followed by `-h`:
-
-        $ voltron reg -h
-        usage: voltron reg [-h] [--show-header] [--hide-header] [--show-footer]
-                           [--hide-footer] [--horizontal | --vertical] [--sse]
-
-        optional arguments:
-          -h, --help         show this help message and exit
-          --show-header, -e  show header
-          --hide-header, -E  hide header
-          --show-footer, -f  show footer
-          --hide-footer, -F  hide footer
-          --horizontal, -o   horizontal orientation
-          --vertical, -v     vertical orientation (default)
-          --sse, -s          show sse registers
 
 Bugs
 ----
