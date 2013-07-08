@@ -78,6 +78,7 @@ class VoltronView (object):
         sp.add_argument('--hide-header', '-E', dest="header", action='store_false', help='hide header', default=None)
         sp.add_argument('--show-footer', '-f', dest="footer", action='store_true', help='show footer', default=None)
         sp.add_argument('--hide-footer', '-F', dest="footer", action='store_false', help='hide footer', default=None)
+        sp.add_argument('--name', '-n', action='store', help='named configuration to use', default=None)
 
     def __init__(self, args={}, loaded_config={}):
         log.debug('Loading view: ' + self.__class__.__name__)
@@ -103,6 +104,8 @@ class VoltronView (object):
             merge(self.loaded_config[name], self.config)
 
         # Override settings from command line args
+        if self.args.name != None:
+            merge(self.loaded_config[self.args.name], self.config)
         if self.args.header != None:
             self.config['header']['show'] = self.args.header
         if self.args.footer != None:
@@ -340,8 +343,8 @@ class RegisterView (TerminalView):
         VoltronView.add_generic_arguments(sp)
         sp.set_defaults(func=RegisterView)
         g = sp.add_mutually_exclusive_group()
-        g.add_argument('--horizontal', '-o', action='store_true', help='horizontal orientation (default)', default=False)
-        g.add_argument('--vertical', '-v', action='store_true', help='vertical orientation', default=True)
+        g.add_argument('--horizontal', '-o', action='store_true', help='horizontal orientation', default=False)
+        g.add_argument('--vertical', '-v', action='store_true', help='vertical orientation (default)', default=True)
         sp.add_argument('--sse', '-s', action='store_true', help='show sse registers', default=False)
 
     def setup(self):
