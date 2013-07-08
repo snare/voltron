@@ -78,6 +78,7 @@ log = None
 clients = []
 queue = None
 inst = None
+config = {}
 
 def main(debugger=None, dict=None):
     global log, queue, inst, config
@@ -87,9 +88,12 @@ def main(debugger=None, dict=None):
     log = logging.getLogger('')
 
     # Load config
-    config_data = file(os.path.expanduser('~/.voltron')).read()
-    lines = filter(lambda x: len(x) != 0 and x[0] != '#', config_data.split('\n'))
-    config = json.loads('\n'.join(lines))
+    try:
+        config_data = file(os.path.expanduser('~/.voltron')).read()
+        lines = filter(lambda x: len(x) != 0 and x[0] != '#', config_data.split('\n'))
+        config = json.loads('\n'.join(lines))
+    except:
+        log.debug("No config file")
 
     # Set up queue
     queue = Queue.Queue()
