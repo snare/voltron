@@ -424,7 +424,8 @@ class ClientHandler (asyncore.dispatcher):
 
     def handle_close(self):
         self.close()
-        clients.remove(self)
+        if self in clients:
+            clients.remove(self)
 
     def send_event(self, event):
         log.debug('Sending event to client {}: {}'.format(self, event))
@@ -438,10 +439,6 @@ class ClientHandler (asyncore.dispatcher):
 class Server (asyncore.dispatcher):
     def __init__(self, sockfile):
         asyncore.dispatcher.__init__(self)
-        try:
-            os.remove(SOCK)
-        except:
-            pass
         self.create_socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.bind(sockfile)
         self.listen(1)
@@ -467,6 +464,12 @@ class ServerThread (threading.Thread):
     def run(self):
         global clients, queue
 
+        # Make sure there's no left over socket
+        try:
+            os.remove(SOCK)
+        except:
+            pass
+
         # Create a server instance
         serv = Server(SOCK)
         self.lock = threading.Lock()
@@ -483,7 +486,13 @@ class ServerThread (threading.Thread):
                 client.send_event(event)
 
         # Clean up
+        for client in clients:
+            client.close()
         serv.close()
+        try:
+            os.remove(SOCK)
+        except:
+            pass
 
     def should_exit(self):
         self.lock.acquire()
@@ -519,18 +528,22 @@ class Client (asyncore.dispatcher):
 
     def handle_read(self):
         data = self.recv(READ_MAX)
-        try:
-            msg = pickle.loads(data)
-            log.debug('Received message: ' + str(msg))
-        except Exception as e:
-            log.error('Exception parsing message: ' + str(e))
-            log.error('Invalid message: ' + data)
+        if len(data) > 0:
+            msg = None
+            try:
+                msg = pickle.loads(data)
+                log.debug('Received message: ' + str(msg))
+            except Exception as e:
+                log.error('Exception parsing message: ' + str(e))
+                log.error('Invalid message: ' + data)
 
-        try:
-            if self.view:
-                self.view.render(msg)
-        except Exception as e:
-            log.error('Error rendering view: ' + str(e))
+            try:
+                if msg and self.view:
+                    self.view.render(msg)
+            except Exception as e:
+                log.error('Error rendering view: ' + str(e))
+        else:
+            log.debug('Empty read')
 
     def writable(self):
         return False
