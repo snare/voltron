@@ -14,6 +14,7 @@ import Queue
 import struct
 import json
 import curses
+import time
 
 from collections import defaultdict
 from termcolor import colored
@@ -378,7 +379,8 @@ class StandaloneServer (object):
         log.debug("Starting standalone server")
         self.thread = ServerThread()
         self.thread.start()
-        while True: pass
+        while True:
+            time.sleep(1)
 
     def cleanup(self):
         log.info("Exiting")
@@ -428,6 +430,9 @@ class ClientHandler (asyncore.dispatcher):
         log.debug('Sending event to client {}: {}'.format(self, event))
         self.send(pickle.dumps(event))
 
+    def writable(self):
+        return False
+
 
 # Main server socket for accept()s
 class Server (asyncore.dispatcher):
@@ -451,6 +456,9 @@ class Server (asyncore.dispatcher):
                 clients.append(client)
             except Exception as e:
                 log.error("Exception handling accept: " + str(e))
+
+    def writable(self):
+        return False
 
 
 # Thread spun off when the plugin is started to listen for incoming client connections, and send out any
@@ -525,7 +533,8 @@ class Client (asyncore.dispatcher):
             log.error('Error rendering view: ' + str(e))
 
     def writable(self):
-        return False; 
+        return False
+
 
 # Parent class for all views
 class VoltronView (object):
