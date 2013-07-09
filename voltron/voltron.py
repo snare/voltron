@@ -3,6 +3,7 @@
 import os
 import argparse
 import logging
+import logging.config
 import struct
 import json
 
@@ -10,6 +11,26 @@ from view import *
 from comms import *
 from gdbproxy import *
 
+LOG_CONFIG = {
+        'version': 1,
+        'formatters': {
+            'standard': {'format': 'voltron: [%(levelname)s] %(message)s'}
+        },
+        'handlers': {
+            'default': {
+                'class': 'logging.StreamHandler',
+                'formatter': 'standard'
+            }
+        },
+        'loggers': {
+            'voltron': {
+                'handlers': ['default'],
+                'level': 'INFO',
+                'propogate': True,
+            }
+        }
+}
+logging.config.dictConfig(LOG_CONFIG)
 log = logging.getLogger('voltron')
 
 def main(debugger=None, dict=None):

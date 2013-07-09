@@ -43,11 +43,11 @@ class Client (asyncore.dispatcher):
                 log.error('Exception parsing message: ' + str(e))
                 log.error('Invalid message: ' + data)
 
-            try:
-                if msg and self.view:
-                    self.view.render(msg)
-            except Exception as e:
-                log.error('Error rendering view: ' + str(e))
+            # try:
+            if msg and self.view:
+                self.view.render(msg)
+            # except Exception as e:
+            #     log.error('Error rendering view: ' + str(e))
         else:
             log.debug('Empty read')
 
