@@ -29,8 +29,7 @@ class VoltronGDBCommand (VoltronCommand, gdb.Command):
     def get_registers(self):
         log.debug('Getting registers')
         regs = ['rax','rbx','rcx','rdx','rbp','rsp','rdi','rsi','rip','r8','r9','r10','r11','r12','r13','r14','r15',
-                'cs','ds','es','fs','gs','ss','xmm0','xmm1','xmm2','xmm3','xmm4','xmm5','xmm6','xmm7','xmm8',
-                'xmm9','xmm10','xmm11','xmm12','xmm13','xmm14','xmm15']
+                'cs','ds','es','fs','gs','ss']
         vals = {}
         for reg in regs:
             try:
@@ -43,6 +42,20 @@ class VoltronGDBCommand (VoltronCommand, gdb.Command):
         except:
             log.debug('Failed getting reg: eflags')
             vals['rflags'] = 'N/A'
+        regs = ['xmm0','xmm1','xmm2','xmm3','xmm4','xmm5','xmm6','xmm7','xmm8','xmm9','xmm10','xmm11','xmm12','xmm13','xmm14','xmm15']
+        for reg in regs:
+            try:
+                vals[reg] = int(str(gdb.parse_and_eval('$'+reg+'.uint128')), 16) & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+            except:
+                log.debug('Failed getting reg: ' + reg)
+                vals[reg] = 'N/A'
+        regs = ['st0','st1','st2','st3','st4','st5','st6','st7']
+        for reg in regs:
+            try:
+                vals[reg] = int(gdb.execute('info reg '+reg, to_string=True).split()[-1][2:-1], 16)
+            except:
+                log.debug('Failed getting reg: ' + reg)
+                vals[reg] = 'N/A'
         log.debug('Got registers: ' + str(vals))
         return vals
 

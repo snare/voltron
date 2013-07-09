@@ -42,8 +42,16 @@ class VoltronLLDBCommand (VoltronCommand):
 
     def get_registers(self):
         log.debug('Getting registers')
-        frame = self.get_frame()
-        regs = {x.name:int(x.value, 16) for x in list(list(frame.GetRegisters())[0])}
+        objs = self.get_frame().GetRegisters()
+        objs = list(objs[0]) + list(objs[1]) + list(objs[2])
+        regs = {}
+        for reg in objs:
+            val = 'n/a'
+            if reg.value != None:
+                val = int(reg.value, 16)
+            regs[reg.name] = val
+        for i in range(7):
+            regs['st'+str(i)] = regs['stmm'+str(i)]
         return regs
 
     def get_register(self, reg):

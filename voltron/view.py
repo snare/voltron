@@ -5,6 +5,7 @@ import sys
 import logging
 import cPickle as pickle
 import curses
+import pprint
 
 try:
     import pygments
@@ -25,11 +26,14 @@ ADDR_FORMAT_128 = '0x{0:0=32X}'
 ADDR_FORMAT_64 = '0x{0:0=16X}'
 ADDR_FORMAT_32 = '0x{0:0=8X}'
 ADDR_FORMAT_16 = '0x{0:0=4X}'
-SEGM_FORMAT_16 = '{0:0=4X}'
+SHORT_ADDR_FORMAT_128 = '{0:0=32X}'
+SHORT_ADDR_FORMAT_64 = '{0:0=16X}'
+SHORT_ADDR_FORMAT_32 = '{0:0=8X}'
+SHORT_ADDR_FORMAT_16 = '{0:0=4X}'
 
 # Parent class for all views
 class VoltronView (object):
-    DEFAULT_CONFIG = {
+    BASE_DEFAULT_CONFIG = {
         "update_on": "stop",
         "clear": True,
         "header": {
@@ -71,13 +75,14 @@ class VoltronView (object):
             }
         }
     }
+    VIEW_DEFAULT_CONFIG = {}
 
     @classmethod
     def add_generic_arguments(cls, sp):
         sp.add_argument('--show-header', '-e', dest="header", action='store_true', help='show header', default=None)
-        sp.add_argument('--hide-header', '-E', dest="header", action='store_false', help='hide header', default=None)
+        sp.add_argument('--hide-header', '-E', dest="header", action='store_false', help='hide header')
         sp.add_argument('--show-footer', '-f', dest="footer", action='store_true', help='show footer', default=None)
-        sp.add_argument('--hide-footer', '-F', dest="footer", action='store_false', help='hide footer', default=None)
+        sp.add_argument('--hide-footer', '-F', dest="footer", action='store_false', help='hide footer')
         sp.add_argument('--name', '-n', action='store', help='named configuration to use', default=None)
 
     def __init__(self, args={}, loaded_config={}):
@@ -86,39 +91,59 @@ class VoltronView (object):
         self.args = args
         self.loaded_config = loaded_config
 
-        # Common set by render method for header and footer formatting
+        # Commonly set by render method for header and footer formatting
         self.title = ''
         self.info = ''
 
-        # Set config defaults
-        self.config = self.DEFAULT_CONFIG
-        if self.loaded_config.has_key('all_views'):
-            merge(self.loaded_config['all_views'], self.config)
+        # Build configuration
+        self.build_config()
 
-        # Let subclass set stuff up
+        log.debug("View config: " + pprint.pformat(self.config))
+        log.debug("Args: " + str(self.args))
+
+        # Let subclass do any setup it needs to do
         self.setup()
 
-        # Load subclass view config
-        name = self.config['type']+'_view'
-        if self.loaded_config.has_key(name):
-            merge(self.loaded_config[name], self.config)
-
         # Override settings from command line args
-        if self.args.name != None:
-            merge(self.loaded_config[self.args.name], self.config)
         if self.args.header != None:
             self.config['header']['show'] = self.args.header
         if self.args.footer != None:
             self.config['footer']['show'] = self.args.footer
-
-        log.debug("View config: " + str(self.config))
-        log.debug("Args: " + str(self.args))
 
         # Initialise window
         self.init_window()        
 
         # Connect to server
         self.connect()
+
+    def build_config(self):
+        # Start with base defaults
+        self.config = self.BASE_DEFAULT_CONFIG
+
+        # Add view-specific defaults
+        merge(self.VIEW_DEFAULT_CONFIG, self.config)
+
+        # Add all_views config from config file
+        if self.loaded_config.has_key('all_views'):
+            merge(self.loaded_config['all_views'], self.config)
+
+        # Add view-specific config from config file
+        name = self.config['type']+'_view'
+        if self.loaded_config.has_key(name):
+            merge(self.loaded_config[name], self.config)
+
+        # Add named config
+        if self.args.name != None:
+            merge(self.loaded_config[self.args.name], self.config)
+
+        # Apply view-specific command-line args
+        self.apply_cli_config()
+
+    def apply_cli_config(self):
+        if self.args.header != None:
+            self.config['header']['show'] = self.args.header
+        if self.args.footer != None:
+            self.config['footer']['show'] = self.args.footer
 
     def setup(self):
         log.debug('Base view class setup')
@@ -267,16 +292,21 @@ class CursesView (VoltronView):
 
 # Class to actually render the view
 class RegisterView (TerminalView):
-    FORMAT_DEFAULTS = {
-        'label_format':     '{0}:',
-        'label_func':       str.upper,
-        'label_colour':     'green',
-        'label_colour_en':  True,
-        'value_format':     ADDR_FORMAT_64,
-        'value_func':       None,
-        'value_colour':     'grey',
-        'value_colour_mod': 'red',
-        'value_colour_en':  True
+    VIEW_DEFAULT_CONFIG = {
+        'type': 'register',
+        'format_defaults': {
+            'label_format':     '{0}:',
+            'label_func':       'str.upper',
+            'label_colour':     'green',
+            'label_colour_en':  True,
+            'value_format':     SHORT_ADDR_FORMAT_64,
+            'value_func':       None,
+            'value_colour':     'grey',
+            'value_colour_mod': 'red',
+            'value_colour_en':  True
+        },
+        'sections': ['general'],
+        'orientation': 'vertical'
     }
     FORMAT_INFO = {
         'x64': [
@@ -284,56 +314,161 @@ class RegisterView (TerminalView):
                 'regs':             ['rax','rbx','rcx','rdx','rbp','rsp','rdi','rsi','rip',
                                      'r8','r9','r10','r11','r12','r13','r14','r15'],
                 'label_format':     '{0:3s}:',
+                'category':         'general',
             },
             {
                 'regs':             ['cs','ds','es','fs','gs','ss'],
-                'value_format':     SEGM_FORMAT_16,
-            },
-            {
-                'regs':             ['xmm0','xmm1','xmm2','xmm3','xmm4','xmm5','xmm6','xmm7','xmm8',
-                                     'xmm9','xmm10','xmm11','xmm12','xmm13','xmm14','xmm15'],
-                'value_format':     ADDR_FORMAT_128,
+                'value_format':     SHORT_ADDR_FORMAT_16,
+                'category':         'general',
             },
             {
                 'regs':             ['rflags'],
                 'value_format':     '{}',
                 'value_func':       'self.format_flags',
-                'value_colour_en':  False
-            }
+                'value_colour_en':  False,
+                'category':         'general',
+            },
+            {
+                'regs':             ['xmm0','xmm1','xmm2','xmm3','xmm4','xmm5','xmm6','xmm7','xmm8',
+                                     'xmm9','xmm10','xmm11','xmm12','xmm13','xmm14','xmm15'],
+                'value_format':     SHORT_ADDR_FORMAT_128,
+                'value_func':       'self.format_xmm',
+                'category':         'sse',
+            },
+            {
+                'regs':             ['st0','st1','st2','st3','st4','st5','st6','st7'],
+                'value_format':     '{0:0=20X}',
+                'value_func':       'self.format_fpu',
+                'category':         'fpu',
+            },
+        ],
+        'x86': [
+            {
+                'regs':             ['eax','ebx','ecx','edx','ebp','esp','edi','esi','eip'],
+                'label_format':     '{0:3s}:',
+                'value_format':     SHORT_ADDR_FORMAT_32,
+                'category':         'general',
+            },
+            {
+                'regs':             ['cs','ds','es','fs','gs','ss'],
+                'value_format':     SHORT_ADDR_FORMAT_16,
+                'category':         'general',
+            },
+            {
+                'regs':             ['eflags'],
+                'value_format':     '{}',
+                'value_func':       'self.format_flags',
+                'value_colour_en':  False,
+                'category':         'general',
+            },
+            {
+                'regs':             ['xmm0','xmm1','xmm2','xmm3','xmm4','xmm5','xmm6','xmm7'],
+                'value_format':     None,
+                'value_func':       'self.format_xmm',
+                'category':         'sse',
+            },
+            {
+                'regs':             ['st0','st1','st2','st3','st4','st5','st6','st7'],
+                'value_format':     '{0:0=20X}',
+                'value_func':       'self.format_fpu',
+                'category':         'fpu',
+            },
+        ],
+        'arm': [
         ]
     }
-    TEMPLATE_H = (
-        "{raxl} {rax}  {rbxl} {rbx}  {rbpl} {rbp}  {rspl} {rsp}  {rflags}\n"
-        "{rdil} {rdi}  {rsil} {rsi}  {rdxl} {rdx}  {rcxl} {rcx}  {ripl} {rip}\n"
-        "{r8l} {r8}  {r9l} {r9}  {r10l} {r10}  {r11l} {r11}  {r12l} {r12}\n"
-        "{r13l} {r13}  {r14l} {r14}  {r15l} {r15}\n"
-        "{csl} {cs}  {dsl} {ds}  {esl} {es}  {fsl} {fs}  {gsl} {gs}  {ssl} {ss}"
-    )
-    TEMPLATE_V = (
-        " {rflags}\n"
-        "{ripl} {rip}\n"
-        "{raxl} {rax}\n{rbxl} {rbx}\n{rbpl} {rbp}\n{rspl} {rsp}\n"
-        "{rdil} {rdi}\n{rsil} {rsi}\n{rdxl} {rdx}\n{rcxl} {rcx}\n"
-        "{r8l} {r8}\n{r9l} {r9}\n{r10l} {r10}\n{r11l} {r11}\n{r12l} {r12}\n"
-        "{r13l} {r13}\n{r14l} {r14}\n{r15l} {r15}\n"
-        "{csl}  {cs}  {dsl}  {ds}\n{esl}  {es}  {fsl}  {fs}\n{gsl}  {gs}  {ssl}  {ss}"
-    )
+    TEMPLATES = {
+        'x64': {
+            'horizontal': {
+                'general': (
+                    "{raxl} {rax}  {rbxl} {rbx}  {rbpl} {rbp}  {rspl} {rsp}  {rflags}\n"
+                    "{rdil} {rdi}  {rsil} {rsi}  {rdxl} {rdx}  {rcxl} {rcx}  {ripl} {rip}\n"
+                    "{r8l} {r8}  {r9l} {r9}  {r10l} {r10}  {r11l} {r11}  {r12l} {r12}\n"
+                    "{r13l} {r13}  {r14l} {r14}  {r15l} {r15}\n"
+                    "{csl} {cs}  {dsl} {ds}  {esl} {es}  {fsl} {fs}  {gsl} {gs}  {ssl} {ss}"
+                ),
+                'sse': (
+                    "{xmm0l}  {xmm0} {xmm1l}  {xmm1} {xmm2l}  {xmm2}\n"
+                    "{xmm3l}  {xmm3} {xmm4l}  {xmm4} {xmm5l}  {xmm5}\n"
+                    "{xmm6l}  {xmm6} {xmm7l}  {xmm7} {xmm8l}  {xmm8}\n"
+                    "{xmm9l}  {xmm9} {xmm10l} {xmm10} {xmm11l} {xmm11}\n"
+                    "{xmm12l} {xmm12} {xmm13l} {xmm13} {xmm14l} {xmm14}\n"
+                    "{xmm15l} {xmm15}\n"
+                ),
+                'fpu': (
+                    "{st0l} {st0} {st1l} {st1} {st2l} {st2} {st3l} {st2}\n"
+                    "{st4l} {st4} {st5l} {st5} {st6l} {st6} {st7l} {st7}\n"
+                )
+            },
+            'vertical': {
+                'general': (
+                    "{rflags}\n"
+                    "{ripl} {rip}\n"
+                    "{raxl} {rax}\n{rbxl} {rbx}\n{rbpl} {rbp}\n{rspl} {rsp}\n"
+                    "{rdil} {rdi}\n{rsil} {rsi}\n{rdxl} {rdx}\n{rcxl} {rcx}\n"
+                    "{r8l} {r8}\n{r9l} {r9}\n{r10l} {r10}\n{r11l} {r11}\n{r12l} {r12}\n"
+                    "{r13l} {r13}\n{r14l} {r14}\n{r15l} {r15}\n"
+                    "{csl}  {cs}  {dsl}  {ds}\n{esl}  {es}  {fsl}  {fs}\n{gsl}  {gs}  {ssl}  {ss}"
+                ),
+                'sse': (
+                    "{xmm0l}  {xmm0}\n{xmm1l}  {xmm1}\n{xmm2l}  {xmm2}\n{xmm3l}  {xmm3}\n"
+                    "{xmm4l}  {xmm4}\n{xmm5l}  {xmm5}\n{xmm6l}  {xmm6}\n{xmm7l}  {xmm7}\n"
+                    "{xmm8l}  {xmm8}\n{xmm9l}  {xmm9}\n{xmm10l} {xmm10}\n{xmm11l} {xmm11}\n"
+                    "{xmm12l} {xmm12}\n{xmm13l} {xmm13}\n{xmm14l} {xmm14}\n{xmm15l} {xmm15}"
+                ),
+                'fpu': (
+                    "{st0l} {st0}\n{st1l} {st1}\n{st2l} {st2}\n{st3l} {st2}\n"
+                    "{st4l} {st4}\n{st5l} {st5}\n{st6l} {st6}\n{st7l} {st7}\n"
+                )
+            }
+        },
+        'x86': {
+            'horizontal': {
+                'general': (
+                    "{eaxl} {eax}  {ebxl} {ebx}  {ebpl} {ebp}  {espl} {esp}  {eflags}\n"
+                    "{edil} {edi}  {esil} {esi}  {edxl} {edx}  {ecxl} {ecx}  {eipl} {eip}\n"
+                    "{csl} {cs}  {dsl} {ds}  {esl} {es}  {fsl} {fs}  {gsl} {gs}  {ssl} {ss}"
+                ),
+                'sse': (
+                    "{xmm0l}  {xmm0} {xmm1l}  {xmm1} {xmm2l}  {xmm2}\n"
+                    "{xmm3l}  {xmm3} {xmm4l}  {xmm4} {xmm5l}  {xmm5}\n"
+                    "{xmm6l}  {xmm6} {xmm7l}"
+                ),
+                'fpu': (
+                    "{st0l} {st0} {st1l} {st1} {st2l} {st2} {st3l} {st2}\n"
+                    "{st4l} {st4} {st5l} {st5} {st6l} {st6} {st7l} {st7}\n"
+                )
+            },
+            'vertical': {
+                'general': (
+                    "{eflags}\n"
+                    "{eipl} {eip}\n"
+                    "{eaxl} {eax}\n{ebxl} {ebx}\n{ebpl} {ebp}\n{espl} {esp}\n"
+                    "{edil} {edi}\n{esil} {esi}\n{edxl} {edx}\n{ecxl} {ecx}\n"
+                    "{csl}  {cs}  {dsl}  {ds}\n{esl}  {es}  {fsl}  {fs}\n{gsl}  {gs}  {ssl}  {ss}"
+                ),
+                'sse': (
+                    "{xmm0l}  {xmm0}\n{xmm1l}  {xmm1}\n{xmm2l}  {xmm2}\n{xmm3l}  {xmm3}\n"
+                    "{xmm4l}  {xmm4}\n{xmm5l}  {xmm5}\n{xmm6l}  {xmm6}\n{xmm7l}  {xmm7}\n"
+                ),
+                'fpu': (
+                    "{st0l} {st0}\n{st1l} {st1}\n{st2l} {st2}\n{st3l} {st2}\n"
+                    "{st4l} {st4}\n{st5l} {st5}\n{st6l} {st6}\n{st7l} {st7}\n"
+                )
+            }
+        },
+        'arm': {
+            'horizontal': {
+
+            },
+            'vertical': {
+            
+            }
+        }
+    }
     FLAG_BITS = {'c': 0, 'p': 2, 'a': 4, 'z': 6, 's': 7, 't': 8, 'i': 9, 'd': 10, 'o': 11}
     FLAG_TEMPLATE = "[ {o} {d} {i} {t} {s} {z} {a} {p} {c} ]"
-    SSE_TEMPLATE_H = (
-        "{xmm0l}  {xmm0} {xmm1l}  {xmm1} {xmm2l}  {xmm2}\n"
-        "{xmm3l}  {xmm3} {xmm4l}  {xmm4} {xmm5l}  {xmm5}\n"
-        "{xmm6l}  {xmm6} {xmm7l}  {xmm7} {xmm8l}  {xmm8}\n"
-        "{xmm9l}  {xmm9} {xmm10l} {xmm10} {xmm11l} {xmm11}\n"
-        "{xmm12l} {xmm12} {xmm13l} {xmm13} {xmm14l} {xmm14}\n"
-        "{xmm15l} {xmm15}\n"
-    )
-    SSE_TEMPLATE_V = (
-        "{xmm0l}  {xmm0}\n{xmm1l}  {xmm1}\n{xmm2l}  {xmm2}\n{xmm3l}  {xmm3}\n"
-        "{xmm4l}  {xmm4}\n{xmm5l}  {xmm5}\n{xmm6l}  {xmm6}\n{xmm7l}  {xmm7}\n"
-        "{xmm8l}  {xmm8}\n{xmm9l}  {xmm9}\n{xmm10l} {xmm10}\n{xmm11l} {xmm11}\n"
-        "{xmm12l} {xmm12}\n{xmm13l} {xmm13}\n{xmm14l} {xmm14}\n{xmm15l} {xmm15}"
-    )
+    XMM_INDENT = 7
     last_regs = None
     last_flags = None
 
@@ -343,44 +478,45 @@ class RegisterView (TerminalView):
         VoltronView.add_generic_arguments(sp)
         sp.set_defaults(func=RegisterView)
         g = sp.add_mutually_exclusive_group()
-        g.add_argument('--horizontal', '-o', action='store_true', help='horizontal orientation', default=False)
-        g.add_argument('--vertical', '-v', action='store_true', help='vertical orientation (default)', default=True)
-        sp.add_argument('--sse', '-s', action='store_true', help='show sse registers', default=False)
+        g.add_argument('--horizontal', '-o',    dest="orientation", action='store_const',   const="horizontal", help='horizontal orientation')
+        g.add_argument('--vertical', '-v',      dest="orientation", action='store_const',   const="vertical",   help='vertical orientation (default)')
+        sp.add_argument('--general', '-g',      dest="sections",    action='append_const',  const="general",    help='show general registers')
+        sp.add_argument('--no-general', '-G',   dest="sections",    action='append_const',  const="no_general", help='show general registers')
+        sp.add_argument('--sse', '-s',          dest="sections",    action='append_const',  const="sse",        help='show sse registers')
+        sp.add_argument('--no-sse', '-S',       dest="sections",    action='append_const',  const="no_sse",     help='show sse registers')
+        sp.add_argument('--fpu', '-p',          dest="sections",    action='append_const',  const="fpu",        help='show fpu registers')
+        sp.add_argument('--no-fpu', '-P',       dest="sections",    action='append_const',  const="no_fpu",     help='show fpu registers')
 
-    def setup(self):
-        global config
-        self.config['type'] = 'register'
-        try:
-            self.format_defaults = dict(self.FORMAT_DEFAULTS.items() + self.config['format_defaults'].items())
-        except:
-            self.format_defaults = self.FORMAT_DEFAULTS
+    def apply_cli_config(self):
+        super(RegisterView, self).apply_cli_config()
+        if self.args.orientation != None:
+            self.config['orientation'] = self.args.orientation
+        if self.args.sections != None:
+            a = filter(lambda x: 'no_'+x not in self.args.sections and not x.startswith('no_'), self.config['sections'] + self.args.sections)
+            self.config['sections'] = []
+            for sec in a:
+                if sec not in self.config['sections']:
+                    self.config['sections'].append(sec)
 
     def render(self, msg=None):
-        # Grab the appropriate template
-        if self.args.horizontal:
-            template = self.TEMPLATE_H
-            if self.args.sse:
-                template += '\n' + self.SSE_TEMPLATE_H
-        else:
-            template = self.TEMPLATE_V
-            if self.args.sse:
-                template += '\n' + self.SSE_TEMPLATE_V
+        # Build template
+        template = '\n'.join(map(lambda x: self.TEMPLATES['x64'][self.config['orientation']][x], self.config['sections']))
 
         # Process formatting settings
-        data = defaultdict(lambda: '<n/a>')
+        data = defaultdict(lambda: 'n/a')
         data.update(msg['data'])
         formats = self.FORMAT_INFO['x64']
         formatted = {}
         for fmt in formats:
             # Apply defaults where they're missing
-            fmt = dict(self.format_defaults.items() + fmt.items())
+            fmt = dict(self.config['format_defaults'].items() + fmt.items())
 
             # Format the data for each register
             for reg in fmt['regs']:
                 # Format the label
                 label = fmt['label_format'].format(reg)
                 if fmt['label_func'] != None:
-                    formatted[reg+'l'] = fmt['label_func'](label)
+                    formatted[reg+'l'] = eval(fmt['label_func'])(label)
                 if fmt['label_colour_en']:
                     formatted[reg+'l'] =  colored(formatted[reg+'l'], fmt['label_colour'])
 
@@ -395,7 +531,9 @@ class RegisterView (TerminalView):
                     colour = fmt['value_colour']
                     if self.last_regs == None or self.last_regs != None and val != self.last_regs[reg]:
                         colour = fmt['value_colour_mod']
-                    formatted[reg] = fmt['value_format'].format(val)
+                    formatted[reg] = val
+                    if fmt['value_format'] != None:
+                        formatted[reg] = fmt['value_format'].format(formatted[reg])
                     if fmt['value_func'] != None:
                         if type(fmt['value_func']) == str:
                             formatted[reg] = eval(fmt['value_func'])(formatted[reg])
@@ -406,7 +544,10 @@ class RegisterView (TerminalView):
 
         # Prepare output
         log.debug('Formatted: ' + str(formatted))
-        self.title = '[regs]'
+        height, width = self.window_size()
+        self.title = '[regs:{}]'.format('|'.join(self.config['sections']))
+        if len(self.title) > width:
+            self.title = '[regs]'
         self.body = template.format(**formatted)
 
         # Pad
@@ -426,7 +567,7 @@ class RegisterView (TerminalView):
         values = {}
 
         # Get formatting info for flags
-        fmt = dict(self.format_defaults.items() + filter(lambda x: 'rflags' in x['regs'], self.FORMAT_INFO['x64'])[0].items())
+        fmt = dict(self.config['format_defaults'].items() + filter(lambda x: 'rflags' in x['regs'], self.FORMAT_INFO['x64'])[0].items())
 
         # Handle each flag bit
         val = int(val, 10)
@@ -447,19 +588,32 @@ class RegisterView (TerminalView):
         # Format with template
         return self.FLAG_TEMPLATE.format(**formatted)
 
+    def format_xmm(self, val):
+        if self.config['orientation'] == 'vertical':
+            height, width = self.window_size()
+            if width < len(SHORT_ADDR_FORMAT_128.format(0)) + self.XMM_INDENT:
+                return val[:16] + '\n' + ' '*self.XMM_INDENT + val[16:]
+            else:
+                return val
+        else:
+            return val
+
+    def format_fpu(self, val):
+        if self.config['orientation'] == 'vertical':
+            return val
+        else:
+            return val
 
 class DisasmView (TerminalView):
-    DISASM_SHOW_LINES = 16
-    DISASM_SEP_WIDTH = 90
+    VIEW_DEFAULT_CONFIG = {
+        'type': 'disasm'
+    }
 
     @classmethod
     def configure_subparser(cls, subparsers):
         sp = subparsers.add_parser('disasm', help='disassembly view')
         VoltronView.add_generic_arguments(sp)
         sp.set_defaults(func=DisasmView)
-
-    def setup(self):
-        self.config['type'] = 'disasm'
 
     def render(self, msg=None):
         height, width = self.window_size()
@@ -485,8 +639,9 @@ class DisasmView (TerminalView):
     
 
 class StackView (TerminalView):
-    STACK_SHOW_LINES = 16
-    STACK_SEP_WIDTH = 90
+    VIEW_DEFAULT_CONFIG = {
+        'type': 'stack'
+    }
 
     @classmethod
     def configure_subparser(cls, subparsers):
@@ -494,9 +649,6 @@ class StackView (TerminalView):
         VoltronView.add_generic_arguments(sp)
         sp.add_argument('--bytes', '-b', action='store', type=int, help='bytes per line (default 16)', default=16)
         sp.set_defaults(func=StackView)
-
-    def setup(self):
-        self.config['type'] = 'stack'
 
     def render(self, msg=None):
         height, width = self.window_size()
@@ -522,14 +674,15 @@ class StackView (TerminalView):
 
 
 class BacktraceView (TerminalView):
+    VIEW_DEFAULT_CONFIG = {
+        'type': 'bt'
+    }
+
     @classmethod
     def configure_subparser(cls, subparsers):
         sp = subparsers.add_parser('bt', help='backtrace view')
         VoltronView.add_generic_arguments(sp)
         sp.set_defaults(func=BacktraceView)
-
-    def setup(self):
-        self.config['type'] = 'bt'
 
     def render(self, msg=None):
         height, width = self.window_size()
@@ -550,6 +703,10 @@ class BacktraceView (TerminalView):
 
 
 class CommandView (TerminalView):
+    VIEW_DEFAULT_CONFIG = {
+        'type': 'cmd'
+    }
+
     @classmethod
     def configure_subparser(cls, subparsers):
         sp = subparsers.add_parser('cmd', help='command view - specify a command to be run each time the debugger stops')
@@ -558,7 +715,6 @@ class CommandView (TerminalView):
         sp.set_defaults(func=CommandView)
 
     def setup(self):
-        self.config['type'] = 'cmd'
         self.config['cmd'] = self.args.command
 
     def render(self, msg=None):
