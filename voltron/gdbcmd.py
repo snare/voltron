@@ -26,6 +26,15 @@ class VoltronGDBCommand (VoltronCommand, gdb.Command):
     def stop_handler(self, event):
         self.update()
 
+    def get_architecture(self):
+        arch = gdb.selected_frame().architecture().name()
+        if arch in ['i386:x86-64', 'i386:x86-64:intel']:
+            return 'x64'
+        elif arch in ['i386', 'i386:intel', 'i386:x64-32', 'i386:x64-32:intel', 'i8086']:
+            return 'x86'
+        elif arch in ['arm', 'thumb']: # have to confirm these
+            return 'arm'
+
     def get_registers(self):
         log.debug('Getting registers')
         regs = ['rax','rbx','rcx','rdx','rbp','rsp','rdi','rsi','rip','r8','r9','r10','r11','r12','r13','r14','r15',

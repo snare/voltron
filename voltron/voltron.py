@@ -48,7 +48,9 @@ def main(debugger=None, dict=None):
     # Set up command line arg parser
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', '-d', action='store_true', help='print debug logging')
-    subparsers = parser.add_subparsers(title='subcommands', description='valid subcommands', help='additional help')
+    top_level_sp = parser.add_subparsers(title='subcommands', description='valid subcommands')
+    view_parser = top_level_sp.add_parser('view', help='display a view')
+    view_sp = view_parser.add_subparsers(title='views', description='valid view types', help='additional help')
 
     # Update the view base class
     base = CursesView if 'curses' in config.keys() and config['curses'] else TerminalView
@@ -57,11 +59,11 @@ def main(debugger=None, dict=None):
 
     # Set up a subcommand for each view class 
     for cls in base.__subclasses__():
-        cls.configure_subparser(subparsers)
+        cls.configure_subparser(view_sp)
 
     # And subcommands for the loathsome red-headed stepchildren
-    StandaloneServer.configure_subparser(subparsers)
-    GDB6Proxy.configure_subparser(subparsers)
+    StandaloneServer.configure_subparser(top_level_sp)
+    GDB6Proxy.configure_subparser(top_level_sp)
 
     # Parse args
     args = parser.parse_args()

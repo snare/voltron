@@ -24,7 +24,14 @@ class Client (asyncore.dispatcher):
         self.config = config
         self.reg_info = None
         self.create_socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.connect(SOCK)
+        success = False
+        while not success:
+            try:
+                self.connect(SOCK)
+                success = True
+            except Exception as e:
+                log.error("Failed connecting to server:" + str(e))
+                time.sleep(1)
 
     def register(self):
         log.debug('Client {} registering with config: {}'.format(self, str(self.config)))
@@ -43,11 +50,8 @@ class Client (asyncore.dispatcher):
                 log.error('Exception parsing message: ' + str(e))
                 log.error('Invalid message: ' + data)
 
-            # try:
             if msg and self.view:
                 self.view.render(msg)
-            # except Exception as e:
-            #     log.error('Error rendering view: ' + str(e))
         else:
             log.debug('Empty read')
 
