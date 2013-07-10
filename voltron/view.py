@@ -124,13 +124,13 @@ class VoltronView (object):
         merge(self.VIEW_DEFAULT_CONFIG, self.config)
 
         # Add all_views config from config file
-        if self.loaded_config.has_key('all_views'):
-            merge(self.loaded_config['all_views'], self.config)
+        if self.loaded_config.has_key('view') and self.loaded_config['view'].has_key('all_views'):
+            merge(self.loaded_config['view']['all_views'], self.config)
 
         # Add view-specific config from config file
         name = self.config['type']+'_view'
-        if self.loaded_config.has_key(name):
-            merge(self.loaded_config[name], self.config)
+        if self.loaded_config.has_key('view') and self.loaded_config['view'].has_key(name):
+            merge(self.loaded_config['view'][name], self.config)
 
         # Add named config
         if self.args.name != None:
@@ -594,7 +594,7 @@ class RegisterView (TerminalView):
             if width < len(SHORT_ADDR_FORMAT_128.format(0)) + self.XMM_INDENT:
                 return val[:16] + '\n' + ' '*self.XMM_INDENT + val[16:]
             else:
-                return val
+                return val[:16] +  ':' + val[16:]
         else:
             return val
 

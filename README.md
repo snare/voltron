@@ -171,6 +171,34 @@ Usage - LLDB
 
         (lldb) voltron update
 
+Layout automation
+-----------------
+
+### tmux
+
+There's a few tmux scripting tools around - [tmuxinator](https://github.com/aziz/tmuxinator) is one of them. You'll probably need to use the latest version (as of July 11, 2013) as the current stable version has a bug that results in narrow panes not being created properly or something. Seems to be resolved in the latest repo version.
+
+Here's a sample **tmuxinator** config for a layout similar to the example screencap that works well on an 11" MacBook Air in fullscreen mode:
+
+        project_name: voltron
+        project_root: .
+        cli_args: -v -2
+        tabs:
+          - madhax:
+              layout: 15a8,169x41,0,0{147x41,0,0[147x13,0,0{81x13,0,0,60,65x13,82,0,61},147x19,0,14,62,147x7,0,34{89x7,0,34,63,57x7,90,34,64}],21x41,148,0,65}
+              panes:
+                - voltron view disasm
+                - voltron view cmd "i b"
+                - gdb
+                - voltron view stack 
+                - voltron view bt
+                - voltron view reg
+
+The `layout` option there configures the actual dimensions of the panes. You can generate the layout info like this:
+
+        $ tmux list-windows
+        1: madhax* (6 panes) [169x41] [layout 15a8,169x41,0,0{147x41,0,0[147x13,0,0{81x13,0,0,60,65x13,82,0,61},147x19,0,14,62,147x7,0,34{89x7,0,34,63,57x7,90,34,64}],21x41,148,0,65}] @11 (active)
+
 Bugs
 ----
 
