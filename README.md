@@ -44,7 +44,15 @@ There is also support for named view configurations for each type. The example c
 
 Some options specified in the configuration file can also be overridden by command line arguments. At this stage, just the show/hide header/footer options.
 
-So the resulting order of precedence for configuration is: defaults -> all_views -> view-specific -> named view -> command line args. Each configuration level is added to the previous level, and only the options specified in this level override the previous level.
+So the resulting order of precedence for configuration is:
+
+1. defaults in source
+2. "all_views" config
+3. view-specific config
+4. named view config
+5. command line args
+
+Each configuration level is added to the previous level, and only the options specified in this level override the previous level.
 
 Help
 ----
@@ -52,7 +60,7 @@ Help
 **voltron** uses the `argparse` module with subcommands, so the command line interface should be relatively familiar. Top-level help, including a list of available subcommands, will be output with `-h`:
 
         $ voltron -h
-        usage: voltron [-h] [--debug] {reg,disasm,stack,bt,cmd,server,gdb6proxy} ...
+        usage: voltron [-h] [--debug] {view,server,gdb6proxy} ...
 
         optional arguments:
           -h, --help            show this help message and exit
@@ -61,7 +69,23 @@ Help
         subcommands:
           valid subcommands
 
-          {reg,disasm,stack,bt,cmd,server,gdb6proxy}
+          {view,server,gdb6proxy}
+            view                display a view
+            server              standalone server for debuggers without python support
+            gdb6proxy           import a dump from GDBv6 and send it to the server
+
+View/module-specific help works the same way - whichever subcommand, followed by `-h`:
+
+        $ voltron view -h
+        usage: voltron view [-h] {reg,disasm,stack,bt,cmd} ...
+
+        optional arguments:
+          -h, --help            show this help message and exit
+
+        views:
+          valid view types
+
+          {reg,disasm,stack,bt,cmd}
                                 additional help
             reg                 register view
             disasm              disassembly view
@@ -69,24 +93,28 @@ Help
             bt                  backtrace view
             cmd                 command view - specify a command to be run each time
                                 the debugger stops
-            server              standalone server for debuggers without python support
-            gdb6proxy           import a dump from GDBv6 and send it to the server
 
-View/module-specific help works the same way - whichever subcommand, followed by `-h`:
-
-        $ voltron reg -h
-        usage: voltron reg [-h] [--show-header] [--hide-header] [--show-footer]
-                           [--hide-footer] [--horizontal | --vertical] [--sse]
+        $ voltron view reg -h
+        usage: voltron view reg [-h] [--show-header] [--hide-header] [--show-footer]
+                                [--hide-footer] [--name NAME]
+                                [--horizontal | --vertical] [--general] [--no-general]
+                                [--sse] [--no-sse] [--fpu] [--no-fpu]
 
         optional arguments:
-          -h, --help         show this help message and exit
-          --show-header, -e  show header
-          --hide-header, -E  hide header
-          --show-footer, -f  show footer
-          --hide-footer, -F  hide footer
-          --horizontal, -o   horizontal orientation
-          --vertical, -v     vertical orientation (default)
-          --sse, -s          show sse registers
+          -h, --help            show this help message and exit
+          --show-header, -e     show header
+          --hide-header, -E     hide header
+          --show-footer, -f     show footer
+          --hide-footer, -F     hide footer
+          --name NAME, -n NAME  named configuration to use
+          --horizontal, -o      horizontal orientation
+          --vertical, -v        vertical orientation (default)
+          --general, -g         show general registers
+          --no-general, -G      show general registers
+          --sse, -s             show sse registers
+          --no-sse, -S          show sse registers
+          --fpu, -p             show fpu registers
+          --no-fpu, -P          show fpu registers
 
 Usage - GDBv7
 -------------
@@ -176,7 +204,7 @@ Layout automation
 
 ### tmux
 
-There's a few tmux scripting tools around - [tmuxinator](https://github.com/aziz/tmuxinator) is one of them. You'll probably need to use the latest version (as of July 11, 2013) as the current stable version has a bug that results in narrow panes not being created properly or something. Seems to be resolved in the latest repo version.
+There's a few tmux scripting tools around - [tmuxinator](https://github.com/aziz/tmuxinator) is one of them. You'll probably need to use the latest repo version (as of July 11, 2013) as the current stable version has a bug that results in narrow panes not being created properly or something. Seems to be resolved in the latest repo version.
 
 Here's a sample **tmuxinator** config for a layout similar to the example screencap that works well on an 11" MacBook Air in fullscreen mode:
 
