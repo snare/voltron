@@ -36,7 +36,7 @@ Configuration
 
 A sample configuration file is included in the repo. Copy it to `~/.voltron` and mess with it and you should get the idea. Header and footer positions, visbility and colours are configurable along with other view-specific items (e.g. colours for labels and values in the register view).
 
-In the example config at the top level, the "all_views" section sets up a base configuration to apply to all views. Each view can be configured individually overriding these settings. For example, the "stack_view" section in the example config overrides a number of these settings to reposition the title and info labels. The "register_view" section in the example config contains some settings overriding the default colours for the register view. Have a look at the source for other items in "FORMAT_DEFAULTS" that can be overridden in this section of the config.
+In the example config at the top level, the "all_views" section sets up a base configuration to apply to all views. Each view can be configured individually overriding these settings. For example, the "stack_view" section in the example config overrides a number of these settings to reposition the title and info labels. The "register_view" section in the example config contains some settings overriding the default colours for the register view. Have a look at the source for other items in "format_defaults" that can be overridden in this section of the config.
 
 There is also support for named view configurations for each type. The example configuration contains a config section called "some_named_stack_view", which is a modified version of the example stack view configuration. If you specify this name with the `-n` option, this named configuration will be added to the existing config for that view type:
 
@@ -130,11 +130,11 @@ Usage - GDBv7
 
 3. In another terminal (I use iTerm panes) start one of the UI views
 
-        $ voltron reg -v
-        $ voltron stack
-        $ voltron disasm
-        $ voltron bt
-        $ voltron cmd 'x/32x $rip'
+        $ voltron view reg -v
+        $ voltron view stack
+        $ voltron view disasm
+        $ voltron view bt
+        $ voltron view cmd 'x/32x $rip'
 
 4. The UI view code will attach to the server (via a domain socket) and refresh every time the debugger is stopped. So, set a break point and let the debugger hit it and everything should be updated. A forced update can be triggered with the following command: 
 
@@ -164,8 +164,8 @@ The macro file will be inside the **voltron** egg. For example, on OS X it might
 
 3. In another terminal (I use iTerm panes) start one of the UI views
 
-        $ voltron reg -v
-        $ voltron stack
+        $ voltron view reg -v
+        $ voltron view stack
 
 4. The UI view code will attach to the server (via a domain socket) and refresh every time the debugger is stopped. So, set a break point and let the debugger hit it and everything should be updated. A forced update can be triggered with the following command: 
 
@@ -189,11 +189,11 @@ Usage - LLDB
 
 3. In another terminal (I use iTerm panes) start one of the UI views
 
-        $ voltron reg -v
-        $ voltron stack
-        $ voltron disasm
-        $ voltron bt
-        $ voltron cmd 'reg read'
+        $ voltron view reg -v
+        $ voltron view stack
+        $ voltron view disasm
+        $ voltron view bt
+        $ voltron view cmd 'reg read'
 
 4. The UI view code will attach to the server (via a domain socket) and refresh every time the debugger is stopped. So, set a break point and let the debugger hit it and everything should be updated. A forced update can be triggered with the following command: 
 
