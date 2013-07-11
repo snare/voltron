@@ -25,7 +25,7 @@ Installation
 
 A standard python setup script is included.
 
-        # python setup.py install
+    # python setup.py install
 
 This will install the **voltron** egg wherever that happens on your system, and an executable named `voltron` to `/usr/local/bin/`.
 
@@ -59,62 +59,62 @@ Help
 
 **voltron** uses the `argparse` module with subcommands, so the command line interface should be relatively familiar. Top-level help, including a list of available subcommands, will be output with `-h`:
 
-        $ voltron -h
-        usage: voltron [-h] [--debug] {view,server,gdb6proxy} ...
+    $ voltron -h
+    usage: voltron [-h] [--debug] {view,server,gdb6proxy} ...
 
-        optional arguments:
-          -h, --help            show this help message and exit
-          --debug, -d           print debug logging
+    optional arguments:
+      -h, --help            show this help message and exit
+      --debug, -d           print debug logging
 
-        subcommands:
-          valid subcommands
+    subcommands:
+      valid subcommands
 
-          {view,server,gdb6proxy}
-            view                display a view
-            server              standalone server for debuggers without python support
-            gdb6proxy           import a dump from GDBv6 and send it to the server
+      {view,server,gdb6proxy}
+        view                display a view
+        server              standalone server for debuggers without python support
+        gdb6proxy           import a dump from GDBv6 and send it to the server
 
 View/module-specific help works the same way - whichever subcommand, followed by `-h`:
 
-        $ voltron view -h
-        usage: voltron view [-h] {reg,disasm,stack,bt,cmd} ...
+    $ voltron view -h
+    usage: voltron view [-h] {reg,disasm,stack,bt,cmd} ...
 
-        optional arguments:
-          -h, --help            show this help message and exit
+    optional arguments:
+      -h, --help            show this help message and exit
 
-        views:
-          valid view types
+    views:
+      valid view types
 
-          {reg,disasm,stack,bt,cmd}
-                                additional help
-            reg                 register view
-            disasm              disassembly view
-            stack               stack view
-            bt                  backtrace view
-            cmd                 command view - specify a command to be run each time
-                                the debugger stops
+      {reg,disasm,stack,bt,cmd}
+                            additional help
+        reg                 register view
+        disasm              disassembly view
+        stack               stack view
+        bt                  backtrace view
+        cmd                 command view - specify a command to be run each time
+                            the debugger stops
 
-        $ voltron view reg -h
-        usage: voltron view reg [-h] [--show-header] [--hide-header] [--show-footer]
-                                [--hide-footer] [--name NAME]
-                                [--horizontal | --vertical] [--general] [--no-general]
-                                [--sse] [--no-sse] [--fpu] [--no-fpu]
+    $ voltron view reg -h
+    usage: voltron view reg [-h] [--show-header] [--hide-header] [--show-footer]
+                            [--hide-footer] [--name NAME]
+                            [--horizontal | --vertical] [--general] [--no-general]
+                            [--sse] [--no-sse] [--fpu] [--no-fpu]
 
-        optional arguments:
-          -h, --help            show this help message and exit
-          --show-header, -e     show header
-          --hide-header, -E     hide header
-          --show-footer, -f     show footer
-          --hide-footer, -F     hide footer
-          --name NAME, -n NAME  named configuration to use
-          --horizontal, -o      horizontal orientation
-          --vertical, -v        vertical orientation (default)
-          --general, -g         show general registers
-          --no-general, -G      show general registers
-          --sse, -s             show sse registers
-          --no-sse, -S          show sse registers
-          --fpu, -p             show fpu registers
-          --no-fpu, -P          show fpu registers
+    optional arguments:
+      -h, --help            show this help message and exit
+      --show-header, -e     show header
+      --hide-header, -E     hide header
+      --show-footer, -f     show footer
+      --hide-footer, -F     hide footer
+      --name NAME, -n NAME  named configuration to use
+      --horizontal, -o      horizontal orientation
+      --vertical, -v        vertical orientation (default)
+      --general, -g         show general registers
+      --no-general, -G      show general registers
+      --sse, -s             show sse registers
+      --no-sse, -S          show sse registers
+      --fpu, -p             show fpu registers
+      --no-fpu, -P          show fpu registers
 
 Usage - GDBv7
 -------------
@@ -208,24 +208,24 @@ There's a few tmux scripting tools around - [tmuxinator](https://github.com/aziz
 
 Here's a sample **tmuxinator** config for a layout similar to the example screencap that works well on an 11" MacBook Air in fullscreen mode:
 
-        project_name: voltron
-        project_root: .
-        cli_args: -v -2
-        tabs:
-          - madhax:
-              layout: 15a8,169x41,0,0{147x41,0,0[147x13,0,0{81x13,0,0,60,65x13,82,0,61},147x19,0,14,62,147x7,0,34{89x7,0,34,63,57x7,90,34,64}],21x41,148,0,65}
-              panes:
-                - voltron view disasm
-                - voltron view cmd "i b"
-                - gdb
-                - voltron view stack 
-                - voltron view bt
-                - voltron view reg
+    project_name: voltron
+    project_root: .
+    cli_args: -v -2
+    tabs:
+      - madhax:
+          layout: 15a8,169x41,0,0{147x41,0,0[147x13,0,0{81x13,0,0,60,65x13,82,0,61},147x19,0,14,62,147x7,0,34{89x7,0,34,63,57x7,90,34,64}],21x41,148,0,65}
+          panes:
+            - voltron view disasm
+            - voltron view cmd "i b"
+            - gdb
+            - voltron view stack 
+            - voltron view bt
+            - voltron view reg
 
 The `layout` option there configures the actual dimensions of the panes. You can generate the layout info like this:
 
-        $ tmux list-windows
-        1: madhax* (6 panes) [169x41] [layout 15a8,169x41,0,0{147x41,0,0[147x13,0,0{81x13,0,0,60,65x13,82,0,61},147x19,0,14,62,147x7,0,34{89x7,0,34,63,57x7,90,34,64}],21x41,148,0,65}] @11 (active)
+    $ tmux list-windows
+    1: madhax* (6 panes) [169x41] [layout 15a8,169x41,0,0{147x41,0,0[147x13,0,0{81x13,0,0,60,65x13,82,0,61},147x19,0,14,62,147x7,0,34{89x7,0,34,63,57x7,90,34,64}],21x41,148,0,65}] @11 (active)
 
 Bugs
 ----
