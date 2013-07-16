@@ -419,7 +419,7 @@ class RegisterView (TerminalView):
             },
             'vertical': {
                 'general': (
-                    "{jump}\n{rflags}\n"
+                    "{rflags}\n{jump}\n"
                     "{ripl} {rip}\n"
                     "{raxl} {rax}\n{rbxl} {rbx}\n{rbpl} {rbp}\n{rspl} {rsp}\n"
                     "{rdil} {rdi}\n{rsil} {rsi}\n{rdxl} {rdx}\n{rcxl} {rcx}\n"
@@ -458,7 +458,7 @@ class RegisterView (TerminalView):
             },
             'vertical': {
                 'general': (
-                    "{jump}\n{eflags}\n"
+                    "{eflags}\n{jump}\n"
                     "{eipl} {eip}\n"
                     "{eaxl} {eax}\n{ebxl} {ebx}\n{ebpl} {ebp}\n{espl} {esp}\n"
                     "{edil} {edi}\n{esil} {esi}\n{edxl} {edx}\n{ecxl} {ecx}\n"
@@ -727,7 +727,7 @@ class RegisterView (TerminalView):
             else:
                 jump = '!Jump ({})'.format(reason)
         else:
-            jump = 'Not cond jump'
+            jump = ''
 
         # Pad out
         height, width = self.window_size()

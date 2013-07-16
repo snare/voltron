@@ -35,18 +35,6 @@ class VoltronGDBCommand (VoltronCommand, gdb.Command):
         elif arch in ['arm', 'arm', 'armv2', 'armv2a', 'armv3', 'armv3m', 'armv4', 'armv4t', 'armv5', 'armv5t', 'armv5te']:
             return 'arm'
 
-    def get_pc_name(self):
-        arch = self.get_arch()
-        if arch == 'x64':
-            return 'rip'
-        elif arch == 'x86':
-            return 'eip'
-        elif arch == 'arm':
-            return 'pc'
-
-    def get_pc(self):
-        return self.get_register(self.get_pc_name())
-
     def get_next_instruction(self):
         return self.get_disasm().split('\n')[0].split(':')[1].strip()
 

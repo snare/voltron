@@ -69,11 +69,7 @@ class VoltronCommand (object):
             elif client.registration['config']['type'] == 'disasm':
                 event['data'] = self.get_disasm()
             elif client.registration['config']['type'] == 'stack':
-                if arch == 'x86':
-                    sp = 'esp'
-                elif arch == 'x64':
-                    sp = 'rsp'
-                event['data'] = {'data': self.get_stack(), 'sp': self.get_register(sp)}
+                event['data'] = {'data': self.get_stack(), 'sp': self.get_sp()}
             elif client.registration['config']['type'] == 'bt':
                 event['data'] = self.get_backtrace()
                 
@@ -84,3 +80,27 @@ class VoltronCommand (object):
 
     def unregister_hooks(self):
         pass
+
+    def get_pc_name(self):
+        arch = self.get_arch()
+        if arch == 'x64':
+            return 'rip'
+        elif arch == 'x86':
+            return 'eip'
+        elif arch == 'arm':
+            return 'pc'
+
+    def get_pc(self):
+        return self.get_register(self.get_pc_name())
+
+    def get_sp_name(self):
+        arch = self.get_arch()
+        if arch == 'x64':
+            return 'rsp'
+        elif arch == 'x86':
+            return 'esp'
+        elif arch == 'arm':
+            return 'sp'
+
+    def get_sp(self):
+        return self.get_register(self.get_sp_name())

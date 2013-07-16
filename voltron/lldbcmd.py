@@ -49,15 +49,6 @@ class VoltronLLDBCommand (VoltronCommand):
     def get_frame(self):
         return self.debugger.GetTargetAtIndex(0).process.selected_thread.GetFrameAtIndex(0)
 
-    def get_pc(self):
-        arch = self.get_arch()
-        if arch == 'x64':
-            return self.get_register('rip')
-        elif arch == 'x86':
-            return self.get_register('eip')
-        elif arch == 'arm':
-            return self.get_register('pc')
-
     def get_next_instruction(self):
         target = self.debugger.GetTargetAtIndex(0)
         pc = lldb.SBAddress(self.get_pc(), target)
