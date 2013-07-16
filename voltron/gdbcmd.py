@@ -35,6 +35,21 @@ class VoltronGDBCommand (VoltronCommand, gdb.Command):
         elif arch in ['arm', 'arm', 'armv2', 'armv2a', 'armv3', 'armv3m', 'armv4', 'armv4t', 'armv5', 'armv5t', 'armv5te']:
             return 'arm'
 
+    def get_pc_name(self):
+        arch = self.get_arch()
+        if arch == 'x64':
+            return 'rip'
+        elif arch == 'x86':
+            return 'eip'
+        elif arch == 'arm':
+            return 'pc'
+
+    def get_pc(self):
+        return self.get_register(self.get_pc_name())
+
+    def get_next_instruction(self):
+        return self.get_disasm().split('\n')[0].split(':')[1].strip()
+
     def get_registers(self):
         arch = self.get_arch()
         regs = {}
@@ -146,14 +161,8 @@ class VoltronGDBCommand (VoltronCommand, gdb.Command):
 
     def get_disasm(self):
         log.debug('Getting disasm')
-        arch = self.get_arch()
-        if arch == 'x64':
-            ip = 'rip'
-        elif arch == 'x86':
-            ip = 'eip'
-        elif arch == 'arm':
-            ip = 'pc'
-        res = gdb.execute('x/{}i ${}'.format(DISASM_MAX, ip), to_string=True)
+        pc = self.get_pc_name()
+        res = gdb.execute('x/{}i ${}'.format(DISASM_MAX, pc), to_string=True)
         return res
 
     def get_stack(self):
