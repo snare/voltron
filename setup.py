@@ -1,5 +1,5 @@
 from setuptools import setup
-import glob
+from glob import glob
 
 setup(
     name = "voltron",
