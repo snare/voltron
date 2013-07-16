@@ -11,8 +11,9 @@ setup(
     url = "https://github.com/snarez/voltron",
     packages=['voltron'],
     install_requires = ['termcolor'],
-    data_files=['voltron.gdb', 'voltron.cfg'],
+    data_files=['voltron.gdb', 'voltron.default.cfg'],
     entry_points = {
         'console_scripts': ['voltron = voltron:main']
     }
 )
+
