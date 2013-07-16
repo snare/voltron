@@ -363,7 +363,7 @@ class RegisterView (TerminalView):
             },
             {
                 'regs':             ['xmm0','xmm1','xmm2','xmm3','xmm4','xmm5','xmm6','xmm7'],
-                'value_format':     None,
+                'value_format':     SHORT_ADDR_FORMAT_128,
                 'value_func':       'self.format_xmm',
                 'category':         'sse',
             },
@@ -445,7 +445,7 @@ class RegisterView (TerminalView):
                     "{eipl} {eip}\n"
                     "{eaxl} {eax}\n{ebxl} {ebx}\n{ebpl} {ebp}\n{espl} {esp}\n"
                     "{edil} {edi}\n{esil} {esi}\n{edxl} {edx}\n{ecxl} {ecx}\n"
-                    "{csl}  {cs}  {dsl}  {ds}\n{esl}  {es}  {fsl}  {fs}\n{gsl}  {gs}  {ssl}  {ss}"
+                    "{csl}  {cs}\n{dsl}  {ds}\n{esl}  {es}\n{fsl}  {fs}\n{gsl}  {gs}\n{ssl}  {ss}"
                 ),
                 'sse': (
                     "{xmm0l}  {xmm0}\n{xmm1l}  {xmm1}\n{xmm2l}  {xmm2}\n{xmm3l}  {xmm3}\n"
@@ -499,13 +499,16 @@ class RegisterView (TerminalView):
                     self.config['sections'].append(sec)
 
     def render(self, msg=None):
+        # Store current message
+        self.curr_msg = msg
+
         # Build template
-        template = '\n'.join(map(lambda x: self.TEMPLATES['x64'][self.config['orientation']][x], self.config['sections']))
+        template = '\n'.join(map(lambda x: self.TEMPLATES[msg['arch']][self.config['orientation']][x], self.config['sections']))
 
         # Process formatting settings
         data = defaultdict(lambda: 'n/a')
         data.update(msg['data'])
-        formats = self.FORMAT_INFO['x64']
+        formats = self.FORMAT_INFO[msg['arch']]
         formatted = {}
         for fmt in formats:
             # Apply defaults where they're missing
@@ -567,14 +570,18 @@ class RegisterView (TerminalView):
         values = {}
 
         # Get formatting info for flags
-        fmt = dict(self.config['format_defaults'].items() + filter(lambda x: 'rflags' in x['regs'], self.FORMAT_INFO['x64'])[0].items())
+        if self.curr_msg['arch'] == 'x64':
+            reg = 'rflags'
+        elif self.curr_msg['arch'] == 'x86':
+            reg = 'eflags'
+        fmt = dict(self.config['format_defaults'].items() + filter(lambda x: reg in x['regs'], self.FORMAT_INFO[self.curr_msg['arch']])[0].items())
 
         # Handle each flag bit
         val = int(val, 10)
         formatted = {}
         for flag in self.FLAG_BITS.keys():
             values[flag] = (val & (1 << self.FLAG_BITS[flag]) > 0)
-            log.debug("Flag {} value {} (for rflags 0x{})".format(flag, values[flag], val))
+            log.debug("Flag {} value {} (for flags 0x{})".format(flag, values[flag], val))
             formatted[flag] = str.upper(flag) if values[flag] else flag
             if self.last_flags != None and self.last_flags[flag] != values[flag]:
                 colour = fmt['value_colour_mod']

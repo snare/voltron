@@ -8,7 +8,7 @@ I got sick of GDB's (lack of) UI, so I built this. fG!'s [gdbinit](https://githu
 
 I initially built this to work with GDB but with the idea that I'd add LLDB support at some point. That point is now! Voltron now works with LLDB as well.
 
-It's basically held together by sticky tape, so don't expect too much.
+It's basically held together by sticky tape, so don't expect too much. I'm constantly developing this and pushing code out, so consider the `master` branch to be in flux and experimental at this stage.
 
 [![voltron example](http://github.com/snarez/voltron/raw/master/example.png)](#example)
 
