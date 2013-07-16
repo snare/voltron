@@ -38,7 +38,13 @@ class VoltronLLDBCommand (VoltronCommand):
         self.debugger.HandleCommand('target stop-hook delete')
 
     def get_arch(self):
-        return 'x64'
+        arch = self.debugger.GetTargetAtIndex(0).triple.split('-')[0]
+        if arch == 'x86_64':
+            return 'x64'
+        elif arch == 'i386':
+            return 'x86'
+        elif arch == 'arm':
+            return 'arm'
 
     def get_frame(self):
         return self.debugger.GetTargetAtIndex(0).process.selected_thread.GetFrameAtIndex(0)
@@ -68,9 +74,15 @@ class VoltronLLDBCommand (VoltronCommand):
 
     def get_stack(self):
         log.debug('Getting stack')
-        rsp = self.get_register('rsp')
+        arch = self.get_arch()
+        if arch == 'x64':
+            sp = self.get_register('rsp')
+        elif arch == 'x86':
+            sp = self.get_register('esp')
+        elif arch == 'arm':
+            sp = self.get_register('sp')
         error = lldb.SBError()
-        res = lldb.debugger.GetTargetAtIndex(0).process.ReadMemory(rsp, STACK_MAX*16, error)
+        res = lldb.debugger.GetTargetAtIndex(0).process.ReadMemory(sp, STACK_MAX*16, error)
         return res
 
     def get_backtrace(self):
