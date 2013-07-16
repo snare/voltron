@@ -57,9 +57,10 @@ class VoltronCommand (object):
 
     def update(self):
         log.debug("Updating clients")
+        arch = self.get_arch()
 
         for client in filter(lambda c: c.registration['config']['update_on'] == 'stop', clients):
-            event = {'msg_type': 'update', }
+            event = {'msg_type': 'update', 'arch': arch}
 
             if client.registration['config']['type'] == 'cmd':
                 event['data'] = self.get_cmd_output(client.registration['config']['cmd'])
@@ -68,7 +69,11 @@ class VoltronCommand (object):
             elif client.registration['config']['type'] == 'disasm':
                 event['data'] = self.get_disasm()
             elif client.registration['config']['type'] == 'stack':
-                event['data'] = {'data': self.get_stack(), 'sp': self.get_register('rsp')}
+                if arch == 'x86':
+                    sp = 'esp'
+                elif arch == 'x64':
+                    sp = 'rsp'
+                event['data'] = {'data': self.get_stack(), 'sp': self.get_register(sp)}
             elif client.registration['config']['type'] == 'bt':
                 event['data'] = self.get_backtrace()
                 

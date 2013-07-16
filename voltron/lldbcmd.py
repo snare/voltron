@@ -37,6 +37,9 @@ class VoltronLLDBCommand (VoltronCommand):
         # XXX: Fix this so it only removes our stop-hook
         self.debugger.HandleCommand('target stop-hook delete')
 
+    def get_arch(self):
+        return 'x64'
+
     def get_frame(self):
         return self.debugger.GetTargetAtIndex(0).process.selected_thread.GetFrameAtIndex(0)
 
