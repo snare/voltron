@@ -303,7 +303,8 @@ class RegisterView (TerminalView):
             'value_func':       None,
             'value_colour':     'grey',
             'value_colour_mod': 'red',
-            'value_colour_en':  True
+            'value_colour_en':  True,
+            'format_name':      None
         },
         'sections': ['general'],
         'orientation': 'vertical'
@@ -327,6 +328,14 @@ class RegisterView (TerminalView):
                 'value_func':       'self.format_flags',
                 'value_colour_en':  False,
                 'category':         'general',
+            },
+            {
+                'regs':             ['rflags'],
+                'value_format':     '{}',
+                'value_func':       'self.format_jump',
+                'value_colour_en':  False,
+                'category':         'general',
+                'format_name':      'jump'
             },
             {
                 'regs':             ['xmm0','xmm1','xmm2','xmm3','xmm4','xmm5','xmm6','xmm7','xmm8',
@@ -362,6 +371,14 @@ class RegisterView (TerminalView):
                 'category':         'general',
             },
             {
+                'regs':             ['eflags'],
+                'value_format':     '{}',
+                'value_func':       'self.format_jump',
+                'value_colour_en':  False,
+                'category':         'general',
+                'format_name':      'jump'
+            },
+            {
                 'regs':             ['xmm0','xmm1','xmm2','xmm3','xmm4','xmm5','xmm6','xmm7'],
                 'value_format':     SHORT_ADDR_FORMAT_128,
                 'value_func':       'self.format_xmm',
@@ -385,7 +402,7 @@ class RegisterView (TerminalView):
                     "{rdil} {rdi}  {rsil} {rsi}  {rdxl} {rdx}  {rcxl} {rcx}  {ripl} {rip}\n"
                     "{r8l} {r8}  {r9l} {r9}  {r10l} {r10}  {r11l} {r11}  {r12l} {r12}\n"
                     "{r13l} {r13}  {r14l} {r14}  {r15l} {r15}\n"
-                    "{csl} {cs}  {dsl} {ds}  {esl} {es}  {fsl} {fs}  {gsl} {gs}  {ssl} {ss}"
+                    "{csl} {cs}  {dsl} {ds}  {esl} {es}  {fsl} {fs}  {gsl} {gs}  {ssl} {ss} {jump}"
                 ),
                 'sse': (
                     "{xmm0l}  {xmm0} {xmm1l}  {xmm1} {xmm2l}  {xmm2}\n"
@@ -402,7 +419,7 @@ class RegisterView (TerminalView):
             },
             'vertical': {
                 'general': (
-                    "{rflags}\n"
+                    "{jump}\n{rflags}\n"
                     "{ripl} {rip}\n"
                     "{raxl} {rax}\n{rbxl} {rbx}\n{rbpl} {rbp}\n{rspl} {rsp}\n"
                     "{rdil} {rdi}\n{rsil} {rsi}\n{rdxl} {rdx}\n{rcxl} {rcx}\n"
@@ -427,7 +444,7 @@ class RegisterView (TerminalView):
                 'general': (
                     "{eaxl} {eax}  {ebxl} {ebx}  {ebpl} {ebp}  {espl} {esp}  {eflags}\n"
                     "{edil} {edi}  {esil} {esi}  {edxl} {edx}  {ecxl} {ecx}  {eipl} {eip}\n"
-                    "{csl} {cs}  {dsl} {ds}  {esl} {es}  {fsl} {fs}  {gsl} {gs}  {ssl} {ss}"
+                    "{csl} {cs}  {dsl} {ds}  {esl} {es}  {fsl} {fs}  {gsl} {gs}  {ssl} {ss} {jump}"
                 ),
                 'sse': (
                     "{xmm0l}  {xmm0} {xmm1l}  {xmm1} {xmm2l}  {xmm2}\n"
@@ -441,7 +458,7 @@ class RegisterView (TerminalView):
             },
             'vertical': {
                 'general': (
-                    "{eflags}\n"
+                    "{jump}\n{eflags}\n"
                     "{eipl} {eip}\n"
                     "{eaxl} {eax}\n{ebxl} {ebx}\n{ebpl} {ebp}\n{espl} {esp}\n"
                     "{edil} {edi}\n{esil} {esi}\n{edxl} {edx}\n{ecxl} {ecx}\n"
@@ -507,7 +524,8 @@ class RegisterView (TerminalView):
 
         # Process formatting settings
         data = defaultdict(lambda: 'n/a')
-        data.update(msg['data'])
+        data.update(msg['data']['regs'])
+        inst = msg['data']['inst']
         formats = self.FORMAT_INFO[msg['arch']]
         formatted = {}
         for fmt in formats:
@@ -529,21 +547,25 @@ class RegisterView (TerminalView):
                     temp = fmt['value_format'].format(0)
                     if len(val) < len(temp):
                         val += (len(temp) - len(val))*' '
-                    formatted[reg] = colored(val, fmt['value_colour'])
+                    formatted_reg = colored(val, fmt['value_colour'])
                 else:
                     colour = fmt['value_colour']
                     if self.last_regs == None or self.last_regs != None and val != self.last_regs[reg]:
                         colour = fmt['value_colour_mod']
-                    formatted[reg] = val
+                    formatted_reg = val
                     if fmt['value_format'] != None:
-                        formatted[reg] = fmt['value_format'].format(formatted[reg])
+                        formatted_reg = fmt['value_format'].format(formatted_reg)
                     if fmt['value_func'] != None:
                         if type(fmt['value_func']) == str:
-                            formatted[reg] = eval(fmt['value_func'])(formatted[reg])
+                            formatted_reg = eval(fmt['value_func'])(formatted_reg)
                         else:
-                            formatted[reg] = fmt['value_func'](formatted[reg])
+                            formatted_reg = fmt['value_func'](formatted_reg)
                     if fmt['value_colour_en']:
-                        formatted[reg] = colored(formatted[reg], colour)
+                        formatted_reg = colored(formatted_reg, colour)
+                if fmt['format_name'] == None:
+                    formatted[reg] = formatted_reg
+                else:
+                    formatted[fmt['format_name']] = formatted_reg
 
         # Prepare output
         log.debug('Formatted: ' + str(formatted))
@@ -593,7 +615,132 @@ class RegisterView (TerminalView):
         self.last_flags = values
 
         # Format with template
-        return self.FLAG_TEMPLATE.format(**formatted)
+        flags = self.FLAG_TEMPLATE.format(**formatted)
+
+        return flags
+
+    def format_jump(self, val):
+        # Grab flag bits
+        val = int(val, 10)
+        values = {}
+        for flag in self.FLAG_BITS.keys():
+            values[flag] = (val & (1 << self.FLAG_BITS[flag]) > 0)
+
+        # If this is a jump instruction, see if it will be taken
+        inst = self.curr_msg['data']['inst'].split()[0]
+        j = None
+        if inst in ['ja', 'jnbe']:
+            if not values['c'] and not values['z']:
+                j = (True, '!c && !z')
+            else:
+                j = (False, 'c || z')
+        elif inst in ['jae', 'jnb', 'jnc']:
+            if not values['c']:
+                j = (True, '!c')
+            else:
+                j = (False, 'c')
+        elif inst in ['jb', 'jc', 'jnae']:
+            if values['c']:
+                j = (True, 'c')
+            else:
+                j = (False, '!c')
+        elif inst in ['jbe', 'jna']:
+            if values['c'] or values['z']:
+                j = (True, 'c || z')
+            else:
+                j = (True, '!c && !z')
+        elif inst in ['jcxz', 'jecxz', 'jrcxz']:
+            if self.get_arch() == 'x64':
+                cx = regs['rcx']
+            elif self.get_arch() == 'x86':
+                cx = regs['ecx']
+            if cx == 0:
+                j = (True, cx+'==0')
+            else:
+                j = (False, cx+'!=0')
+        elif inst in ['je', 'jz']:
+            if values['z']:
+                j = (True, 'z')
+            else:
+                j = (False, '!z')
+        elif inst in ['jnle', 'jg']:
+            if not values['z'] and values['s'] == values['o']:
+                j = (True, '!z && s==o')
+            else:
+                j = (False, 'z || s!=o')
+        elif inst in ['jge', 'jnl']:
+            if values['s'] == values['o']:
+                j = (True, 's==o')
+            else:
+                j = (False, 's!=o')
+        elif inst in ['jl', 'jnge']:
+            if values['s'] == values['o']:
+                j = (True, 's!=o')
+            else:
+                j = (False, 's==o')
+        elif inst in ['jle', 'jng']:
+            if values['z'] or values['s'] == values['o']:
+                j = (True, 'z || s==o')
+            else:
+                j = (False, '!z && s!=o')
+        elif inst in ['jne', 'jnz']:
+            if not values['z']:
+                j = (True, '!z')
+            else:
+                j = (False, 'z')
+        elif inst in ['jno']:
+            if not values['o']:
+                j = (True, '!o')
+            else:
+                j = (False, 'o')
+        elif inst in ['jnp', 'jpo']:
+            if not values['p']:
+                j = (True, '!p')
+            else:
+                j = (False, 'p')
+        elif inst in ['jns']:
+            if not values['s']:
+                j = (True, '!s')
+            else:
+                j = (False, 's')
+        elif inst in ['jo']:
+            if values['o']:
+                j = (True, 'o')
+            else:
+                j = (False, '!o')
+        elif inst in ['jp', 'jpe']:
+            if values['p']:
+                j = (True, 'p')
+            else:
+                j = (False, '!p')
+        elif inst in ['js']:
+            if values['s']:
+                j = (True, 's')
+            else:
+                j = (False, '!s')
+
+        # Construct message
+        if j != None:
+            taken, reason = j
+            if taken:
+                jump = 'Jump ({})'.format(reason)
+            else:
+                jump = '!Jump ({})'.format(reason)
+        else:
+            jump = 'Not cond jump'
+
+        # Pad out
+        height, width = self.window_size()
+        t = '{:^%d}' % (width - 2)
+        jump = t.format(jump)
+
+        # Colour
+        if j != None:
+            jump = colored(jump, self.config['format_defaults']['value_colour_mod'])
+        else:
+            jump = colored(jump, self.config['format_defaults']['value_colour'])
+
+        return '[' + jump + ']'
 
     def format_xmm(self, val):
         if self.config['orientation'] == 'vertical':

@@ -10,6 +10,8 @@ I initially built this to work with GDB but with the idea that I'd add LLDB supp
 
 It's basically held together by sticky tape, so don't expect too much. I'm constantly developing this and pushing code out, so consider the `master` branch to be in flux and experimental at this stage.
 
+I've taken a lot of inspiration from the way fG!'s `gdbinit` renders the registers, flags, jump info etc. So big thanks to him for all the hard work he's done on that over the years.
+
 [![voltron example](http://github.com/snarez/voltron/raw/master/example.png)](#example)
 
 Requirements

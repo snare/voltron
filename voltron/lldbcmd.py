@@ -49,8 +49,25 @@ class VoltronLLDBCommand (VoltronCommand):
     def get_frame(self):
         return self.debugger.GetTargetAtIndex(0).process.selected_thread.GetFrameAtIndex(0)
 
+    def get_pc(self):
+        arch = self.get_arch()
+        if arch == 'x64':
+            return self.get_register('rip')
+        elif arch == 'x86':
+            return self.get_register('eip')
+        elif arch == 'arm':
+            return self.get_register('pc')
+
+    def get_next_instruction(self):
+        target = self.debugger.GetTargetAtIndex(0)
+        pc = lldb.SBAddress(self.get_pc(), target)
+        inst = target.ReadInstructions(pc, 1)
+        return str(inst).split(':')[1].strip()
+
     def get_registers(self):
         log.debug('Getting registers')
+
+        # Get registers
         objs = self.get_frame().GetRegisters()
         objs = list(objs[0]) + list(objs[1]) + list(objs[2])
         regs = {}
@@ -61,6 +78,7 @@ class VoltronLLDBCommand (VoltronCommand):
             regs[reg.name] = val
         for i in range(7):
             regs['st'+str(i)] = regs['stmm'+str(i)]
+
         return regs
 
     def get_register(self, reg):

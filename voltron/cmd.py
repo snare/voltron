@@ -65,7 +65,7 @@ class VoltronCommand (object):
             if client.registration['config']['type'] == 'cmd':
                 event['data'] = self.get_cmd_output(client.registration['config']['cmd'])
             elif client.registration['config']['type'] == 'register':
-                event['data'] = self.get_registers()
+                event['data'] = {'regs': self.get_registers(), 'inst': self.get_next_instruction()}
             elif client.registration['config']['type'] == 'disasm':
                 event['data'] = self.get_disasm()
             elif client.registration['config']['type'] == 'stack':
