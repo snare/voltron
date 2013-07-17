@@ -8,7 +8,7 @@ I got sick of GDB's (lack of) UI, so I built this. fG!'s [gdbinit](https://githu
 
 It's basically held together by sticky tape, so don't expect too much. I'm constantly developing this and pushing code out, so consider the `master` branch to be in flux and experimental at this stage.
 
-[![voltron example](http://github.com/snarez/voltron/raw/master/example.png)](#example)
+[![voltron example](http://ho.ax/voltron.png)](#example)
 
 I've taken a lot of inspiration from the way fG!'s `gdbinit` renders the registers, flags, jump info etc. So big thanks to him for all the hard work he's done on that over the years.
 
