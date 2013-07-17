@@ -4,23 +4,22 @@ voltron
 A half-arsed UI module for GDB & LLDB. 
 --------------------------------------
 
-I got sick of GDB's (lack of) UI, so I built this. fG!'s [gdbinit](https://github.com/gdbinit/Gdbinit) makes GDB slightly more bearable, and this does a similar job in a different way. **voltron** allows you to attach views running in other terminal windows to a GDB session, resulting in a more modular and flexible UI like you get in a GUI debugger like WinDbg, Immunity Debugger, OllyDbg, etc. It's not in the same league as a proper GUI debugger, but it does make GDB more bearable.
-
-I initially built this to work with GDB but with the idea that I'd add LLDB support at some point. That point is now! Voltron now works with LLDB as well.
+I got sick of GDB's (lack of) UI, so I built this. fG!'s [gdbinit](https://github.com/gdbinit/Gdbinit) makes GDB slightly more bearable, and this does a similar job in a different way. **voltron** allows you to attach views running in other terminal windows to a GDB or LLDB session, resulting in a more modular and flexible UI like you get in a GUI debugger like WinDbg, Immunity Debugger, OllyDbg, etc. It's not in the same league as a proper GUI debugger, but it does make GDB more bearable.
 
 It's basically held together by sticky tape, so don't expect too much. I'm constantly developing this and pushing code out, so consider the `master` branch to be in flux and experimental at this stage.
 
-I've taken a lot of inspiration from the way fG!'s `gdbinit` renders the registers, flags, jump info etc. So big thanks to him for all the hard work he's done on that over the years.
-
 [![voltron example](http://github.com/snarez/voltron/raw/master/example.png)](#example)
 
-Requirements
-------------
+I've taken a lot of inspiration from the way fG!'s `gdbinit` renders the registers, flags, jump info etc. So big thanks to him for all the hard work he's done on that over the years.
+
+Support
+-------
 
 **voltron** supports GDB version 7, LLDB, and has limited support for GDB version 6.
 
-Requires the termcolor python module.
-
+The following architectures are supported:
+* x86
+* x86_64
 
 Installation
 ------------
@@ -59,64 +58,11 @@ Each configuration level is added to the previous level, and only the options sp
 Help
 ----
 
-**voltron** uses the `argparse` module with subcommands, so the command line interface should be relatively familiar. Top-level help, including a list of available subcommands, will be output with `-h`:
+**voltron** uses the `argparse` module with subcommands, so the command line interface should be relatively familiar. Top-level help, including a list of available subcommands, will be output with `-h`. Detailed help for subcommands can be obtained the same way:
 
     $ voltron -h
-    usage: voltron [-h] [--debug] {view,server,gdb6proxy} ...
-
-    optional arguments:
-      -h, --help            show this help message and exit
-      --debug, -d           print debug logging
-
-    subcommands:
-      valid subcommands
-
-      {view,server,gdb6proxy}
-        view                display a view
-        server              standalone server for debuggers without python support
-        gdb6proxy           import a dump from GDBv6 and send it to the server
-
-View/module-specific help works the same way - whichever subcommand, followed by `-h`:
-
     $ voltron view -h
-    usage: voltron view [-h] {reg,disasm,stack,bt,cmd} ...
-
-    optional arguments:
-      -h, --help            show this help message and exit
-
-    views:
-      valid view types
-
-      {reg,disasm,stack,bt,cmd}
-                            additional help
-        reg                 register view
-        disasm              disassembly view
-        stack               stack view
-        bt                  backtrace view
-        cmd                 command view - specify a command to be run each time
-                            the debugger stops
-
     $ voltron view reg -h
-    usage: voltron view reg [-h] [--show-header] [--hide-header] [--show-footer]
-                            [--hide-footer] [--name NAME]
-                            [--horizontal | --vertical] [--general] [--no-general]
-                            [--sse] [--no-sse] [--fpu] [--no-fpu]
-
-    optional arguments:
-      -h, --help            show this help message and exit
-      --show-header, -e     show header
-      --hide-header, -E     hide header
-      --show-footer, -f     show footer
-      --hide-footer, -F     hide footer
-      --name NAME, -n NAME  named configuration to use
-      --horizontal, -o      horizontal orientation
-      --vertical, -v        vertical orientation (default)
-      --general, -g         show general registers
-      --no-general, -G      show general registers
-      --sse, -s             show sse registers
-      --no-sse, -S          show sse registers
-      --fpu, -p             show fpu registers
-      --no-fpu, -P          show fpu registers
 
 Usage - GDBv7
 -------------
@@ -239,14 +185,7 @@ There are probably others.
 Development
 -----------
 
-I initially hacked this together in a night as a "do the bare minimum to make my life better" project, as larger projects of this nature that I start never get finished. A few people have expressed interest in it, so I've added a few bits and pieces to it and will probably continue to add to it occasionally.
-
-Things I probably will do at some stage in the not too distant future:
-
-* Better colour support throughout all views like in the register view
-* Do something better than use Pygments with the sucky GDB lexer
-
-Feel free to add to it and send a pull request.
+I initially hacked this together in a night as a "do the bare minimum to make my life better" project, as larger projects of this nature that I start never get finished. I'm continuing development on this in an ad hoc fashion. If you have a feature request feel free to add it as an issue on github, or add it yourself and send a pull request.
 
 If you want to add a new view type you'll just need to add a new subclass of `TerminalView` (see the others for examples) that registers for updates and renders data for your own message type, and potentially add some code to `VoltronCommand`/`VoltronGDBCommand`/`VoltronLLDBCommand` to grab the necessary data and cram it into an update message.
 
