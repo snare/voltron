@@ -10,7 +10,7 @@ setup(
     keywords = "voltron gdb lldb",
     url = "https://github.com/snarez/voltron",
     packages=['voltron'],
-    install_requires = ['termcolor'],
+    install_requires = [],
     data_files=['voltron.gdb', 'voltron.cfg'],
     entry_points = {
         'console_scripts': ['voltron = voltron:main']

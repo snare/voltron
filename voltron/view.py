@@ -16,7 +16,6 @@ except:
     have_pygments = False
 
 from collections import defaultdict
-from termcolor import colored
 
 from comms import *
 
@@ -176,48 +175,39 @@ class VoltronView (object):
             lines.append("%s:  %-*s  |%s|\n" % (ADDR_FORMAT_64.format(offset+c), length*3, hex, printable))
         return ''.join(lines).strip()
 
-    def format_header(self):
-        height, width = self.window_size()
-
-        # Get values for labels
-        l = getattr(self, self.config['header']['label_left']['name']) if self.config['header']['label_left']['name'] != None else ''
-        r = getattr(self, self.config['header']['label_right']['name']) if self.config['header']['label_right']['name'] != None else ''
-        p = self.config['header']['pad']
-        llen = len(l)
-        rlen = len(r)
-
-        # Add colour
-        l = colored(l, self.config['header']['label_left']['colour'], 'on_' + self.config['header']['label_left']['bg_colour'], self.config['header']['label_left']['attrs'])
-        r = colored(r, self.config['header']['label_right']['colour'], 'on_' + self.config['header']['label_right']['bg_colour'], self.config['header']['label_right']['attrs'])
-        p = colored(p, self.config['header']['colour'], 'on_' + self.config['header']['bg_colour'], self.config['header']['attrs'])
-
-        # Build header
-        header = l + (width - llen - rlen)*p + r
-        
-        return header
-
-    def format_footer(self):
-        height, width = self.window_size()
-
-        # Get values for labels
-        l = getattr(self, self.config['footer']['label_left']['name']) if self.config['footer']['label_left']['name'] != None else ''
-        r = getattr(self, self.config['footer']['label_right']['name']) if self.config['footer']['label_right']['name'] != None else ''
-        p = self.config['footer']['pad']
-        llen = len(l)
-        rlen = len(r)
-
-        # Add colour
-        l = colored(l, self.config['footer']['label_left']['colour'], 'on_' + self.config['footer']['label_left']['bg_colour'], self.config['footer']['label_left']['attrs'])
-        r = colored(r, self.config['footer']['label_right']['colour'], 'on_' + self.config['footer']['label_right']['bg_colour'], self.config['footer']['label_right']['attrs'])
-        p = colored(p, self.config['footer']['colour'], 'on_' + self.config['footer']['bg_colour'], self.config['footer']['attrs'])
-
-        # Build header and footer
-        footer = l + (width - llen - rlen)*p + r
-        
-        return footer
-
 
 class TerminalView (VoltronView):
+    COLOURS = {
+        'grey':     30,
+        'red':      31,
+        'green':    32,
+        'yellow':   33,
+        'blue':     34,
+        'magenta':  35,
+        'cyan':     36,
+        'white':    37
+    }
+    BACKGROUND = {
+        'grey':     40,
+        'red':      41,
+        'green':    42,
+        'yellow':   43,
+        'blue':     44,
+        'magenta':  45,
+        'cyan':     46,
+        'white':    47
+    }
+    ATTRIBUTES ={
+        'bold':     1,
+        'dark':     2,
+        'underline':4,
+        'blink':    5,
+        'reverse':  7,
+        'concealed':8
+    }
+    RESET = 0
+    TEMPLATE = '\033[{}m'
+
     def init_window(self):
         # Hide cursor
         os.system('tput civis')
@@ -252,6 +242,59 @@ class TerminalView (VoltronView):
             height -= 1
         return height
 
+    def colour(self, text='', colour=None, background=None, attrs=[]):
+        s = ''
+        t = self.TEMPLATE
+        if colour != None:
+            s += t.format(self.COLOURS[colour])
+        if background != None:
+            s += t.format(self.BACKGROUND[background])
+        if attrs != []:
+            s += ''.join(map(lambda x: t.format(self.ATTRIBUTES[x]), attrs))
+        s += text
+        s += t.format(self.RESET)
+        return s
+
+    def format_header(self):
+        height, width = self.window_size()
+
+        # Get values for labels
+        l = getattr(self, self.config['header']['label_left']['name']) if self.config['header']['label_left']['name'] != None else ''
+        r = getattr(self, self.config['header']['label_right']['name']) if self.config['header']['label_right']['name'] != None else ''
+        p = self.config['header']['pad']
+        llen = len(l)
+        rlen = len(r)
+
+        # Add colour
+        l = self.colour(l, self.config['header']['label_left']['colour'], self.config['header']['label_left']['bg_colour'], self.config['header']['label_left']['attrs'])
+        r = self.colour(r, self.config['header']['label_right']['colour'], self.config['header']['label_right']['bg_colour'], self.config['header']['label_right']['attrs'])
+        p = self.colour(p, self.config['header']['colour'], self.config['header']['bg_colour'], self.config['header']['attrs'])
+
+        # Build header
+        header = l + (width - llen - rlen)*p + r
+        
+        return header
+
+    def format_footer(self):
+        height, width = self.window_size()
+
+        # Get values for labels
+        l = getattr(self, self.config['footer']['label_left']['name']) if self.config['footer']['label_left']['name'] != None else ''
+        r = getattr(self, self.config['footer']['label_right']['name']) if self.config['footer']['label_right']['name'] != None else ''
+        p = self.config['footer']['pad']
+        llen = len(l)
+        rlen = len(r)
+
+        # Add colour
+        l = self.colour(l, self.config['footer']['label_left']['colour'], self.config['footer']['label_left']['bg_colour'], self.config['footer']['label_left']['attrs'])
+        r = self.colour(r, self.config['footer']['label_right']['colour'], self.config['footer']['label_right']['bg_colour'], self.config['footer']['label_right']['attrs'])
+        p = self.colour(p, self.config['footer']['colour'], self.config['footer']['bg_colour'], self.config['footer']['attrs'])
+
+        # Build header and footer
+        footer = l + (width - llen - rlen)*p + r
+        
+        return footer
+
 
 class CursesView (VoltronView):
     def init_window(self):
@@ -271,8 +314,7 @@ class CursesView (VoltronView):
         self.screen.refresh()
 
     def clear(self):
-        # Clear the window - this sucks, should probably do it with ncurses at some stage
-        os.system('clear')
+        self.screen.clear()
 
     def window_size(self):
         # Get terminal size - this also sucks, but curses sucks more
@@ -539,7 +581,7 @@ class RegisterView (TerminalView):
                 if fmt['label_func'] != None:
                     formatted[reg+'l'] = eval(fmt['label_func'])(label)
                 if fmt['label_colour_en']:
-                    formatted[reg+'l'] =  colored(formatted[reg+'l'], fmt['label_colour'])
+                    formatted[reg+'l'] =  self.colour(formatted[reg+'l'], fmt['label_colour'])
 
                 # Format the value
                 val = data[reg]
@@ -547,7 +589,7 @@ class RegisterView (TerminalView):
                     temp = fmt['value_format'].format(0)
                     if len(val) < len(temp):
                         val += (len(temp) - len(val))*' '
-                    formatted_reg = colored(val, fmt['value_colour'])
+                    formatted_reg = self.colour(val, fmt['value_colour'])
                 else:
                     colour = fmt['value_colour']
                     if self.last_regs == None or self.last_regs != None and val != self.last_regs[reg]:
@@ -561,7 +603,7 @@ class RegisterView (TerminalView):
                         else:
                             formatted_reg = fmt['value_func'](formatted_reg)
                     if fmt['value_colour_en']:
-                        formatted_reg = colored(formatted_reg, colour)
+                        formatted_reg = self.colour(formatted_reg, colour)
                 if fmt['format_name'] == None:
                     formatted[reg] = formatted_reg
                 else:
@@ -609,7 +651,7 @@ class RegisterView (TerminalView):
                 colour = fmt['value_colour_mod']
             else:
                 colour = fmt['value_colour']
-            formatted[flag] = colored(formatted[flag], colour)
+            formatted[flag] = self.colour(formatted[flag], colour)
 
         # Store the flag values for comparison
         self.last_flags = values
@@ -736,9 +778,9 @@ class RegisterView (TerminalView):
 
         # Colour
         if j != None:
-            jump = colored(jump, self.config['format_defaults']['value_colour_mod'])
+            jump = self.colour(jump, self.config['format_defaults']['value_colour_mod'])
         else:
-            jump = colored(jump, self.config['format_defaults']['value_colour'])
+            jump = self.colour(jump, self.config['format_defaults']['value_colour'])
 
         return '[' + jump + ']'
 
