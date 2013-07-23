@@ -67,7 +67,7 @@ class Server (object):
         self.thread.start()
 
     def stop(self):
-        log.info("Exiting")
+        log.debug("Stopping server thread")
         self.thread.set_should_exit(True)
         self.thread.join(10)
 

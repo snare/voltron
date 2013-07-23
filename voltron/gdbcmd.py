@@ -13,43 +13,81 @@ class VoltronGDBCommand (VoltronCommand, gdb.Command):
     def __init__(self):
         super(VoltronCommand, self).__init__("voltron", gdb.COMMAND_NONE, gdb.COMPLETE_NONE)
         self.running = False
+        self.server = None
+        self.helper = None
 
     def invoke(self, arg, from_tty):
         self.handle_command(arg)
 
     def register_hooks(self):
         gdb.events.stop.connect(self.stop_handler)
+        gdb.events.exited.connect(self.exit_handler)
+        gdb.events.cont.connect(self.cont_handler)
 
     def unregister_hooks(self):
         gdb.events.stop.disconnect(self.stop_handler)
+        gdb.events.exited.disconnect(self.exit_handler)
+        gdb.events.cont.disconnect(self.cont_handler)
 
     def stop_handler(self, event):
+        log.debug('Inferior stopped')
+        if self.helper == None:
+            self.helper = self.find_helper()
         self.update()
 
-    def get_arch(self):
+    def exit_handler(self, event):
+        log.debug('Inferior exited')
+        self.stop_server()
+        self.helper = None
+
+    def cont_handler(self, event):
+        log.debug('Inferior continued')
+        if self.server == None:
+            self.start_server()
+
+    def find_helper(self):
         arch = gdb.selected_frame().architecture().name()
-        if arch in ['i386:x86-64', 'i386:x86-64:intel']:
-            return 'x64'
-        elif arch in ['i386', 'i386:intel', 'i386:x64-32', 'i386:x64-32:intel', 'i8086']:
-            return 'x86'
-        elif arch in ['arm', 'arm', 'armv2', 'armv2a', 'armv3', 'armv3m', 'armv4', 'armv4t', 'armv5', 'armv5t', 'armv5te']:
-            return 'arm'
+        for cls in GDBHelper.__inheritors__:
+            if hasattr(cls, 'archs') and arch in cls.archs:
+                return cls()
+        raise LookupError('No helper found for arch {}'.format(arch))
+
+
+class GDBHelper (DebuggerHelper):
+    def get_arch(self):
+        return gdb.selected_frame().architecture().name()
 
     def get_next_instruction(self):
         return self.get_disasm().split('\n')[0].split(':')[1].strip()
 
-    def get_registers(self):
-        arch = self.get_arch()
-        regs = {}
-        if arch == 'x64':
-            regs = self.get_registers_x64()
-        elif arch == 'x86':
-            regs = self.get_registers_x86()
-        elif arch == 'arm':
-            regs = self.get_registers_arm()
-        return regs
+    def get_disasm(self):
+        log.debug('Getting disasm')
+        res = gdb.execute('x/{}i ${}'.format(DISASM_MAX, self.get_pc_name()), to_string=True)
+        return res
 
-    def get_registers_x86(self):
+    def get_stack(self):
+        log.debug('Getting stack')
+        res = str(gdb.selected_inferior().read_memory(self.get_sp(), STACK_MAX*16))
+        return res
+
+    def get_backtrace(self):
+        log.debug('Getting backtrace')
+        res = gdb.execute('bt', to_string=True)
+        return res
+
+    def get_cmd_output(self, cmd=''):
+        log.debug('Getting command output: ' + cmd)
+        res = gdb.execute(cmd, to_string=True)
+        return res
+
+
+class GDBHelperX86 (GDBHelper):
+    archs = ['i386', 'i386:intel', 'i386:x64-32', 'i386:x64-32:intel', 'i8086']
+    arch_group = 'x86'
+    pc = 'eip'
+    sp = 'esp'
+
+    def get_registers(self):
         log.debug('Getting registers')
 
         # Get regular registers
@@ -71,38 +109,6 @@ class VoltronGDBCommand (VoltronCommand, gdb.Command):
 
         # Get SSE registers
         sse = self.get_registers_sse(8)
-        vals = dict(vals.items() + sse.items())
-
-        # Get FPU registers
-        fpu = self.get_registers_fpu()
-        vals = dict(vals.items() + fpu.items())
-
-        log.debug('Got registers: ' + str(vals))
-        return vals
-
-    def get_registers_x64(self):
-        log.debug('Getting registers')
-
-        # Get regular registers
-        regs = ['rax','rbx','rcx','rdx','rbp','rsp','rdi','rsi','rip','r8','r9','r10','r11','r12','r13','r14','r15',
-                'cs','ds','es','fs','gs','ss']
-        vals = {}
-        for reg in regs:
-            try:
-                vals[reg] = int(gdb.parse_and_eval('(long long)$'+reg)) & 0xFFFFFFFFFFFFFFFF
-            except:
-                log.debug('Failed getting reg: ' + reg)
-                vals[reg] = 'N/A'
-
-        # Get flags
-        try:
-            vals['rflags'] = int(gdb.execute('info reg $eflags', to_string=True).split()[1], 16)
-        except:
-            log.debug('Failed getting reg: eflags')
-            vals['rflags'] = 'N/A'
-
-        # Get SSE registers
-        sse = self.get_registers_sse(16)
         vals = dict(vals.items() + sse.items())
 
         # Get FPU registers
@@ -136,47 +142,66 @@ class VoltronGDBCommand (VoltronCommand, gdb.Command):
 
     def get_register(self, reg):
         log.debug('Getting register: ' + reg)
-        arch = self.get_arch()
-        if arch == 'x64':
-            return int(gdb.parse_and_eval('(long long)$'+reg)) & 0xFFFFFFFFFFFFFFFF
-        elif arch == 'x86':
-            return int(gdb.parse_and_eval('(long)$'+reg)) & 0xFFFFFFFF
-        elif arch == 'arm':
-            return int(gdb.parse_and_eval('(long)$'+reg)) & 0xFFFFFFFF
+        return int(gdb.parse_and_eval('(long)$'+reg)) & 0xFFFFFFFF
 
-    def get_registers_arm(self):
-        return {}
 
-    def get_disasm(self):
-        log.debug('Getting disasm')
-        pc = self.get_pc_name()
-        res = gdb.execute('x/{}i ${}'.format(DISASM_MAX, pc), to_string=True)
-        return res
+class GDBHelperX64 (GDBHelperX86):
+    archs = ['i386:x86-64', 'i386:x86-64:intel']
+    arch_group = 'x64'
+    pc = 'rip'
+    sp = 'rsp'
 
-    def get_stack(self):
-        log.debug('Getting stack')
-        arch = self.get_arch()
-        if arch == 'x64':
-            sp = self.get_register('rsp')
-        elif arch == 'x86':
-            sp = self.get_register('esp')
-        elif arch == 'arm':
-            sp = self.get_register('sp')
-        res = str(gdb.selected_inferior().read_memory(sp, STACK_MAX*16))
-        return res
+    def get_registers(self):
+        log.debug('Getting registers')
 
-    def get_backtrace(self):
-        log.debug('Getting backtrace')
-        res = gdb.execute('bt', to_string=True)
-        return res
+        # Get regular registers
+        regs = ['rax','rbx','rcx','rdx','rbp','rsp','rdi','rsi','rip','r8','r9','r10','r11','r12','r13','r14','r15',
+                'cs','ds','es','fs','gs','ss']
+        vals = {}
+        for reg in regs:
+            try:
+                vals[reg] = int(gdb.parse_and_eval('(long long)$'+reg)) & 0xFFFFFFFFFFFFFFFF
+            except:
+                log.debug('Failed getting reg: ' + reg)
+                vals[reg] = 'N/A'
 
-    def get_cmd_output(self, cmd=None):
-        if cmd:
-            log.debug('Getting command output: ' + cmd)
-            res = gdb.execute(cmd, to_string=True)
-        else:
-            res = "<No command>"
-        return res
+        # Get flags
+        try:
+            vals['rflags'] = int(gdb.execute('info reg $eflags', to_string=True).split()[1], 16)
+        except:
+            log.debug('Failed getting reg: eflags')
+            vals['rflags'] = 'N/A'
+
+        # Get SSE registers
+        sse = self.get_registers_sse(16)
+        vals = dict(vals.items() + sse.items())
+
+        # Get FPU registers
+        fpu = self.get_registers_fpu()
+        vals = dict(vals.items() + fpu.items())
+
+        log.debug('Got registers: ' + str(vals))
+        return vals
+
+    def get_register(self, reg):
+        log.debug('Getting register: ' + reg)
+        return int(gdb.parse_and_eval('(long long)$'+reg)) & 0xFFFFFFFFFFFFFFFF
+
+
+class GDBHelperARM (GDBHelper):
+    archs = ['arm', 'arm', 'armv2', 'armv2a', 'armv3', 'armv3m', 'armv4', 'armv4t', 'armv5', 'armv5t', 'armv5te']
+    arch_group = 'arm'
+    pc = 'pc'
+    sp = 'sp'
+
+    def get_registers(self):
+        log.debug('Getting registers')
+        vals = {}
+        return vals
+
+    def get_register(self, reg):
+        log.debug('Getting register: ' + reg)
+        return int(gdb.parse_and_eval('(long)$'+reg)) & 0xFFFFFFFF
 
 
 if __name__ == "__main__":
