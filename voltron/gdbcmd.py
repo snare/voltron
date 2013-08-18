@@ -5,9 +5,10 @@ import sys
 import gdb
 import logging
 
-from voltron.cmd import *
+from .cmd import *
+from .common import *
 
-log = logging.getLogger('voltron')
+log = configure_logging()
 
 class VoltronGDBCommand (VoltronCommand, gdb.Command):
     def __init__(self):
@@ -31,8 +32,6 @@ class VoltronGDBCommand (VoltronCommand, gdb.Command):
 
     def stop_handler(self, event):
         log.debug('Inferior stopped')
-        if self.helper == None:
-            self.helper = self.find_helper()
         self.update()
 
     def exit_handler(self, event):
@@ -202,10 +201,3 @@ class GDBHelperARM (GDBHelper):
     def get_register(self, reg):
         log.debug('Getting register: ' + reg)
         return int(gdb.parse_and_eval('(long)$'+reg)) & 0xFFFFFFFF
-
-
-if __name__ == "__main__":
-    log.debug('Loading GDB command')
-    print("Voltron loaded.")
-    inst = VoltronGDBCommand()
-

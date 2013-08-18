@@ -6,6 +6,10 @@ import Queue
 import time
 import pickle
 import threading
+import logging
+import logging.config
+
+from .common import *
 
 READ_MAX = 0xFFFF
 
@@ -14,7 +18,7 @@ SOCK = "/tmp/voltron.sock"
 queue = Queue.Queue()
 clients = []
 
-log = logging.getLogger('voltron')
+log = configure_logging()
 
 # Socket to register with the server and receive messages, calls view's render() method when a message comes in
 class Client (asyncore.dispatcher):
@@ -23,6 +27,9 @@ class Client (asyncore.dispatcher):
         self.view = view
         self.config = config
         self.reg_info = None
+        self.do_connect()
+
+    def do_connect(self):
         self.create_socket(socket.AF_UNIX, socket.SOCK_STREAM)
         success = False
         while not success:
@@ -30,7 +37,7 @@ class Client (asyncore.dispatcher):
                 self.connect(SOCK)
                 success = True
             except Exception as e:
-                log.error("Failed connecting to server:" + str(e))
+                self.view.render(error="Failed connecting to server:" + str(e))
                 time.sleep(1)
 
     def register(self):
@@ -54,6 +61,10 @@ class Client (asyncore.dispatcher):
                 self.view.render(msg)
         else:
             log.debug('Empty read')
+
+    def handle_close(self):
+        self.close()
+        self.do_connect()
 
     def writable(self):
         return False

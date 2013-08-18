@@ -1,14 +1,15 @@
 from __future__ import print_function
 
 import logging
+import logging.config
 from collections import defaultdict
 
-from comms import *
+from .comms import *
 
 DISASM_MAX = 32
 STACK_MAX = 64
 
-log = logging.getLogger('voltron')
+log = configure_logging()
 
 class VoltronCommand (object):
     running = False
@@ -71,9 +72,16 @@ class VoltronCommand (object):
     def update(self):
         log.debug("Updating clients")
 
+        # Make sure we have a server and helper running
+        if self.server == None:
+            self.start_server()
+        if self.helper == None:
+            self.helper = self.find_helper()
+
+        # Process updates for registered clients
+        log.debug("Processing updates")
         for client in filter(lambda c: c.registration['config']['update_on'] == 'stop', clients):
             event = {'msg_type': 'update', 'arch': self.helper.arch_group}
-
             if client.registration['config']['type'] == 'cmd':
                 event['data'] = self.helper.get_cmd_output(client.registration['config']['cmd'])
             elif client.registration['config']['type'] == 'register':
@@ -84,7 +92,8 @@ class VoltronCommand (object):
                 event['data'] = {'data': self.helper.get_stack(), 'sp': self.helper.get_sp()}
             elif client.registration['config']['type'] == 'bt':
                 event['data'] = self.helper.get_backtrace()
-                
+            
+            # Add the new event to the queue
             self.server.enqueue_event(client, event)
 
     # These methods are overridden by the debugger-specific classes

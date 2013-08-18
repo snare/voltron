@@ -2,33 +2,31 @@ from __future__ import print_function
 
 import lldb
 import logging
+import logging.config
 
-from cmd import *
-from comms import *
+from .cmd import *
+from .comms import *
+from .common import *
 
-log = logging.getLogger('voltron')
-
+log = configure_logging()
 inst = None
-
-# Called when the module is loaded into lldb and initialised
-def __lldb_init_module(debugger, dict):
-    global inst
-    log.debug('Loading LLDB command')
-    inst = VoltronLLDBCommand(debugger, dict)
-
-# Called when the command is invoked
-def lldb_invoke(debugger, command, result, dict):
-    inst.invoke(debugger, command, result, dict)
 
 class VoltronLLDBCommand (VoltronCommand):
     def __init__(self, debugger, dict):
         self.debugger = debugger
-        debugger.HandleCommand('command script add -f lldbcmd.lldb_invoke voltron')
+        debugger.HandleCommand('command script add -f dbgentry.lldb_invoke voltron')
         self.running = False
+        self.server = None
+        self.helper = None
 
     def invoke(self, debugger, command, result, dict):
         self.debugger = debugger
         self.handle_command(command)
+
+    def start(self):
+        if self.server == None:
+            self.start_server()
+        super(VoltronLLDBCommand, self).start()
 
     def register_hooks(self):
         self.debugger.HandleCommand('target stop-hook add -o \'voltron update\'')
@@ -37,14 +35,19 @@ class VoltronLLDBCommand (VoltronCommand):
         # XXX: Fix this so it only removes our stop-hook
         self.debugger.HandleCommand('target stop-hook delete')
 
-    def get_arch(self):
+    def find_helper(self):
         arch = self.debugger.GetTargetAtIndex(0).triple.split('-')[0]
-        if arch == 'x86_64':
-            return 'x64'
-        elif arch == 'i386':
-            return 'x86'
-        elif arch == 'arm':
-            return 'arm'
+        for cls in LLDBHelper.__inheritors__:
+            if hasattr(cls, 'archs') and arch in cls.archs:
+                inst = cls()
+                inst.debugger = self.debugger
+                return inst
+        raise LookupError('No helper found for arch {}'.format(arch))
+
+
+class LLDBHelper (DebuggerHelper):
+    def get_arch(self):
+        return self.debugger.GetTargetAtIndex(0).triple.split('-')[0]
 
     def get_frame(self):
         return self.debugger.GetTargetAtIndex(0).process.selected_thread.GetFrameAtIndex(0)
@@ -83,15 +86,8 @@ class VoltronLLDBCommand (VoltronCommand):
 
     def get_stack(self):
         log.debug('Getting stack')
-        arch = self.get_arch()
-        if arch == 'x64':
-            sp = self.get_register('rsp')
-        elif arch == 'x86':
-            sp = self.get_register('esp')
-        elif arch == 'arm':
-            sp = self.get_register('sp')
         error = lldb.SBError()
-        res = lldb.debugger.GetTargetAtIndex(0).process.ReadMemory(sp, STACK_MAX*16, error)
+        res = lldb.debugger.GetTargetAtIndex(0).process.ReadMemory(self.get_sp(), STACK_MAX*16, error)
         return res
 
     def get_backtrace(self):
@@ -108,3 +104,25 @@ class VoltronLLDBCommand (VoltronCommand):
         else:
             res = "<No command>"
         return res
+
+
+class LLDBHelperX86 (LLDBHelper):
+    archs = ['i386']
+    arch_group = 'x86'
+    pc = 'eip'
+    sp = 'esp'
+
+
+class LLDBHelperX64 (LLDBHelper):
+    archs = ['x86_64']
+    arch_group = 'x64'
+    pc = 'rip'
+    sp = 'rsp'
+
+
+class LLDBHelperARM (LLDBHelper):
+    archs = ['arm']
+    arch_group = 'arm'
+    pc = 'pc'
+    sp = 'sp'
+

@@ -6,6 +6,7 @@ import logging
 import cPickle as pickle
 import curses
 import pprint
+import re
 
 try:
     import pygments
@@ -17,9 +18,10 @@ except:
 
 from collections import defaultdict
 
-from comms import *
+from .comms import *
+from .common import *
 
-log = logging.getLogger('voltron')
+log = configure_logging()
 
 ADDR_FORMAT_128 = '0x{0:0=32X}'
 ADDR_FORMAT_64 = '0x{0:0=16X}'
@@ -157,7 +159,7 @@ class VoltronView (object):
 
     def run(self):
         os.system('clear')
-        log.info('Waiting for an update from the debugger')
+        self.render(error='Waiting for an update from the debugger')
         asyncore.loop()
 
     def render(self, msg=None):
@@ -295,6 +297,27 @@ class TerminalView (VoltronView):
         
         return footer
 
+    def pad_body(self):
+        height, width = self.window_size()
+
+        # Split body into lines
+        lines = self.body.split('\n')
+
+        # Subtract lines (including wrapped lines)
+        # import pdb;pdb.set_trace()
+        pad = self.body_height()
+        for line in lines:
+            line = ''.join(re.split('\033\[\d+m', line))
+            (n, rem) = divmod(len(line), width)
+            if rem > 0: n += 1
+            pad -= n
+
+        # If we have too much data for the view, too bad
+        if pad < 0:
+            pad = 0
+
+        self.body += int(pad)*'\n'
+
 
 class CursesView (VoltronView):
     def init_window(self):
@@ -317,7 +340,6 @@ class CursesView (VoltronView):
         self.screen.clear()
 
     def window_size(self):
-        # Get terminal size - this also sucks, but curses sucks more
         height, width = os.popen('stty size').read().split()
         height = int(height)
         width = int(width)
@@ -557,75 +579,78 @@ class RegisterView (TerminalView):
                 if sec not in self.config['sections']:
                     self.config['sections'].append(sec)
 
-    def render(self, msg=None):
-        # Store current message
-        self.curr_msg = msg
+    def render(self, msg=None, error=None):
+        if msg != None:
+            # Store current message
+            self.curr_msg = msg
 
-        # Build template
-        template = '\n'.join(map(lambda x: self.TEMPLATES[msg['arch']][self.config['orientation']][x], self.config['sections']))
+            # Build template
+            template = '\n'.join(map(lambda x: self.TEMPLATES[msg['arch']][self.config['orientation']][x], self.config['sections']))
 
-        # Process formatting settings
-        data = defaultdict(lambda: 'n/a')
-        data.update(msg['data']['regs'])
-        inst = msg['data']['inst']
-        formats = self.FORMAT_INFO[msg['arch']]
-        formatted = {}
-        for fmt in formats:
-            # Apply defaults where they're missing
-            fmt = dict(self.config['format_defaults'].items() + fmt.items())
+            # Process formatting settings
+            data = defaultdict(lambda: 'n/a')
+            data.update(msg['data']['regs'])
+            inst = msg['data']['inst']
+            formats = self.FORMAT_INFO[msg['arch']]
+            formatted = {}
+            for fmt in formats:
+                # Apply defaults where they're missing
+                fmt = dict(self.config['format_defaults'].items() + fmt.items())
 
-            # Format the data for each register
-            for reg in fmt['regs']:
-                # Format the label
-                label = fmt['label_format'].format(reg)
-                if fmt['label_func'] != None:
-                    formatted[reg+'l'] = eval(fmt['label_func'])(label)
-                if fmt['label_colour_en']:
-                    formatted[reg+'l'] =  self.colour(formatted[reg+'l'], fmt['label_colour'])
+                # Format the data for each register
+                for reg in fmt['regs']:
+                    # Format the label
+                    label = fmt['label_format'].format(reg)
+                    if fmt['label_func'] != None:
+                        formatted[reg+'l'] = eval(fmt['label_func'])(label)
+                    if fmt['label_colour_en']:
+                        formatted[reg+'l'] =  self.colour(formatted[reg+'l'], fmt['label_colour'])
 
-                # Format the value
-                val = data[reg]
-                if type(val) == str:
-                    temp = fmt['value_format'].format(0)
-                    if len(val) < len(temp):
-                        val += (len(temp) - len(val))*' '
-                    formatted_reg = self.colour(val, fmt['value_colour'])
-                else:
-                    colour = fmt['value_colour']
-                    if self.last_regs == None or self.last_regs != None and val != self.last_regs[reg]:
-                        colour = fmt['value_colour_mod']
-                    formatted_reg = val
-                    if fmt['value_format'] != None:
-                        formatted_reg = fmt['value_format'].format(formatted_reg)
-                    if fmt['value_func'] != None:
-                        if type(fmt['value_func']) == str:
-                            formatted_reg = eval(fmt['value_func'])(formatted_reg)
-                        else:
-                            formatted_reg = fmt['value_func'](formatted_reg)
-                    if fmt['value_colour_en']:
-                        formatted_reg = self.colour(formatted_reg, colour)
-                if fmt['format_name'] == None:
-                    formatted[reg] = formatted_reg
-                else:
-                    formatted[fmt['format_name']] = formatted_reg
+                    # Format the value
+                    val = data[reg]
+                    if type(val) == str:
+                        temp = fmt['value_format'].format(0)
+                        if len(val) < len(temp):
+                            val += (len(temp) - len(val))*' '
+                        formatted_reg = self.colour(val, fmt['value_colour'])
+                    else:
+                        colour = fmt['value_colour']
+                        if self.last_regs == None or self.last_regs != None and val != self.last_regs[reg]:
+                            colour = fmt['value_colour_mod']
+                        formatted_reg = val
+                        if fmt['value_format'] != None:
+                            formatted_reg = fmt['value_format'].format(formatted_reg)
+                        if fmt['value_func'] != None:
+                            if type(fmt['value_func']) == str:
+                                formatted_reg = eval(fmt['value_func'])(formatted_reg)
+                            else:
+                                formatted_reg = fmt['value_func'](formatted_reg)
+                        if fmt['value_colour_en']:
+                            formatted_reg = self.colour(formatted_reg, colour)
+                    if fmt['format_name'] == None:
+                        formatted[reg] = formatted_reg
+                    else:
+                        formatted[fmt['format_name']] = formatted_reg
 
-        # Prepare output
-        log.debug('Formatted: ' + str(formatted))
+            # Prepare output
+            log.debug('Formatted: ' + str(formatted))
+            self.body = template.format(**formatted)
+
+            # Store the regs
+            self.last_regs = data
+
+        # Prepare headers and footers
         height, width = self.window_size()
         self.title = '[regs:{}]'.format('|'.join(self.config['sections']))
         if len(self.title) > width:
             self.title = '[regs]'
-        self.body = template.format(**formatted)
 
-        # Pad
-        lines = self.body.split('\n')
-        pad = self.body_height() - len(lines)
-        if pad < 0:
-            pad = 0
-        self.body += pad*'\n'
+        # Set body to error message if appropriate
+        if msg == None and error != None:
+            self.body = self.colour(error, 'red')
 
-        # Store the regs
-        self.last_regs = data
+        # Pad the body
+        self.pad_body()
 
         # Call parent's render method
         super(RegisterView, self).render()
@@ -811,24 +836,29 @@ class DisasmView (TerminalView):
         VoltronView.add_generic_arguments(sp)
         sp.set_defaults(func=DisasmView)
 
-    def render(self, msg=None):
+    def render(self, msg=None, error=None):
         height, width = self.window_size()
 
-        # Get the disasm
-        disasm = msg['data']
-        disasm = '\n'.join(disasm.split('\n')[:self.body_height()])
-
-        # Pygmentize output
-        if have_pygments:
-            try:
-                lexer = pygments.lexers.get_lexer_by_name('gdb')
-                disasm = pygments.highlight(disasm, lexer, pygments.formatters.Terminal256Formatter())
-            except Exception as e:
-                log.warning('Failed to highlight disasm: ' + str(e))
-
-        # Build output
+        # Set up header & error message if applicable
         self.title = '[code]'
-        self.body = disasm.rstrip()
+        if error != None:
+            self.body = self.colour(error, 'red')
+
+        if msg != None:
+            # Get the disasm
+            disasm = msg['data']
+            disasm = '\n'.join(disasm.split('\n')[:self.body_height()])
+
+            # Pygmentize output
+            if have_pygments:
+                try:
+                    lexer = pygments.lexers.get_lexer_by_name('gdb')
+                    disasm = pygments.highlight(disasm, lexer, pygments.formatters.Terminal256Formatter())
+                except Exception as e:
+                    log.warning('Failed to highlight disasm: ' + str(e))
+
+            # Build output
+            self.body = disasm.rstrip()
 
         # Call parent's render method
         super(DisasmView, self).render()
@@ -846,24 +876,30 @@ class StackView (TerminalView):
         sp.add_argument('--bytes', '-b', action='store', type=int, help='bytes per line (default 16)', default=16)
         sp.set_defaults(func=StackView)
 
-    def render(self, msg=None):
+    def render(self, msg=None, error=None):
         height, width = self.window_size()
 
-        # Get the stack data
-        data = msg['data']
-        stack_raw = data['data']
-        sp = data['sp']
-        stack_raw = stack_raw[:(self.body_height())*self.args.bytes]
-
-        # Hexdump it
-        lines = self.hexdump(stack_raw, offset=sp, length=self.args.bytes).split('\n')
-        lines.reverse()
-        stack = '\n'.join(lines)
-
-        # Build output
+        # Set up header and error message if applicable
         self.title = "[stack]"
-        self.info = '[0x{0:0=4x}:'.format(len(stack_raw)) + ADDR_FORMAT_64.format(sp) + ']'
-        self.body = stack.strip()
+        if error != None:
+            self.body = self.colour(error, 'red')
+            self.pad_body()
+
+        if msg != None:
+            # Get the stack data
+            data = msg['data']
+            stack_raw = data['data']
+            sp = data['sp']
+            stack_raw = stack_raw[:(self.body_height())*self.args.bytes]
+
+            # Hexdump it
+            lines = self.hexdump(stack_raw, offset=sp, length=self.args.bytes).split('\n')
+            lines.reverse()
+            stack = '\n'.join(lines)
+
+            # Build output
+            self.info = '[0x{0:0=4x}:'.format(len(stack_raw)) + ADDR_FORMAT_64.format(sp) + ']'
+            self.body = stack.strip()
 
         # Call parent's render method
         super(StackView, self).render()
@@ -880,19 +916,23 @@ class BacktraceView (TerminalView):
         VoltronView.add_generic_arguments(sp)
         sp.set_defaults(func=BacktraceView)
 
-    def render(self, msg=None):
+    def render(self, msg=None, error=None):
         height, width = self.window_size()
 
-        # Get the back trace data
-        data = msg['data']
-        lines = data.split('\n')
-        pad = self.body_height() - len(lines) + 1
-        if pad < 0:
-            pad = 0
-
-        # Build output
+        # Set up header and error message if applicable
         self.title = '[backtrace]'
-        self.body = data.strip() + pad*'\n'
+        if error != None:
+            self.body = self.colour(error, 'red')
+
+        if msg != None:
+            # Get the back trace data
+            data = msg['data']
+
+            # Build output
+            self.body = data.strip()
+
+        # Pad body
+        self.pad_body()
 
         # Call parent's render method
         super(BacktraceView, self).render()
@@ -913,17 +953,22 @@ class CommandView (TerminalView):
     def setup(self):
         self.config['cmd'] = self.args.command
 
-    def render(self, msg=None):
-        # Get the command output
-        data = msg['data']
-        lines = data.split('\n')
-        pad = self.body_height() - len(lines) + 1
-        if pad < 0:
-            pad = 0
-
-        # Build output
+    def render(self, msg=None, error=None):
+        # Set up header and error message if applicable
         self.title = '[cmd:' + self.config['cmd'] + ']'
-        self.body = data.rstrip() + pad*'\n'
+        if error != None:
+            self.body = self.colour(error, 'red')
+
+        if msg != None:
+            # Get the command output
+            data = msg['data']
+            lines = data.split('\n')
+            pad = self.body_height() - len(lines) + 1
+            if pad < 0:
+                pad = 0
+
+            # Build output
+            self.body = data.rstrip() + pad*'\n'
 
         # Call parent's render method
         super(CommandView, self).render()

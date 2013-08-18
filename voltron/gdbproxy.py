@@ -4,9 +4,10 @@ import socket
 import struct
 import cPickle as pickle
 
-from comms import SOCK, READ_MAX
+from .comms import SOCK, READ_MAX
+from .common import *
 
-log = logging.getLogger('voltron')
+log = configure_logging()
 
 # This class is called from the command line by GDBv6's stop-hook. The dumped registers and stack are collected,
 # parsed and sent to the voltron standalone server, which then sends the updates out to any registered clients.
