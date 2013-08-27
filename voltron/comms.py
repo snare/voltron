@@ -36,6 +36,7 @@ class Client (asyncore.dispatcher):
             try:
                 self.connect(SOCK)
                 success = True
+                self.register()
             except Exception as e:
                 self.view.render(error="Failed connecting to server:" + str(e))
                 time.sleep(1)

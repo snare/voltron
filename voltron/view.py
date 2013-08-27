@@ -152,7 +152,6 @@ class VoltronView (object):
     def connect(self):
         try:
             self.client = Client(view=self, config=self.config)
-            self.client.register()
         except Exception as e:
             log.error('Exception connecting: ' + str(e))
             raise e
