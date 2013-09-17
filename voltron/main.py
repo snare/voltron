@@ -38,7 +38,7 @@ def main(debugger=None, dict=None):
     for cls in TerminalView.__subclasses__():
         cls.__bases__ = (base,)
 
-    # Set up a subcommand for each view class 
+    # Set up a subcommand for each view class
     for cls in base.__subclasses__():
         cls.configure_subparser(view_sp)
 
