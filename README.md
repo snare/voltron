@@ -67,9 +67,9 @@ Help
 Usage - GDBv7
 -------------
 
-1. Load **voltron** into your debugger (this could go in your `.gdbinit`). The full path will be inside the **voltron** egg. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron-0.1-py2.7.egg/voltron/gdbcmd.py*.
+1. Load **voltron** into your debugger (this could go in your `.gdbinit`). The full path will be inside the **voltron** egg. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron-0.1-py2.7.egg/dbgentry.py*.
 
-        source /path/to/voltron/gdbcmd.py
+        source /path/to/voltron/dbgentry.py
 
 2. Fire up the debugger and start the **voltron** server thread (you could also put this in your `.gdbinit`)
 
@@ -126,9 +126,9 @@ The macro file will be inside the **voltron** egg. For example, on OS X it might
 Usage - LLDB
 -------------
 
-1. Load **voltron** into your debugger (this could go in your `.lldbinit`). The full path will be inside the **voltron** egg. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron-0.1-py2.7.egg/voltron/lldbcmd.py*.
+1. Load **voltron** into your debugger (this could go in your `.lldbinit`). The full path will be inside the **voltron** egg. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron-0.1-py2.7.egg/dbgentry.py*.
 
-        command script import /path/to/voltron/lldbcmd.py
+        command script import /path/to/voltron/dbgentry.py
 
 2. Fire up the debugger and start the **voltron** server thread (you could also put this in your `.lldbinit`)
 
