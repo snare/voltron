@@ -20,7 +20,6 @@ class VoltronLLDBCommand (VoltronCommand):
         self.helper = None
 
     def invoke(self, debugger, command, result, dict):
-        self.debugger = debugger
         self.handle_command(command)
 
     def start(self):
@@ -29,31 +28,31 @@ class VoltronLLDBCommand (VoltronCommand):
         super(VoltronLLDBCommand, self).start()
 
     def register_hooks(self):
-        self.debugger.HandleCommand('target stop-hook add -o \'voltron update\'')
+        lldb.debugger.HandleCommand('target stop-hook add -o \'voltron update\'')
 
     def unregister_hooks(self):
         # XXX: Fix this so it only removes our stop-hook
-        self.debugger.HandleCommand('target stop-hook delete')
+        lldb.debugger.HandleCommand('target stop-hook delete')
 
     def find_helper(self):
-        arch = self.debugger.GetTargetAtIndex(0).triple.split('-')[0]
+        arch = lldb.debugger.GetTargetAtIndex(0).triple.split('-')[0]
         for cls in LLDBHelper.__inheritors__:
             if hasattr(cls, 'archs') and arch in cls.archs:
                 inst = cls()
-                inst.debugger = self.debugger
+                inst.debugger = lldb.debugger
                 return inst
         raise LookupError('No helper found for arch {}'.format(arch))
 
 
 class LLDBHelper (DebuggerHelper):
     def get_arch(self):
-        return self.debugger.GetTargetAtIndex(0).triple.split('-')[0]
+        return lldb.debugger.GetTargetAtIndex(0).triple.split('-')[0]
 
     def get_frame(self):
-        return self.debugger.GetTargetAtIndex(0).process.selected_thread.GetFrameAtIndex(0)
+        return lldb.debugger.GetTargetAtIndex(0).process.selected_thread.GetFrameAtIndex(0)
 
     def get_next_instruction(self):
-        target = self.debugger.GetTargetAtIndex(0)
+        target = lldb.debugger.GetTargetAtIndex(0)
         pc = lldb.SBAddress(self.get_pc(), target)
         inst = target.ReadInstructions(pc, 1)
         return str(inst).split(':')[1].strip()
@@ -61,7 +60,6 @@ class LLDBHelper (DebuggerHelper):
     def get_registers(self):
         log.debug('Getting registers')
 
-        # Get registers
         objs = self.get_frame().GetRegisters()
         objs = list(objs[0]) + list(objs[1]) + list(objs[2])
         regs = {}
@@ -99,7 +97,7 @@ class LLDBHelper (DebuggerHelper):
         if cmd:
             log.debug('Getting command output: ' + cmd)
             res = lldb.SBCommandReturnObject()
-            self.debugger.GetCommandInterpreter().HandleCommand(cmd, res)
+            lldb.debugger.GetCommandInterpreter().HandleCommand(cmd, res)
             res = res.GetOutput()
         else:
             res = "<No command>"
