@@ -92,7 +92,7 @@ class VoltronCommand (object):
                 event['data'] = {'data': self.helper.get_stack(), 'sp': self.helper.get_sp()}
             elif client.registration['config']['type'] == 'bt':
                 event['data'] = self.helper.get_backtrace()
-            
+
             # Add the new event to the queue
             self.server.enqueue_event(client, event)
 

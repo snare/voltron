@@ -113,7 +113,7 @@ class VoltronView (object):
             self.config['footer']['show'] = self.args.footer
 
         # Initialise window
-        self.init_window()        
+        self.init_window()
 
         # Setup a SIGWINCH handler so we do reasonable things on resize
         signal.signal(signal.SIGWINCH, lambda sig, stack: self.render())
@@ -277,7 +277,7 @@ class TerminalView (VoltronView):
 
         # Build header
         header = l + (width - llen - rlen)*p + r
-        
+
         return header
 
     def format_footer(self):
@@ -297,7 +297,7 @@ class TerminalView (VoltronView):
 
         # Build header and footer
         footer = l + (width - llen - rlen)*p + r
-        
+
         return footer
 
     def pad_body(self):
@@ -546,7 +546,7 @@ class RegisterView (TerminalView):
 
             },
             'vertical': {
-            
+
             }
         }
     }
@@ -865,7 +865,7 @@ class DisasmView (TerminalView):
 
         # Call parent's render method
         super(DisasmView, self).render()
-    
+
 
 class StackView (TerminalView):
     VIEW_DEFAULT_CONFIG = {
