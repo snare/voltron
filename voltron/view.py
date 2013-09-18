@@ -116,7 +116,7 @@ class VoltronView (object):
         self.init_window()
 
         # Setup a SIGWINCH handler so we do reasonable things on resize
-        signal.signal(signal.SIGWINCH, lambda sig, stack: self.render())
+        # signal.signal(signal.SIGWINCH, lambda sig, stack: self.render())
 
         # Connect to server
         self.connect()
