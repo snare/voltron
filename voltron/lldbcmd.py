@@ -66,8 +66,11 @@ class LLDBHelper (DebuggerHelper):
     def get_registers(self):
         log.debug('Getting registers')
 
-        objs = get_frame().GetRegisters()
-        objs = list(objs[0]) + list(objs[1]) + list(objs[2])
+        regs = get_frame().GetRegisters()
+        objs = []
+        for i in xrange(len(regs)):
+            objs += regs[i]
+
         regs = {}
         for reg in objs:
             val = 'n/a'
