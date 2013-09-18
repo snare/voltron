@@ -4,11 +4,13 @@ import os
 import sys
 import gdb
 import logging
+import re
 
 from .cmd import *
 from .common import *
 
 log = configure_logging()
+
 
 class VoltronGDBCommand (VoltronCommand, gdb.Command):
     def __init__(self):
@@ -45,7 +47,7 @@ class VoltronGDBCommand (VoltronCommand, gdb.Command):
             self.start_server()
 
     def find_helper(self):
-        arch = gdb.selected_frame().architecture().name()
+        arch = GDBHelper.get_arch()
         for cls in GDBHelper.__inheritors__:
             if hasattr(cls, 'archs') and arch in cls.archs:
                 return cls()
@@ -53,8 +55,12 @@ class VoltronGDBCommand (VoltronCommand, gdb.Command):
 
 
 class GDBHelper (DebuggerHelper):
-    def get_arch(self):
-        return gdb.selected_frame().architecture().name()
+    @staticmethod
+    def get_arch():
+        try:
+            return gdb.selected_frame().architecture().name()
+        except:
+            return re.search('\(currently (.*)\)', gdb.execute('show architecture', to_string=True)).groups(0)
 
     def get_next_instruction(self):
         return self.get_disasm().split('\n')[0].split(':')[1].strip()
