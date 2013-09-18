@@ -77,6 +77,8 @@ class VoltronCommand (object):
             self.start_server()
         if self.helper == None:
             self.helper = self.find_helper()
+        if not self.has_target():
+            return
 
         # Process updates for registered clients
         log.debug("Processing updates")
@@ -105,6 +107,9 @@ class VoltronCommand (object):
 
     def find_helper(self):
         pass
+
+    def has_target(self):
+        return True
 
 
 class InheritorTracker (type):
