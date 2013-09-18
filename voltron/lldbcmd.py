@@ -39,7 +39,6 @@ class VoltronLLDBCommand (VoltronCommand):
         for cls in LLDBHelper.__inheritors__:
             if hasattr(cls, 'archs') and arch in cls.archs:
                 inst = cls()
-                inst.debugger = lldb.debugger
                 return inst
         raise LookupError('No helper found for arch {}'.format(arch))
 
