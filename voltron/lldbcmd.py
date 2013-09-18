@@ -11,6 +11,10 @@ from .common import *
 log = configure_logging()
 inst = None
 
+def get_frame():
+    return lldb.debugger.GetTargetAtIndex(0).process.selected_thread.GetFrameAtIndex(0)
+
+
 class VoltronLLDBCommand (VoltronCommand):
     def __init__(self, debugger, dict):
         self.debugger = debugger
@@ -42,13 +46,16 @@ class VoltronLLDBCommand (VoltronCommand):
                 return inst
         raise LookupError('No helper found for arch {}'.format(arch))
 
+    def has_target(self):
+        # LLDB from Xcode 5+ Does this awesome thing where it doesn't mention
+        # that the registers it's returning are in no way useful.
+        # Test to see if there actually are any.
+        registers = get_frame().GetRegisters()
+        return len(registers) != 0
 
 class LLDBHelper (DebuggerHelper):
     def get_arch(self):
         return lldb.debugger.GetTargetAtIndex(0).triple.split('-')[0]
-
-    def get_frame(self):
-        return lldb.debugger.GetTargetAtIndex(0).process.selected_thread.GetFrameAtIndex(0)
 
     def get_next_instruction(self):
         target = lldb.debugger.GetTargetAtIndex(0)
@@ -59,7 +66,7 @@ class LLDBHelper (DebuggerHelper):
     def get_registers(self):
         log.debug('Getting registers')
 
-        objs = self.get_frame().GetRegisters()
+        objs = get_frame().GetRegisters()
         objs = list(objs[0]) + list(objs[1]) + list(objs[2])
         regs = {}
         for reg in objs:
