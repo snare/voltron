@@ -6,7 +6,7 @@ A half-arsed UI module for GDB & LLDB.
 
 I got sick of GDB's (lack of) UI, so I built this. fG!'s [gdbinit](https://github.com/gdbinit/Gdbinit) makes GDB slightly more bearable, and this does a similar job in a different way. **voltron** allows you to attach views running in other terminal windows to a GDB or LLDB session, resulting in a more modular and flexible UI like you get in a GUI debugger like WinDbg, Immunity Debugger, OllyDbg, etc. It's not in the same league as a proper GUI debugger, but it does make GDB more bearable.
 
-It's basically held together by sticky tape, so don't expect too much. I'm constantly developing this and pushing code out, so consider the `master` branch to be in flux and experimental at this stage.
+It's basically held together by sticky tape, so don't expect too much.
 
 [![voltron example](http://ho.ax/voltron.png)](#example)
 
