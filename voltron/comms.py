@@ -13,7 +13,14 @@ from .common import *
 
 READ_MAX = 0xFFFF
 
-SOCK = "/tmp/voltron.sock"
+def _sock():
+    if "VOLTRON_SOCKET" in os.environ:
+        return os.getenv("VOLTRON_SOCKET")
+    else:
+        d = os.path.expanduser("~/.voltron")
+        if not os.path.exists(d):
+            os.mkdir(d, 0700)
+        return os.path.join(d, "voltron.sock")
 
 queue = Queue.Queue()
 clients = []
@@ -34,7 +41,7 @@ class Client (asyncore.dispatcher):
         success = False
         while not success:
             try:
-                self.connect(SOCK)
+                self.connect(_sock())
                 success = True
                 self.register()
             except Exception as e:
@@ -113,12 +120,12 @@ class ServerThread (threading.Thread):
     def run(self):
         # Make sure there's no left over socket
         try:
-            os.remove(SOCK)
+            os.remove(_sock())
         except:
             pass
 
         # Create a server socket instance
-        serv = ServerSocket(SOCK)
+        serv = ServerSocket(_sock())
         self.lock = threading.Lock()
         self.set_should_exit(False)
 
@@ -137,7 +144,7 @@ class ServerThread (threading.Thread):
             client.close()
         serv.close()
         try:
-            os.remove(SOCK)
+            os.remove(_sock())
         except:
             pass
 
