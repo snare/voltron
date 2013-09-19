@@ -4,7 +4,7 @@ import socket
 import struct
 import cPickle as pickle
 
-from .comms import SOCK, READ_MAX
+from .comms import _sock, READ_MAX
 from .common import *
 
 log = configure_logging()
@@ -28,7 +28,7 @@ class GDB6Proxy (asyncore.dispatcher):
         if not args.debug:
             log.setLevel(logging.WARNING)
         self.create_socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.connect(SOCK)
+        self.connect(_sock())
 
     def run(self):
         asyncore.loop()
