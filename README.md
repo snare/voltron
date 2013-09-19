@@ -35,7 +35,7 @@ You should also be able to use **voltron** without installing it by changing the
 Configuration
 -------------
 
-A sample configuration file is included in the repo. Copy it to `~/.voltron` and mess with it and you should get the idea. Header and footer positions, visbility and colours are configurable along with other view-specific items (e.g. colours for labels and values in the register view).
+A sample configuration file is included in the repo. Copy it to `~/.voltron/config` and mess with it and you should get the idea. Header and footer positions, visbility and colours are configurable along with other view-specific items (e.g. colours for labels and values in the register view).
 
 In the example config at the top level, the "all_views" section sets up a base configuration to apply to all views. Each view can be configured individually overriding these settings. For example, the "stack_view" section in the example config overrides a number of these settings to reposition the title and info labels. The "register_view" section in the example config contains some settings overriding the default colours for the register view. Have a look at the source for other items in "format_defaults" that can be overridden in this section of the config.
 

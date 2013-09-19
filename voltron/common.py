@@ -21,6 +21,9 @@ LOG_CONFIG = {
     }
 }
 
+VOLTRON_DIR = '~/.voltron/'
+VOLTRON_CONFIG = VOLTRON_DIR + 'config'
+
 def configure_logging():
     logging.config.dictConfig(LOG_CONFIG)
     log = logging.getLogger('voltron')
