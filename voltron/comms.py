@@ -17,7 +17,7 @@ def _sock():
     if "VOLTRON_SOCKET" in os.environ:
         return os.getenv("VOLTRON_SOCKET")
     else:
-        d = os.path.expanduser("~/.voltron")
+        d = VOLTRON_DIR
         if not os.path.exists(d):
             os.mkdir(d, 0700)
         return os.path.join(d, "voltron.sock")
