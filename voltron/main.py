@@ -20,7 +20,7 @@ def main(debugger=None, dict=None):
     # Load config
     config = {}
     try:
-        config_data = file(os.path.expanduser(VOLTRON_CONFIG)).read()
+        config_data = file(VOLTRON_CONFIG).read()
         lines = filter(lambda x: len(x) != 0 and x[0] != '#', config_data.split('\n'))
         config = json.loads('\n'.join(lines))
     except:
