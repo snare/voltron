@@ -40,7 +40,7 @@ class VoltronLLDBCommand (VoltronCommand):
 
     def find_helper(self):
         arch = lldb.debugger.GetTargetAtIndex(0).triple.split('-')[0]
-        for cls in LLDBHelper.__inheritors__:
+        for cls in LLDBHelper.__subclasses__():
             if hasattr(cls, 'archs') and arch in cls.archs:
                 inst = cls()
                 return inst

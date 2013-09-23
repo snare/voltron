@@ -2,7 +2,10 @@ import os
 import logging
 import socket
 import asyncore
-import Queue
+try:
+    import Queue
+except:
+    import queue as Queue
 import time
 import pickle
 import threading
@@ -19,7 +22,7 @@ def _sock():
     else:
         d = VOLTRON_DIR
         if not os.path.exists(d):
-            os.mkdir(d, 0700)
+            os.mkdir(d, 448)
         return os.path.join(d, "voltron.sock")
 
 queue = Queue.Queue()
@@ -168,13 +171,14 @@ class ClientHandler (asyncore.dispatcher):
 
     def handle_read(self):
         data = self.recv(READ_MAX)
-        if data.strip() != "":
+        if len(data.strip()):
             try:
                 msg = pickle.loads(data)
                 log.debug('Received msg: ' + str(msg))
             except Exception as e:
                 log.error('Exception: ' + str(e))
-                log.error('Invalid message data: ' + data)
+                log.error('Invalid message data: ' + str(data))
+                return
 
             if msg['msg_type'] == 'register':
                 self.handle_register(msg)

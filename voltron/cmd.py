@@ -112,19 +112,7 @@ class VoltronCommand (object):
         return True
 
 
-class InheritorTracker (type):
-    def __new__(meta, name, bases, dct):
-        cls = type.__new__(meta, name, bases, dct)
-        if not hasattr(cls, '__inheritors__'):
-            cls.__inheritors__ = []
-        else:
-            cls.__inheritors__.append(cls)
-        return cls
-
-
 class DebuggerHelper (object):
-    __metaclass__ = InheritorTracker
-
     # General methods for retrieving common types of registers
     def get_pc_name(self):
         return self.pc

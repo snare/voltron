@@ -132,12 +132,12 @@ class VoltronView (object):
         merge(self.VIEW_DEFAULT_CONFIG, self.config)
 
         # Add all_views config from config file
-        if self.loaded_config.has_key('view') and self.loaded_config['view'].has_key('all_views'):
+        if 'view' in self.loaded_config and 'all_views' in self.loaded_config['view']:
             merge(self.loaded_config['view']['all_views'], self.config)
 
         # Add view-specific config from config file
         name = self.config['type']+'_view'
-        if self.loaded_config.has_key('view') and self.loaded_config['view'].has_key(name):
+        if 'view' in self.loaded_config and name in self.loaded_config['view']:
             merge(self.loaded_config['view'][name], self.config)
 
         # Add named config
@@ -601,7 +601,7 @@ class RegisterView (TerminalView):
             formatted = {}
             for fmt in formats:
                 # Apply defaults where they're missing
-                fmt = dict(self.config['format_defaults'].items() + fmt.items())
+                fmt = dict(list(self.config['format_defaults'].items()) + list(fmt.items()))
 
                 # Format the data for each register
                 for reg in fmt['regs']:
@@ -669,7 +669,7 @@ class RegisterView (TerminalView):
             reg = 'rflags'
         elif self.curr_msg['arch'] == 'x86':
             reg = 'eflags'
-        fmt = dict(self.config['format_defaults'].items() + filter(lambda x: reg in x['regs'], self.FORMAT_INFO[self.curr_msg['arch']])[0].items())
+        fmt = dict(list(self.config['format_defaults'].items()) + list(list(filter(lambda x: reg in x['regs'], self.FORMAT_INFO[self.curr_msg['arch']]))[0].items()))
 
         # Handle each flag bit
         val = int(val, 10)
@@ -981,7 +981,7 @@ class CommandView (TerminalView):
 
 
 def merge(d1, d2):
-    for k1,v1 in d1.iteritems():
+    for k1,v1 in d1.items():
         if isinstance(v1, dict) and k1 in d2.keys() and isinstance(d2[k1], dict):
             merge(v1, d2[k1])
         else:
