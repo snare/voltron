@@ -669,7 +669,7 @@ class RegisterView (TerminalView):
             reg = 'rflags'
         elif self.curr_msg['arch'] == 'x86':
             reg = 'eflags'
-        fmt = dict(self.config['format_defaults'].items() + filter(lambda x: reg in x['regs'], self.FORMAT_INFO[self.curr_msg['arch']])[0].items())
+        fmt = dict(list(self.config['format_defaults'].items()) + list(list(filter(lambda x: reg in x['regs'], self.FORMAT_INFO[self.curr_msg['arch']]))[0].items()))
 
         # Handle each flag bit
         val = int(val, 10)
