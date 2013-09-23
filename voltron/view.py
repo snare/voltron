@@ -601,7 +601,7 @@ class RegisterView (TerminalView):
             formatted = {}
             for fmt in formats:
                 # Apply defaults where they're missing
-                fmt = dict(self.config['format_defaults'].items() + fmt.items())
+                fmt = dict(list(self.config['format_defaults'].items()) + list(fmt.items()))
 
                 # Format the data for each register
                 for reg in fmt['regs']:

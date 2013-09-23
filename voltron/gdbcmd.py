@@ -114,11 +114,11 @@ class GDBHelperX86 (GDBHelper):
 
         # Get SSE registers
         sse = self.get_registers_sse(8)
-        vals = dict(vals.items() + sse.items())
+        vals = dict(list(vals.items()) + list(sse.items()))
 
         # Get FPU registers
         fpu = self.get_registers_fpu()
-        vals = dict(vals.items() + fpu.items())
+        vals = dict(list(vals.items()) + list(fpu.items()))
 
         log.debug('Got registers: ' + str(vals))
         return vals
@@ -179,11 +179,11 @@ class GDBHelperX64 (GDBHelperX86, GDBHelper):
 
         # Get SSE registers
         sse = self.get_registers_sse(16)
-        vals = dict(vals.items() + sse.items())
+        vals = dict(list(vals.items()) + list(sse.items()))
 
         # Get FPU registers
         fpu = self.get_registers_fpu()
-        vals = dict(vals.items() + fpu.items())
+        vals = dict(list(vals.items()) + list(fpu.items()))
 
         log.debug('Got registers: ' + str(vals))
         return vals
