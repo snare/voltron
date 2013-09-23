@@ -2,7 +2,10 @@ import os
 import logging
 import socket
 import asyncore
-import Queue
+try:
+    import Queue
+except:
+    import queue as Queue
 import time
 import pickle
 import threading
@@ -19,7 +22,7 @@ def _sock():
     else:
         d = VOLTRON_DIR
         if not os.path.exists(d):
-            os.mkdir(d, 0700)
+            os.mkdir(d, 448)
         return os.path.join(d, "voltron.sock")
 
 queue = Queue.Queue()
