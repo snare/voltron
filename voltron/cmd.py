@@ -34,6 +34,7 @@ class VoltronCommand (object):
         if not self.running:
             print("Starting voltron")
             self.running = True
+            self.start_server()
             self.register_hooks()
         else:
             print("Already running")
