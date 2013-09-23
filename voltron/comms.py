@@ -171,7 +171,7 @@ class ClientHandler (asyncore.dispatcher):
 
     def handle_read(self):
         data = self.recv(READ_MAX)
-        if data.strip() != "":
+        if len(data.strip()):
             try:
                 msg = pickle.loads(data)
                 log.debug('Received msg: ' + str(msg))
