@@ -177,7 +177,7 @@ class ClientHandler (asyncore.dispatcher):
                 log.debug('Received msg: ' + str(msg))
             except Exception as e:
                 log.error('Exception: ' + str(e))
-                log.error('Invalid message data: ' + data)
+                log.error('Invalid message data: ' + str(data))
 
             if msg['msg_type'] == 'register':
                 self.handle_register(msg)
