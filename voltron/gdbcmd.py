@@ -48,7 +48,7 @@ class VoltronGDBCommand (VoltronCommand, gdb.Command):
 
     def find_helper(self):
         arch = GDBHelper.get_arch()
-        for cls in GDBHelper.__inheritors__:
+        for cls in GDBHelper.__subclasses__():
             if hasattr(cls, 'archs') and arch in cls.archs:
                 return cls()
         raise LookupError('No helper found for arch {}'.format(arch))
@@ -150,7 +150,7 @@ class GDBHelperX86 (GDBHelper):
         return int(gdb.parse_and_eval('(long)$'+reg)) & 0xFFFFFFFF
 
 
-class GDBHelperX64 (GDBHelperX86):
+class GDBHelperX64 (GDBHelperX86, GDBHelper):
     archs = ['i386:x86-64', 'i386:x86-64:intel']
     arch_group = 'x64'
     pc = 'rip'
