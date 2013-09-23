@@ -29,3 +29,8 @@ def configure_logging():
     logging.config.dictConfig(LOG_CONFIG)
     log = logging.getLogger('voltron')
     return log
+
+
+# Python 3 shims
+if not hasattr(__builtins__, "xrange"):
+    xrange = range
