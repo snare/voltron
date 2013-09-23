@@ -2,7 +2,10 @@ import asyncore
 import logging
 import socket
 import struct
-import cPickle as pickle
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 
 from .comms import _sock, READ_MAX
 from .common import *
