@@ -178,6 +178,7 @@ class ClientHandler (asyncore.dispatcher):
             except Exception as e:
                 log.error('Exception: ' + str(e))
                 log.error('Invalid message data: ' + str(data))
+                return
 
             if msg['msg_type'] == 'register':
                 self.handle_register(msg)
