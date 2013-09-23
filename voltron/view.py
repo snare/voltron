@@ -132,12 +132,12 @@ class VoltronView (object):
         merge(self.VIEW_DEFAULT_CONFIG, self.config)
 
         # Add all_views config from config file
-        if self.loaded_config.has_key('view') and self.loaded_config['view'].has_key('all_views'):
+        if 'view' in self.loaded_config and 'all_views' in self.loaded_config['view']:
             merge(self.loaded_config['view']['all_views'], self.config)
 
         # Add view-specific config from config file
         name = self.config['type']+'_view'
-        if self.loaded_config.has_key('view') and self.loaded_config['view'].has_key(name):
+        if 'view' in self.loaded_config and name in self.loaded_config['view']:
             merge(self.loaded_config['view'][name], self.config)
 
         # Add named config
@@ -981,7 +981,7 @@ class CommandView (TerminalView):
 
 
 def merge(d1, d2):
-    for k1,v1 in d1.iteritems():
+    for k1,v1 in d1.items():
         if isinstance(v1, dict) and k1 in d2.keys() and isinstance(d2[k1], dict):
             merge(v1, d2[k1])
         else:
