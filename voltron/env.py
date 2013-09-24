@@ -1,6 +1,8 @@
 import os
 import json
 
+from .common import *
+
 VOLTRON_DIR = os.path.expanduser('~/.voltron/')
 VOLTRON_CONFIG = os.path.join(VOLTRON_DIR, 'config')
 
