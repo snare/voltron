@@ -5,12 +5,12 @@ import argparse
 import logging
 import logging.config
 import struct
-import json
 
 from .view import *
 from .comms import *
 from .gdbproxy import *
 from .common import *
+from .env import *
 
 log = configure_logging()
 
@@ -18,14 +18,6 @@ def main(debugger=None, dict=None):
     global log, queue, inst
 
     # Load config
-    config = {}
-    try:
-        config_data = file(VOLTRON_CONFIG).read()
-        lines = filter(lambda x: len(x) != 0 and x[0] != '#', config_data.split('\n'))
-        config = json.loads('\n'.join(lines))
-    except:
-        log.debug("No config file")
-
     # Set up command line arg parser
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', '-d', action='store_true', help='print debug logging')
@@ -34,7 +26,7 @@ def main(debugger=None, dict=None):
     view_sp = view_parser.add_subparsers(title='views', description='valid view types', help='additional help')
 
     # Update the view base class
-    base = CursesView if 'curses' in config.keys() and config['curses'] else TerminalView
+    base = CursesView if 'curses' in CONFIG.keys() and CONFIG['curses'] else TerminalView
     for cls in TerminalView.__subclasses__():
         cls.__bases__ = (base,)
 
@@ -52,7 +44,7 @@ def main(debugger=None, dict=None):
         log.setLevel(logging.DEBUG)
 
     # Instantiate and run the appropriate module
-    inst = args.func(args, loaded_config=config)
+    inst = args.func(args, loaded_config=CONFIG)
     try:
         inst.run()
     except Exception as e:
