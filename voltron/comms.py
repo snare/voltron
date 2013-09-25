@@ -13,17 +13,9 @@ import logging
 import logging.config
 
 from .common import *
+from .env import *
 
 READ_MAX = 0xFFFF
-
-def _sock():
-    if "VOLTRON_SOCKET" in os.environ:
-        return os.getenv("VOLTRON_SOCKET")
-    else:
-        d = VOLTRON_DIR
-        if not os.path.exists(d):
-            os.mkdir(d, 448)
-        return os.path.join(d, "voltron.sock")
 
 queue = Queue.Queue()
 clients = []
@@ -44,7 +36,7 @@ class Client (asyncore.dispatcher):
         success = False
         while not success:
             try:
-                self.connect(_sock())
+                self.connect(VOLTRON_SOCKET)
                 success = True
                 self.register()
             except Exception as e:
@@ -123,12 +115,12 @@ class ServerThread (threading.Thread):
     def run(self):
         # Make sure there's no left over socket
         try:
-            os.remove(_sock())
+            os.remove(VOLTRON_SOCKET)
         except:
             pass
 
         # Create a server socket instance
-        serv = ServerSocket(_sock())
+        serv = ServerSocket(VOLTRON_SOCKET)
         self.lock = threading.Lock()
         self.set_should_exit(False)
 
@@ -147,7 +139,7 @@ class ServerThread (threading.Thread):
             client.close()
         serv.close()
         try:
-            os.remove(_sock())
+            os.remove(VOLTRON_SOCKET)
         except:
             pass
 
