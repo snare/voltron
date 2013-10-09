@@ -20,6 +20,10 @@ Support
 The following architectures are supported:
 * x86
 * x86_64
+* armv7s
+* arm64
+
+ARM support is LLDB-only at this stage. armv7 will probably work as well if someone wants to test it and let me know.
 
 Installation
 ------------
