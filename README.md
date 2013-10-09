@@ -4,9 +4,11 @@ voltron
 A half-arsed UI module for GDB & LLDB. 
 --------------------------------------
 
-I got sick of GDB's (lack of) UI, so I built this. fG!'s [gdbinit](https://github.com/gdbinit/Gdbinit) makes GDB slightly more bearable, and this does a similar job in a different way. **voltron** allows you to attach views running in other terminal windows to a GDB or LLDB session, resulting in a more modular and flexible UI like you get in a GUI debugger like WinDbg, Immunity Debugger, OllyDbg, etc. It's not in the same league as a proper GUI debugger, but it does make GDB more bearable.
+Voltron is an unobtrusive debugger UI for hackers. It allows you to attach utility views running in other terminals to your debugger, displaying helpful information such as disassembly, stack contents, register values, etc, while still giving you the same GDB or LLDB CLI you're used to. You can still have your pimped out custom prompt, macros, terminal colour scheme - whatever you're used to - but you get the added bonus of a sweet customisable heads-up display.
 
-It's basically held together by sticky tape, so don't expect too much.
+This was designed primarily for tasks where source code isn't available and you want a view of the disassembly and registers at all times (e.g. reverse engineering, exploit development, other hackery).
+
+By the way, it's basically held together by sticky tape.
 
 [![voltron example](http://ho.ax/voltron.png)](#example)
 
