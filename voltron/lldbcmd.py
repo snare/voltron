@@ -75,10 +75,11 @@ class LLDBHelper (DebuggerHelper):
         for reg in objs:
             val = 'n/a'
             if reg.value != None:
-                val = int(reg.value, 16)
+                try:
+                    val = int(reg.value, 16)
+                except:
+                    val = int(reg.value)
             regs[reg.name] = val
-        for i in range(7):
-            regs['st'+str(i)] = regs['stmm'+str(i)]
 
         return regs
 
@@ -119,8 +120,14 @@ class LLDBHelperX86 (LLDBHelper):
     pc = 'eip'
     sp = 'esp'
 
+    def get_registers(self):
+        regs = super(LLDBHelperX86, self).get_registers()
+        for i in range(7):
+            regs['st'+str(i)] = regs['stmm'+str(i)]
+            return regs
 
-class LLDBHelperX64 (LLDBHelper):
+
+class LLDBHelperX64 (LLDBHelperX86, LLDBHelper):
     archs = ['x86_64']
     arch_group = 'x64'
     pc = 'rip'
@@ -133,3 +140,9 @@ class LLDBHelperARM (LLDBHelper):
     pc = 'pc'
     sp = 'sp'
 
+
+class LLDBHelperARM (LLDBHelper):
+    archs = ['arm64']
+    arch_group = 'arm64'
+    pc = 'pc'
+    sp = 'sp'
