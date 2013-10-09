@@ -462,6 +462,13 @@ class RegisterView (TerminalView):
             },
         ],
         'arm': [
+            {
+                'regs':             ['pc','sp','lr','cpsr','r0','r1','r2','r3','r4','r5','r6',
+                                    'r7','r8','r9','r10','r11','r12'],
+                'label_format':     '{0:>3s}:',
+                'value_format':     SHORT_ADDR_FORMAT_32,
+                'category':         'general',
+            }
         ]
     }
     TEMPLATES = {
@@ -546,10 +553,18 @@ class RegisterView (TerminalView):
         },
         'arm': {
             'horizontal': {
-
+                'general': (
+                    "{pcl} {pc} {spl} {sp} {lrl} {lr} {cpsrl} {cpsr}\n"
+                    "{r0l} {r0} {r1l} {r1} {r2l} {r2} {r3l} {r3} {r4l} {r4} {r5l} {r5} {r6l} {r6}\n"
+                    "{r7l} {r7} {r8l} {r8} {r9l} {r9} {r10l} {r10} {r11l} {r11} {r12l} {r12}"
+                ),
             },
             'vertical': {
-
+                'general': (
+                    "{pcl} {pc}\n{spl} {sp}\n{lrl} {lr}\n"
+                    "{r0l} {r0}\n{r1l} {r1}\n{r2l} {r2}\n{r3l} {r3}\n{r4l} {r4}\n{r5l} {r5}\n{r6l} {r6}\n{r7l} {r7}\n"
+                    "{r8l} {r8}\n{r9l} {r9}\n{r10l} {r10}\n{r11l} {r11}\n{r12l} {r12}\n{cpsrl}{cpsr}"
+                ),
             }
         }
     }

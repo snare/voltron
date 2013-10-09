@@ -78,7 +78,11 @@ class LLDBHelper (DebuggerHelper):
                 try:
                     val = int(reg.value, 16)
                 except:
-                    val = int(reg.value)
+                    try:
+                        val = int(reg.value)
+                    except Exception, e:
+                        log.debug("Exception converting register value: " + str(e))
+                        val = 0
             regs[reg.name] = val
 
         return regs
@@ -135,7 +139,7 @@ class LLDBHelperX64 (LLDBHelperX86, LLDBHelper):
 
 
 class LLDBHelperARM (LLDBHelper):
-    archs = ['arm']
+    archs = ['armv6', 'armv7', 'armv7s']
     arch_group = 'arm'
     pc = 'pc'
     sp = 'sp'
