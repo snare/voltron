@@ -310,7 +310,6 @@ class TerminalView (VoltronView):
         lines = self.body.split('\n')
 
         # Subtract lines (including wrapped lines)
-        # import pdb;pdb.set_trace()
         pad = self.body_height()
         for line in lines:
             line = ''.join(re.split('\033\[\d+m', line))
@@ -469,7 +468,17 @@ class RegisterView (TerminalView):
                 'value_format':     SHORT_ADDR_FORMAT_32,
                 'category':         'general',
             }
-        ]
+        ],
+        'arm64': [
+            {
+                'regs':             ['pc', 'sp', 'x0', 'x1', 'x2', 'x3', 'x4', 'x5', 'x6', 'x7', 'x8', 'x9', 'x10',
+                                    'x11', 'x12', 'x13', 'x14', 'x15', 'x16', 'x17', 'x18', 'x19', 'x20',
+                                    'x21', 'x22', 'x23', 'x24', 'x25', 'x26', 'x27', 'x28', 'x29', 'x30'],
+                'label_format':     '{0:3s}:',
+                'value_format':     SHORT_ADDR_FORMAT_64,
+                'category':         'general',
+            },
+        ],
     }
     TEMPLATES = {
         'x64': {
@@ -564,6 +573,28 @@ class RegisterView (TerminalView):
                     "{pcl} {pc}\n{spl} {sp}\n{lrl} {lr}\n"
                     "{r0l} {r0}\n{r1l} {r1}\n{r2l} {r2}\n{r3l} {r3}\n{r4l} {r4}\n{r5l} {r5}\n{r6l} {r6}\n{r7l} {r7}\n"
                     "{r8l} {r8}\n{r9l} {r9}\n{r10l} {r10}\n{r11l} {r11}\n{r12l} {r12}\n{cpsrl}{cpsr}"
+                ),
+            }
+        },
+        'arm64': {
+            'horizontal': {
+                'general': (
+                    "{pcl} {pc}\n{spl} {sp}\n"
+                    "{x0l} {x0}\n{x1l} {x1}\n{x2l} {x2}\n{x3l} {x3}\n{x4l} {x4}\n{x5l} {x5}\n{x6l} {x6}\n{x7l} {x7}\n"
+                    "{x8l} {x8}\n{x9l} {x9}\n{x10l} {x10}\n{x11l} {x11}\n{x12l} {x12}\n{x13l} {x13}\n{x14l} {x14}\n"
+                    "{x15l} {x15}\n{x16l} {x16}\n{x17l} {x17}\n{x18l} {x18}\n{x19l} {x19}\n{x20l} {x20}\n{x21l} {x21}\n"
+                    "{x22l} {x22}\n{x23l} {x23}\n{x24l} {x24}\n{x25l} {x25}\n{x26l} {x26}\n{x27l} {x27}\n{x28l} {x28}\n"
+                    "{x29l} {x29}\n{x30l} {x30}\n"
+                ),
+            },
+            'vertical': {
+                'general': (
+                    "{pcl} {pc}\n{spl} {sp}\n"
+                    "{x0l} {x0}\n{x1l} {x1}\n{x2l} {x2}\n{x3l} {x3}\n{x4l} {x4}\n{x5l} {x5}\n{x6l} {x6}\n{x7l} {x7}\n"
+                    "{x8l} {x8}\n{x9l} {x9}\n{x10l} {x10}\n{x11l} {x11}\n{x12l} {x12}\n{x13l} {x13}\n{x14l} {x14}\n"
+                    "{x15l} {x15}\n{x16l} {x16}\n{x17l} {x17}\n{x18l} {x18}\n{x19l} {x19}\n{x20l} {x20}\n{x21l} {x21}\n"
+                    "{x22l} {x22}\n{x23l} {x23}\n{x24l} {x24}\n{x25l} {x25}\n{x26l} {x26}\n{x27l} {x27}\n{x28l} {x28}\n"
+                    "{x29l} {x29}\n{x30l} {x30}"
                 ),
             }
         }
