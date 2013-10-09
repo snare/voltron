@@ -178,9 +178,7 @@ The `layout` option there configures the actual dimensions of the panes. You can
 Bugs
 ----
 
-If you don't `voltron stop` before you try to exit GDB the domain socket remains open, and GDB will hang. I couldn't see a hook in the python API to get a notification when GDB is about to exit. It's probably there, but I'll fix it later. Maybe.
-
-There are probably others.
+See the issues thing on github.
 
 Development
 -----------
