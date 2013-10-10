@@ -11,14 +11,12 @@ from .common import *
 log = configure_logging()
 inst = None
 
-def get_frame():
-    return lldb.debugger.GetTargetAtIndex(0).process.selected_thread.GetFrameAtIndex(0)
-
 
 class VoltronLLDBCommand (VoltronCommand):
     def __init__(self, debugger, dict):
         self.debugger = debugger
         debugger.HandleCommand('command script add -f dbgentry.lldb_invoke voltron')
+        self.base_helper = LLDBHelper
         self.running = False
         self.server = None
         self.helper = None
@@ -38,24 +36,31 @@ class VoltronLLDBCommand (VoltronCommand):
         # XXX: Fix this so it only removes our stop-hook
         lldb.debugger.HandleCommand('target stop-hook delete')
 
-    def find_helper(self):
-        arch = lldb.debugger.GetTargetAtIndex(0).triple.split('-')[0]
-        for cls in LLDBHelper.__subclasses__():
-            if hasattr(cls, 'archs') and arch in cls.archs:
-                inst = cls()
-                return inst
-        raise LookupError('No helper found for arch {}'.format(arch))
-
-    def has_target(self):
-        # LLDB from Xcode 5+ Does this awesome thing where it doesn't mention
-        # that the registers it's returning are in no way useful.
-        # Test to see if there actually are any.
-        registers = get_frame().GetRegisters()
-        return len(registers) != 0
 
 class LLDBHelper (DebuggerHelper):
+    @staticmethod
+    def has_target():
+        registers = LLDBHelper.get_frame().GetRegisters()
+        return len(registers) != 0
+
+    @staticmethod
+    def get_frame():
+        return lldb.debugger.GetTargetAtIndex(0).process.selected_thread.GetFrameAtIndex(0)
+
+    @staticmethod
     def get_arch(self):
         return lldb.debugger.GetTargetAtIndex(0).triple.split('-')[0]
+
+    @staticmethod
+    def helper():
+        if LLDBHelper.has_target():        
+            arch = lldb.debugger.GetTargetAtIndex(0).triple.split('-')[0]
+            for cls in LLDBHelper.__subclasses__():
+                if hasattr(cls, 'archs') and arch in cls.archs:
+                    inst = cls()
+                    return inst
+            raise LookupError('No helper found for arch {}'.format(arch))
+        raise LookupError('No target')
 
     def get_next_instruction(self):
         target = lldb.debugger.GetTargetAtIndex(0)
@@ -66,7 +71,7 @@ class LLDBHelper (DebuggerHelper):
     def get_registers(self):
         log.debug('Getting registers')
 
-        regs = get_frame().GetRegisters()
+        regs = LLDBHelper.get_frame().GetRegisters()
         objs = []
         for i in xrange(len(regs)):
             objs += regs[i]
@@ -145,7 +150,7 @@ class LLDBHelperARM (LLDBHelper):
     sp = 'sp'
 
 
-class LLDBHelperARM (LLDBHelper):
+class LLDBHelperARM64 (LLDBHelper):
     archs = ['arm64']
     arch_group = 'arm64'
     pc = 'pc'
