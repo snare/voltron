@@ -164,9 +164,12 @@ class VoltronView (object):
             raise e
 
     def run(self):
+        self.client.do_connect()
         os.system('clear')
         self.render(error='Waiting for an update from the debugger')
-        asyncore.loop()
+        while True:
+            self.client.read()
+
 
     def render(self, msg=None):
         log.warning('Might wanna implement render() in this view eh')
