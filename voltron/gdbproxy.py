@@ -1,4 +1,3 @@
-import asyncore
 import logging
 import socket
 import struct
@@ -7,7 +6,7 @@ try:
 except ImportError:
     import pickle
 
-from .comms import READ_MAX
+from .comms import READ_MAX, BaseSocket
 from .common import *
 from .env import *
 
@@ -16,7 +15,7 @@ log = configure_logging()
 # This class is called from the command line by GDBv6's stop-hook. The dumped registers and stack are collected,
 # parsed and sent to the voltron standalone server, which then sends the updates out to any registered clients.
 # I hate that this exists. Fuck GDBv6.
-class GDB6Proxy (asyncore.dispatcher):
+class GDB6Proxy(BaseSocket):
     REGISTERS = ['rax','rbx','rcx','rdx','rbp','rsp','rdi','rsi','rip','r8','r9','r10','r11','r12','r13','r14','r15','eflags','cs','ds','es','fs','gs','ss']
 
     @classmethod
@@ -31,11 +30,13 @@ class GDB6Proxy (asyncore.dispatcher):
         self.args = args
         if not args.debug:
             log.setLevel(logging.WARNING)
-        self.create_socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.connect(VOLTRON_SOCKET)
+        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.sock.connect(VOLTRON_SOCKET)
+        self.handle_connect()
 
     def run(self):
-        asyncore.loop()
+        while True:
+            self.handle_read()
 
     def handle_connect(self):
         if self.args.type == "reg":
@@ -81,6 +82,3 @@ class GDB6Proxy (asyncore.dispatcher):
             (rsp,) = struct.unpack('<Q', f.read())
         event = {'msg_type': 'push_update', 'update_type': 'stack', 'data': {'sp': rsp, 'data': data}}
         return event
-
-    def cleanup(self):
-        pass

@@ -91,7 +91,7 @@ class VoltronCommand (object):
 
         # Process updates for registered clients
         log.debug("Processing updates")
-        for client in filter(lambda c: c.registration['config']['update_on'] == 'stop', clients):
+        for client in filter(lambda c: c.registration['config']['update_on'] == 'stop', self.server.clients):
             event = {'msg_type': 'update', 'arch': self.helper.arch_group}
             if client.registration['config']['type'] == 'cmd':
                 event['data'] = self.helper.get_cmd_output(client.registration['config']['cmd'])
@@ -104,8 +104,10 @@ class VoltronCommand (object):
             elif client.registration['config']['type'] == 'bt':
                 event['data'] = self.helper.get_backtrace()
 
-            # Add the new event to the queue
-            self.server.enqueue_event(client, event)
+            try:
+                client.send_event(event)
+            except socket.error:
+                self.server.drop_client(client)
 
     # These methods are overridden by the debugger-specific classes
     def register_hooks(self):
