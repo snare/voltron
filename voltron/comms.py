@@ -14,6 +14,7 @@ import logging.config
 
 from .common import *
 from .env import *
+import voltron.cmd
 
 READ_MAX = 0xFFFF
 
@@ -39,8 +40,8 @@ class Client(BaseSocket):
         self.view = view
         self.config = config
         self.reg_info = None
-        self.do_connect()
         self.sock = None
+        self.do_connect()
 
     def do_connect(self):
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -60,8 +61,11 @@ class Client(BaseSocket):
         log.debug('Sending: ' + str(msg))
         self.send(pickle.dumps(msg))
 
+    def recv(self):
+        return self.sock.recv(READ_MAX)
+
     def read(self):
-        data = self.sock.recv(READ_MAX)
+        data = self.recv()
         if len(data) > 0:
             msg = None
             try:
@@ -76,6 +80,17 @@ class Client(BaseSocket):
         else:
             log.debug('Empty read')
             raise SocketDisconnected("socket closed")
+
+class InteractiveClient(Client):
+    # Registration is moot for interactive clients
+    def register(self):
+        pass
+
+    def query(self, msg):
+        self.send(pickle.dumps(msg))
+        resp = self.recv()
+        if len(resp) > 0:
+            return pickle.loads(resp)
 
 
 # Wrapper for a ServerThread to run in the context of a debugger host
@@ -197,10 +212,22 @@ class ClientHandler(BaseSocket):
                 self.handle_register(msg)
             elif msg['msg_type'] == 'push_update':
                 self.handle_push_update(msg)
+            elif msg['msg_type'] == 'interactive':
+                self.handle_interactive_query(msg)
             else:
                 log.error('Invalid message type: ' + msg['msg_type'])
         else:
             raise SocketDisconnected("socket closed")
+
+    def handle_interactive_query(self, msg):
+        helper = voltron.cmd.inst.find_helper()
+        resp = {'value': None}
+        if msg['query'] == 'get_register':
+            reg = msg['register']
+            registers = helper.get_registers()
+            if reg in registers:
+                resp['value'] = registers[reg]
+        self.send_event(resp)
 
     def handle_register(self, msg):
         log.debug('Registering client {} with config: {}'.format(self, str(msg['config'])))

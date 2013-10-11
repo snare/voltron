@@ -1,4 +1,5 @@
 import voltron
+import voltron.cmd
 import voltron.common
 try:
     import voltron.lldbcmd
@@ -18,6 +19,7 @@ if in_lldb:
     def __lldb_init_module(debugger, dict):
         log.debug("Initialising LLDB command")
         voltron.lldbcmd.inst = voltron.lldbcmd.VoltronLLDBCommand(debugger, dict)
+        voltron.cmd.inst = voltron.lldbcmd.inst
 
     # Called when the command is invoked by lldb
     def lldb_invoke(debugger, command, result, dict):
@@ -29,6 +31,7 @@ if in_gdb:
         log.debug('Initialising GDB command')
         print("Voltron loaded.")
         inst = voltron.gdbcmd.VoltronGDBCommand()
+        voltron.cmd.inst = inst
 
 if not in_lldb and not in_gdb:
     print("Something wicked this way comes")
