@@ -52,8 +52,11 @@ class Client(BaseSocket):
                 success = True
                 self.register()
             except Exception as e:
-                self.view.render(error="Failed connecting to server:" + str(e))
-                time.sleep(1)
+                if self.view:
+                    self.view.render(error="Failed connecting to server:" + str(e))
+                    time.sleep(1)
+                else:
+                    raise e
 
     def register(self):
         log.debug('Client {} registering with config: {}'.format(self, str(self.config)))
@@ -81,11 +84,7 @@ class Client(BaseSocket):
             log.debug('Empty read')
             raise SocketDisconnected("socket closed")
 
-class InteractiveClient(Client):
-    # Registration is moot for interactive clients
-    def register(self):
-        pass
-
+class InteractiveClient(Client):    
     def query(self, msg):
         self.send(pickle.dumps(msg))
         resp = self.recv()
