@@ -107,7 +107,7 @@ class VoltronCommand (object):
             try:
                 client.send_event(event)
             except socket.error:
-                self.server.drop_client(client)
+                self.server.purge_client(client)
 
     # These methods are overridden by the debugger-specific classes
     def register_hooks(self):
