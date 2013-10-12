@@ -214,7 +214,7 @@ class ClientHandler(BaseSocket):
             raise SocketDisconnected("socket closed")
 
     def handle_interactive_query(self, msg):
-        helper = voltron.cmd.inst.find_helper()
+        helper = voltron.cmd.inst.helper
         resp = {'value': None}
         if msg['query'] == 'get_register':
             reg = msg['register']
