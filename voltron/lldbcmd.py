@@ -53,7 +53,7 @@ class LLDBHelper (DebuggerHelper):
 
     @staticmethod
     def helper():
-        if LLDBHelper.has_target():        
+        if LLDBHelper.has_target():
             arch = lldb.debugger.GetTargetAtIndex(0).triple.split('-')[0]
             for cls in LLDBHelper.__subclasses__():
                 if hasattr(cls, 'archs') and arch in cls.archs:
@@ -105,6 +105,12 @@ class LLDBHelper (DebuggerHelper):
         log.debug('Getting stack')
         error = lldb.SBError()
         res = lldb.debugger.GetTargetAtIndex(0).process.ReadMemory(self.get_sp(), STACK_MAX*16, error)
+        return res
+
+    def get_memory(self, start, length):
+        log.debug('Getting %x + %d' % (start, length))
+        error = lldb.SBError()
+        res = lldb.debugger.GetTargetAtIndex(0).process.ReadMemory(start, length, error)
         return res
 
     def get_backtrace(self):
