@@ -81,6 +81,11 @@ class GDBHelper (DebuggerHelper):
         res = str(gdb.selected_inferior().read_memory(self.get_sp(), STACK_MAX*16))
         return res
 
+    def get_memory(self, start, length):
+        log.debug('Getting %x + %d' % (start, length))
+        res = str(gdb.selected_inferior().read_memory(start, length))
+        return res
+
     def get_backtrace(self):
         log.debug('Getting backtrace')
         res = gdb.execute('bt', to_string=True)
