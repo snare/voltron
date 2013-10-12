@@ -18,6 +18,7 @@ class VoltronGDBCommand (VoltronCommand, gdb.Command):
         self.running = False
         self.server = None
         self.helper = None
+        self.base_helper = GDBHelper
 
     def invoke(self, arg, from_tty):
         self.handle_command(arg)
@@ -46,21 +47,26 @@ class VoltronGDBCommand (VoltronCommand, gdb.Command):
         if self.server == None:
             self.start_server()
 
-    def find_helper(self):
-        arch = GDBHelper.get_arch()
-        for cls in GDBHelper.__subclasses__():
-            if hasattr(cls, 'archs') and arch in cls.archs:
-                return cls()
-        raise LookupError('No helper found for arch {}'.format(arch))
-
 
 class GDBHelper (DebuggerHelper):
+    @staticmethod
+    def has_target():
+        return len(gdb.inferiors()) > 0
+
     @staticmethod
     def get_arch():
         try:
             return gdb.selected_frame().architecture().name()
         except:
             return re.search('\(currently (.*)\)', gdb.execute('show architecture', to_string=True)).groups(0)
+
+    @staticmethod
+    def helper():
+        arch = GDBHelper.get_arch()
+        for cls in GDBHelper.__subclasses__():
+            if hasattr(cls, 'archs') and arch in cls.archs:
+                return cls()
+        raise LookupError('No helper found for arch {}'.format(arch))
 
     def get_next_instruction(self):
         return self.get_disasm().split('\n')[0].split(':')[1].strip()

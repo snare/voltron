@@ -4,9 +4,11 @@ voltron
 A half-arsed UI module for GDB & LLDB. 
 --------------------------------------
 
-I got sick of GDB's (lack of) UI, so I built this. fG!'s [gdbinit](https://github.com/gdbinit/Gdbinit) makes GDB slightly more bearable, and this does a similar job in a different way. **voltron** allows you to attach views running in other terminal windows to a GDB or LLDB session, resulting in a more modular and flexible UI like you get in a GUI debugger like WinDbg, Immunity Debugger, OllyDbg, etc. It's not in the same league as a proper GUI debugger, but it does make GDB more bearable.
+Voltron is an unobtrusive debugger UI for hackers. It allows you to attach utility views running in other terminals to your debugger, displaying helpful information such as disassembly, stack contents, register values, etc, while still giving you the same GDB or LLDB CLI you're used to. You can still have your pimped out custom prompt, macros, terminal colour scheme - whatever you're used to - but you get the added bonus of a sweet customisable heads-up display.
 
-It's basically held together by sticky tape, so don't expect too much.
+This was designed primarily for tasks where source code isn't available and you want a view of the disassembly and registers at all times (e.g. reverse engineering, exploit development, other hackery).
+
+By the way, it's basically held together by sticky tape.
 
 [![voltron example](http://ho.ax/voltron.png)](#example)
 
@@ -20,6 +22,10 @@ Support
 The following architectures are supported:
 * x86
 * x86_64
+* armv7s
+* arm64
+
+ARM support is LLDB-only at this stage. armv7 will probably work as well if someone wants to test it and let me know.
 
 Installation
 ------------
@@ -29,8 +35,6 @@ A standard python setup script is included.
     # python setup.py install
 
 This will install the **voltron** egg wherever that happens on your system, and an executable named `voltron` to `/usr/local/bin/`.
-
-You should also be able to use **voltron** without installing it by changing the paths used below to wherever you put the source. This won't work for the GDBv6 macros as it calls the `voltron` command without an absolute path, so you'll have to modify the macros if you don't want to install it and want to use it with GDBv6.
 
 Configuration
 -------------
@@ -178,9 +182,7 @@ The `layout` option there configures the actual dimensions of the panes. You can
 Bugs
 ----
 
-If you don't `voltron stop` before you try to exit GDB the domain socket remains open, and GDB will hang. I couldn't see a hook in the python API to get a notification when GDB is about to exit. It's probably there, but I'll fix it later. Maybe.
-
-There are probably others.
+See the issues thing on github.
 
 Development
 -----------

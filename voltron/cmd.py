@@ -18,8 +18,6 @@ class VoltronCommand (object):
     def handle_command(self, command):
         global log
         if "start" in command:
-            if 'debug' in command:
-                log.setLevel(logging.DEBUG)
             self.start()
         elif "stop" in command:
             self.stop()
@@ -27,8 +25,17 @@ class VoltronCommand (object):
             self.status()
         elif "update" in command:
             self.update()
+        elif 'debug' in command:
+            if 'enable' in command:
+                log.setLevel(logging.DEBUG)
+                print("Debug logging enabled")
+            elif 'disable' in command:
+                log.setLevel(logging.INFO)
+                print("Debug logging disabled")
+            else:
+                print("Debug logging is currently " + ("enabled" if log.getEffectiveLevel() == logging.DEBUG else "disabled"))
         else:
-            print("Usage: voltron <start|stop|update|status>")
+            print("Usage: voltron <start|stop|update|status|debug>")
 
     def start(self):
         if not self.running:
@@ -72,13 +79,15 @@ class VoltronCommand (object):
     def update(self):
         log.debug("Updating clients")
 
+        # Make sure we have a target
+        if not self.base_helper.has_target():
+            return
+
         # Make sure we have a server and helper running
         if self.server == None:
             self.start_server()
         if self.helper == None:
-            self.helper = self.find_helper()
-        if not self.has_target():
-            return
+            self.helper = self.base_helper.helper()
 
         # Process updates for registered clients
         log.debug("Processing updates")
@@ -107,11 +116,6 @@ class VoltronCommand (object):
     def unregister_hooks(self):
         pass
 
-    def find_helper(self):
-        pass
-
-    def has_target(self):
-        return True
 
 
 class DebuggerHelper (object):
