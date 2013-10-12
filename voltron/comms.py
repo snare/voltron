@@ -84,7 +84,7 @@ class Client(BaseSocket):
             log.debug('Empty read')
             raise SocketDisconnected("socket closed")
 
-class InteractiveClient(Client):    
+class InteractiveClient(Client):
     def query(self, msg):
         self.send(pickle.dumps(msg))
         resp = self.recv()
@@ -220,6 +220,16 @@ class ClientHandler(BaseSocket):
             registers = helper.get_registers()
             if reg in registers:
                 resp['value'] = registers[reg]
+        elif msg['query'] == 'get_memory':
+            try:
+                start = int(msg['start'])
+                end = int(msg['end'])
+                length = end - start
+                assert(length > 0)
+                resp['value'] = helper.get_memory(start, length)
+            except:
+                pass
+
         self.send_event(resp)
 
     def handle_register(self, msg):
