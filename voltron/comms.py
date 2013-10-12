@@ -97,15 +97,16 @@ class InteractiveClient(Client):
 class Server (object):
     def __init__(self):
         self._clients = []
+        self.exit_out, self.exit_in = os.pipe()
 
     def start(self):
         log.debug("Starting server thread")
-        self.thread = ServerThread(self._clients)
+        self.thread = ServerThread(self._clients, self.exit_out)
         self.thread.start()
 
     def stop(self):
         log.debug("Stopping server thread")
-        self.thread.set_should_exit(True)
+        os.write(self.exit_in, chr(0))
         self.thread.join(10)
 
     @property
@@ -133,8 +134,9 @@ class StandaloneServer(Server):
 # Thread spun off when the server is started to listen for incoming client connections, and send out any
 # events that have been queued by the hooks in the debugger command class
 class ServerThread(threading.Thread):
-    def __init__(self, clients):
+    def __init__(self, clients, exit_pipe):
         self.clients = clients
+        self.exit_pipe = exit_pipe
         threading.Thread.__init__(self)
 
     def run(self):
@@ -147,18 +149,20 @@ class ServerThread(threading.Thread):
         # Create a server socket instance
         serv = ServerSocket(VOLTRON_SOCKET)
         self.lock = threading.Lock()
-        self.set_should_exit(False)
 
         # Main event loop
-        while not self.should_exit():
-            _rfds = [serv] + self.clients
-            try:
-                rfds, _, _ = select.select(_rfds, [], [])
-            except Exception as e:
-                raise Exception(repr(_rfds))
+        running = True
+        while running:
+            _rfds = [serv, self.exit_pipe] + self.clients
+            rfds, _, _ = select.select(_rfds, [], [])
             for i in rfds:
                 if i == serv:
                     self.clients.append(i.accept())
+                elif i == self.exit_pipe:
+                    # Flush the pipe
+                    os.read(self.exit_pipe, 1)
+                    running = False
+                    break
                 else:
                     try:
                         i.read()
@@ -169,6 +173,7 @@ class ServerThread(threading.Thread):
         # Clean up
         for client in self.clients:
             client.close()
+        os.close(self.exit_pipe)
         serv.close()
         try:
             os.remove(VOLTRON_SOCKET)
@@ -178,17 +183,6 @@ class ServerThread(threading.Thread):
     def purge_client(self, client):
         client.close()
         self.clients.remove(client)
-
-    def should_exit(self):
-        self.lock.acquire()
-        r = self._should_exit
-        self.lock.release()
-        return r
-
-    def set_should_exit(self, should_exit):
-        self.lock.acquire()
-        self._should_exit = should_exit
-        self.lock.release()
 
 
 # Socket for talking to an individual client
