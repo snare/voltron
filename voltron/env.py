@@ -1,5 +1,6 @@
 import os
 import json
+import pkg_resources
 
 from .common import *
 
@@ -7,15 +8,29 @@ log = configure_logging()
 
 VOLTRON_DIR = os.path.expanduser('~/.voltron/')
 VOLTRON_CONFIG = os.path.join(VOLTRON_DIR, 'config')
+DEFAULT_CONFIG = 'config/default.cfg'
+
+def _parse_config(config):
+    lines = filter(lambda x: len(x) != 0 and x.strip()[0] != '#', config.split('\n'))
+    return json.loads('\n'.join(lines))
 
 def _load_config():
+    # load default config
     try:
-        config_data = file(VOLTRON_CONFIG).read()
-        lines = filter(lambda x: len(x) != 0 and x[0] != '#', config_data.split('\n'))
-        return json.loads('\n'.join(lines))
+        config = _parse_config(pkg_resources.resource_string('voltron', DEFAULT_CONFIG))
+    except Exception, e:
+        raise IOError("No default configuration found. Your package is probably broken: " + str(e))
+
+    # load local config
+    try:
+        local_config = _parse_config(file(VOLTRON_CONFIG).read())
+        config = merge(local_config, config)
     except:
-        log.debug("No config file")
-        return {}
+        raise
+        pass
+
+    # parse json
+    return config
 
 CONFIG = _load_config()
 

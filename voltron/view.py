@@ -38,50 +38,6 @@ SHORT_ADDR_FORMAT_16 = '{0:0=4X}'
 
 # Parent class for all views
 class VoltronView (object):
-    BASE_DEFAULT_CONFIG = {
-        "update_on": "stop",
-        "clear": True,
-        "header": {
-            "show":         True,
-            "pad":          " ",
-            "colour":       "blue",
-            "bg_colour":    "grey",
-            "attrs":        [],
-            "label_left": {
-                "name":         "info",
-                "colour":       "blue",
-                "bg_colour":    "grey",
-                "attrs":        []
-            },
-            "label_right": {
-                "name":         "title",
-                "colour":       "blue",
-                "bg_colour":    "grey",
-                "attrs":        ["bold"]
-            }
-        },
-        "footer": {
-            "show":         True,
-            "pad":          " ",
-            "colour":       "blue",
-            "bg_colour":    "grey",
-            "attrs":        [],
-            "label_left": {
-                "name":         None,
-                "colour":       "blue",
-                "bg_colour":    "grey",
-                "attrs":        []
-            },
-            "label_right": {
-                "name":         None,
-                "colour":       "blue",
-                "bg_colour":    "grey",
-                "attrs":        ["bold"],
-            }
-        }
-    }
-    VIEW_DEFAULT_CONFIG = {}
-
     @classmethod
     def add_generic_arguments(cls, sp):
         sp.add_argument('--show-header', '-e', dest="header", action='store_true', help='show header', default=None)
@@ -125,18 +81,12 @@ class VoltronView (object):
         self.connect()
 
     def build_config(self):
-        # Start with base defaults
-        self.config = self.BASE_DEFAULT_CONFIG
+        # Start with all_views config
+        self.config = self.loaded_config['view']['all_views']
 
-        # Add view-specific defaults
-        merge(self.VIEW_DEFAULT_CONFIG, self.config)
-
-        # Add all_views config from config file
-        if 'view' in self.loaded_config and 'all_views' in self.loaded_config['view']:
-            merge(self.loaded_config['view']['all_views'], self.config)
-
-        # Add view-specific config from config file
-        name = self.config['type']+'_view'
+        # Add view-specific config
+        self.config['type'] = self.view_type
+        name = self.view_type + '_view'
         if 'view' in self.loaded_config and name in self.loaded_config['view']:
             merge(self.loaded_config['view'][name], self.config)
 
@@ -170,8 +120,9 @@ class VoltronView (object):
         try:
             while True:
                 self.client.read()
-        except Exception:
-            if self.should_restart_on_error():
+        except SocketDisconnected, e:
+            if self.should_reconnect():
+                log.debug("Restarting process: " + str(type(e)))
                 log.debug("Restarting process")
                 self.reexec()
             else:
@@ -193,10 +144,9 @@ class VoltronView (object):
             lines.append("%s:  %-*s  |%s|\n" % (ADDR_FORMAT_64.format(offset+c), length*3, hex, printable))
         return ''.join(lines).strip()
 
-    def should_restart_on_error(self):
-        # Fallback to original behaviour
+    def should_reconnect(self):
         try:
-            return self.loaded_config['view']['restart_on_error']
+            return self.loaded_config['view']['reconnect']
         except:
             return True
 
@@ -382,23 +332,7 @@ class CursesView (VoltronView):
 
 # Class to actually render the view
 class RegisterView (TerminalView):
-    VIEW_DEFAULT_CONFIG = {
-        'type': 'register',
-        'format_defaults': {
-            'label_format':     '{0}:',
-            'label_func':       'str.upper',
-            'label_colour':     'green',
-            'label_colour_en':  True,
-            'value_format':     SHORT_ADDR_FORMAT_64,
-            'value_func':       None,
-            'value_colour':     'grey',
-            'value_colour_mod': 'red',
-            'value_colour_en':  True,
-            'format_name':      None
-        },
-        'sections': ['general'],
-        'orientation': 'vertical'
-    }
+    view_type = 'register'
     FORMAT_INFO = {
         'x64': [
             {
@@ -675,7 +609,7 @@ class RegisterView (TerminalView):
                     # Format the label
                     label = fmt['label_format'].format(reg)
                     if fmt['label_func'] != None:
-                        formatted[reg+'l'] = eval(fmt['label_func'])(label)
+                        formatted[reg+'l'] = eval(fmt['label_func'])(str(label))
                     if fmt['label_colour_en']:
                         formatted[reg+'l'] =  self.colour(formatted[reg+'l'], fmt['label_colour'])
 
@@ -899,9 +833,7 @@ class RegisterView (TerminalView):
             return val
 
 class DisasmView (TerminalView):
-    VIEW_DEFAULT_CONFIG = {
-        'type': 'disasm'
-    }
+    view_type = 'disasm'
 
     @classmethod
     def configure_subparser(cls, subparsers):
@@ -938,9 +870,7 @@ class DisasmView (TerminalView):
 
 
 class StackView (TerminalView):
-    VIEW_DEFAULT_CONFIG = {
-        'type': 'stack'
-    }
+    view_type = 'stack'
 
     @classmethod
     def configure_subparser(cls, subparsers):
@@ -979,9 +909,7 @@ class StackView (TerminalView):
 
 
 class BacktraceView (TerminalView):
-    VIEW_DEFAULT_CONFIG = {
-        'type': 'bt'
-    }
+    view_type = 'bt'
 
     @classmethod
     def configure_subparser(cls, subparsers):
@@ -1012,9 +940,7 @@ class BacktraceView (TerminalView):
 
 
 class CommandView (TerminalView):
-    VIEW_DEFAULT_CONFIG = {
-        'type': 'cmd'
-    }
+    view_type = 'cmd'
 
     @classmethod
     def configure_subparser(cls, subparsers):

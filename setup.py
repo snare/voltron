@@ -11,7 +11,9 @@ setup(
     url = "https://github.com/snarez/voltron",
     packages=['voltron'],
     install_requires = [],
-    data_files=['voltron.gdb', 'voltron.cfg', 'dbgentry.py'],
+    data_files=['voltron.gdb', 'dbgentry.py'],
+    package_data = {'voltron': ['config/*']},
+    install_package_data = True,
     entry_points = {
         'console_scripts': ['voltron = voltron:main']
     },

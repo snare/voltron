@@ -70,9 +70,9 @@ class VoltronCommand (object):
 
     def status(self):
         if self.running:
-            print("There are {} clients attached".format(len(clients)))
-            for client in clients:
-                print("{} registered with config: {}".format(client, str(client.registration['config'])))
+            print("There are {} clients attached".format(len(self.server.clients)))
+            for client in self.server.clients:
+                print("{} registered with type: {}".format(client, str(client.registration['config']['type'])))
         else:
             print("Not running")
 
