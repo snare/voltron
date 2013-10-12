@@ -51,7 +51,7 @@ Some options specified in the configuration file can also be overridden by comma
 
 So the resulting order of precedence for configuration is:
 
-1. defaults in source
+1. defaults in defaults.cfg
 2. "all_views" config
 3. view-specific config
 4. named view config
