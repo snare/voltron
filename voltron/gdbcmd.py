@@ -135,14 +135,12 @@ class GDBHelperX86 (GDBHelper):
         return vals
 
     def get_registers_sse(self, num=8):
+        # the old way of doing this randomly crashed gdb or threw a python exception
         regs = {}
-        for i in range(num):
-            reg = 'xmm'+str(i)
-            try:
-                regs[reg] = int(str(gdb.parse_and_eval('$'+reg+'.uint128')), 16) & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-            except:
-                log.debug('Failed getting reg: ' + reg)
-                regs[reg] = 'N/A'
+        for line in gdb.execute('info all-registers', to_string=True).split('\n'):
+            m = re.match('^(xmm\d+)\s.*uint128 = (0x[0-9a-f]+)\}', line)
+            if m:
+                regs[m.group(1)] = int(m.group(2), 16)
         return regs
 
     def get_registers_fpu(self):
