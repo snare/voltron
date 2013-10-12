@@ -164,9 +164,19 @@ class VoltronView (object):
             raise e
 
     def run(self):
+        self.client.do_connect()
         os.system('clear')
         self.render(error='Waiting for an update from the debugger')
-        asyncore.loop()
+        try:
+            while True:
+                self.client.read()
+        except Exception:
+            if self.should_restart_on_error():
+                log.debug("Restarting process")
+                self.reexec()
+            else:
+                raise
+
 
     def render(self, msg=None):
         log.warning('Might wanna implement render() in this view eh')
@@ -182,6 +192,17 @@ class VoltronView (object):
             printable = ''.join(["%s" % ((ord(x) <= 127 and FILTER[ord(x)]) or sep) for x in chars])
             lines.append("%s:  %-*s  |%s|\n" % (ADDR_FORMAT_64.format(offset+c), length*3, hex, printable))
         return ''.join(lines).strip()
+
+    def should_restart_on_error(self):
+        # Fallback to original behaviour
+        try:
+            return self.loaded_config['view']['restart_on_error']
+        except:
+            return True
+
+    def reexec(self):
+        # Instead of trying to reset internal state, just exec ourselves again
+        os.execv(sys.argv[0], sys.argv)
 
 
 class TerminalView (VoltronView):
