@@ -134,7 +134,7 @@ class GDBHelperX86 (GDBHelper):
         for i in range(num):
             reg = 'xmm'+str(i)
             try:
-                regs[reg] = int(str(gdb.parse_and_eval('$'+reg+'.uint128')), 16) & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                regs[reg] = int(gdb.parse_and_eval('$'+reg+'.uint128').string(), 16) & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
             except:
                 log.debug('Failed getting reg: ' + reg)
                 regs[reg] = 'N/A'
