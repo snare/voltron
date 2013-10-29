@@ -210,7 +210,14 @@ class GDBHelperARM (GDBHelper):
 
     def get_registers(self):
         log.debug('Getting registers')
+        regs = ['pc','sp','lr','cpsr','r0','r1','r2','r3','r4','r5','r6', 'r7','r8','r9','r10','r11','r12']
         vals = {}
+        for reg in regs:
+            try:
+                vals[reg] = int(gdb.parse_and_eval('(long)$'+reg)) & 0xFFFFFFFF
+            except:
+                log.debug('Failed getting reg: ' + reg)
+                vals[reg] = 'N/A'
         return vals
 
     def get_register(self, reg):
