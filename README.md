@@ -25,7 +25,7 @@ The following architectures are supported:
 * armv7s
 * arm64
 
-ARM support is LLDB-only at this stage. armv7 will probably work as well if someone wants to test it and let me know.
+arm64 support is LLDB-only at this stage.
 
 Installation
 ------------
