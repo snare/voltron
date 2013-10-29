@@ -38,3 +38,5 @@ nosetests.xml
 
 # Rope
 .ropeproject
+
+.DS_Store
