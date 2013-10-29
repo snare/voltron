@@ -1,7 +1,7 @@
 voltron
 =======
 
-A half-arsed UI module for GDB & LLDB. 
+A half-arsed UI module for GDB & LLDB.
 --------------------------------------
 
 Voltron is an unobtrusive debugger UI for hackers. It allows you to attach utility views running in other terminals to your debugger, displaying helpful information such as disassembly, stack contents, register values, etc, while still giving you the same GDB or LLDB CLI you're used to. You can still have your pimped out custom prompt, macros, terminal colour scheme - whatever you're used to - but you get the added bonus of a sweet customisable heads-up display.
@@ -88,7 +88,7 @@ Usage - GDBv7
         $ voltron view bt
         $ voltron view cmd 'x/32x $rip'
 
-4. The UI view code will attach to the server (via a domain socket) and refresh every time the debugger is stopped. So, set a break point and let the debugger hit it and everything should be updated. A forced update can be triggered with the following command: 
+4. The UI view code will attach to the server (via a domain socket) and refresh every time the debugger is stopped. So, set a break point and let the debugger hit it and everything should be updated. A forced update can be triggered with the following command:
 
         gdb$ voltron update
 
@@ -119,7 +119,7 @@ The macro file will be inside the **voltron** egg. For example, on OS X it might
         $ voltron view reg -v
         $ voltron view stack
 
-4. The UI view code will attach to the server (via a domain socket) and refresh every time the debugger is stopped. So, set a break point and let the debugger hit it and everything should be updated. A forced update can be triggered with the following command: 
+4. The UI view code will attach to the server (via a domain socket) and refresh every time the debugger is stopped. So, set a break point and let the debugger hit it and everything should be updated. A forced update can be triggered with the following command:
 
         gdb$ voltron_update
 
@@ -147,7 +147,7 @@ Usage - LLDB
         $ voltron view bt
         $ voltron view cmd 'reg read'
 
-4. The UI view code will attach to the server (via a domain socket) and refresh every time the debugger is stopped. So, set a break point and let the debugger hit it and everything should be updated. A forced update can be triggered with the following command: 
+4. The UI view code will attach to the server (via a domain socket) and refresh every time the debugger is stopped. So, set a break point and let the debugger hit it and everything should be updated. A forced update can be triggered with the following command:
 
         (lldb) voltron update
 
@@ -170,7 +170,7 @@ Here's a sample **tmuxinator** config for a layout similar to the example screen
             - voltron view disasm
             - voltron view cmd "i b"
             - gdb
-            - voltron view stack 
+            - voltron view stack
             - voltron view bt
             - voltron view reg
 
