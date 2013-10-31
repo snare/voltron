@@ -26,7 +26,6 @@ def _load_config():
         local_config = _parse_config(file(VOLTRON_CONFIG).read())
         config = merge(local_config, config)
     except:
-        raise
         pass
 
     # parse json
