@@ -17,7 +17,7 @@ I've taken a lot of inspiration from the way fG!'s `gdbinit` renders the registe
 Support
 -------
 
-**voltron** supports GDB version 7, LLDB, and has limited support for GDB version 6.
+`voltron` supports GDB version 7, LLDB, and has limited support for GDB version 6.
 
 The following architectures are supported:
 * x86
@@ -34,16 +34,16 @@ A standard python setup script is included.
 
     # python setup.py install
 
-This will install the **voltron** egg wherever that happens on your system, and an executable named `voltron` to `/usr/local/bin/`.
+This will install the `voltron` egg wherever that happens on your system, and an executable named `voltron` to `/usr/local/bin/`.
 
 Configuration
 -------------
 
 A sample configuration file is included in the repo. Copy it to `~/.voltron/config` and mess with it and you should get the idea. Header and footer positions, visbility and colours are configurable along with other view-specific items (e.g. colours for labels and values in the register view).
 
-In the example config at the top level, the "all_views" section sets up a base configuration to apply to all views. Each view can be configured individually overriding these settings. For example, the "stack_view" section in the example config overrides a number of these settings to reposition the title and info labels. The "register_view" section in the example config contains some settings overriding the default colours for the register view. Have a look at the source for other items in "format_defaults" that can be overridden in this section of the config.
+In the example config at the top level, the `all_views` section sets up a base configuration to apply to all views. Each view can be configured individually overriding these settings. For example, the `stack_view` section in the example config overrides a number of these settings to reposition the title and info labels. The `register_view` section in the example config contains some settings overriding the default colours for the register view. Have a look at the source for other items in `format_defaults` that can be overridden in this section of the config.
 
-There is also support for named view configurations for each type. The example configuration contains a config section called "some_named_stack_view", which is a modified version of the example stack view configuration. If you specify this name with the `-n` option, this named configuration will be added to the existing config for that view type:
+There is also support for named view configurations for each type. The example configuration contains a config section called `some_named_stack_view`, which is a modified version of the example stack view configuration. If you specify this name with the `-n` option, this named configuration will be added to the existing config for that view type:
 
         $ voltron stack -n "some_named_stack_view"
 
@@ -62,7 +62,7 @@ Each configuration level is added to the previous level, and only the options sp
 Help
 ----
 
-**voltron** uses the `argparse` module with subcommands, so the command line interface should be relatively familiar. Top-level help, including a list of available subcommands, will be output with `-h`. Detailed help for subcommands can be obtained the same way:
+`voltron` uses the `argparse` module with subcommands, so the command line interface should be relatively familiar. Top-level help, including a list of available subcommands, will be output with `-h`. Detailed help for subcommands can be obtained the same way:
 
     $ voltron -h
     $ voltron view -h
@@ -71,7 +71,7 @@ Help
 Usage - GDBv7
 -------------
 
-1. Add `voltron` to your `.gdbinit`. The full path will be inside the **voltron** egg. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron-0.1-py2.7.egg/dbgentry.py*. Add the following lines to your `.gdbinit` to load voltron and install its hooks:
+1. Add `voltron` to your `.gdbinit`. The full path will be inside the `voltron` egg. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron-0.1-py2.7.egg/dbgentry.py*. Add the following lines to your `.gdbinit` to load voltron and install its hooks:
 
         source /path/to/voltron/dbgentry.py
         voltron start
@@ -101,11 +101,11 @@ Usage - GDBv7
 Usage - GDBv6
 -------------
 
-**Note:** **voltron** only has limited support for GDBv6 as it's tough to get useful data out of GDB without the Python API. A set of GDB macros are included to interact with **voltron** (which in this case runs as a background process started by the `voltron_start` macro). Only the register and stack views are supported.
+**Note:** `voltron` only has limited support for GDBv6 as it's tough to get useful data out of GDB without the Python API. A set of GDB macros are included to interact with `voltron` (which in this case runs as a background process started by the `voltron_start` macro). Only the register and stack views are supported.
 
 A `hook-stop` macro is included - if you have your own custom one (e.g. fG!'s) you should just add `voltron_update` to your own and comment out the one in `voltron.gdb`.
 
-The macro file will be inside the **voltron** egg. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron-0.1-py2.7.egg/voltron.gdb*.
+The macro file will be inside the `voltron` egg. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron-0.1-py2.7.egg/voltron.gdb*.
 
 1. Add the following to your `.gdbinit` to source the `voltron` macros into GDB, and start the `voltron` server process on every GDB launch.
 
@@ -132,7 +132,7 @@ The macro file will be inside the **voltron** egg. For example, on OS X it might
 Usage - LLDB
 -------------
 
-1. Load **voltron** into your debugger (this could go in your `.lldbinit`). The full path will be inside the **voltron** egg. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron-0.1-py2.7.egg/dbgentry.py*.
+1. Load `voltron` into your debugger (this could go in your `.lldbinit`). The full path will be inside the `voltron` egg. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron-0.1-py2.7.egg/dbgentry.py*.
 
         command script import /path/to/voltron/dbgentry.py
 
