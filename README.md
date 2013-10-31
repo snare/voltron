@@ -71,14 +71,14 @@ Help
 Usage - GDBv7
 -------------
 
-1. Load **voltron** into your debugger (this could go in your `.gdbinit`). The full path will be inside the **voltron** egg. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron-0.1-py2.7.egg/dbgentry.py*.
+1. Add `voltron` to your `.gdbinit`. The full path will be inside the **voltron** egg. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron-0.1-py2.7.egg/dbgentry.py*. Add the following lines to your `.gdbinit` to load voltron and install its hooks:
 
         source /path/to/voltron/dbgentry.py
+        voltron start
 
-2. Fire up the debugger and start the **voltron** server thread (you could also put this in your `.gdbinit`)
+2. Fire up the debugger:
 
-        $ gdb whatever
-        gdb$ voltron start
+        $ gdb file_to_debug
 
 3. In another terminal (I use iTerm panes) start one of the UI views
 
@@ -88,13 +88,15 @@ Usage - GDBv7
         $ voltron view bt
         $ voltron view cmd 'x/32x $rip'
 
-4. The UI view code will attach to the server (via a domain socket) and refresh every time the debugger is stopped. So, set a break point and let the debugger hit it and everything should be updated. A forced update can be triggered with the following command:
+4. Set a breakpoint and run your inferior. Once the inferior has started, the views will be able to connect, but they won't update until the debugger hits the first breakpoint.
+
+        gdb$ b main
+        gdb$ run
+
+5. The debugger should hit the breakpoint and the `voltron` views will be updated. A forced update can be triggered with the following command:
 
         gdb$ voltron update
 
-5. Before you exit the debugger, execute the following command or GDB will hang since the domain socket will still be open.
-
-        gdb$ voltron stop
 
 Usage - GDBv6
 -------------
@@ -105,14 +107,14 @@ A `hook-stop` macro is included - if you have your own custom one (e.g. fG!'s) y
 
 The macro file will be inside the **voltron** egg. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron-0.1-py2.7.egg/voltron.gdb*.
 
-1. Load the macros into your debugger (this could go in your `.gdbinit`)
+1. Add the following to your `.gdbinit` to source the `voltron` macros into GDB, and start the `voltron` server process on every GDB launch.
 
         source /path/to/voltron.gdb
+        voltron_start
 
-2. Fire up the debugger and start the **voltron** server thread (you could also put this in your `.gdbinit`)
+2. Fire up the debugger
 
-        $ gdb whatever
-        gdb$ voltron_start
+        $ gdb file_to_debug
 
 3. In another terminal (I use iTerm panes) start one of the UI views
 
@@ -134,9 +136,9 @@ Usage - LLDB
 
         command script import /path/to/voltron/dbgentry.py
 
-2. Fire up the debugger and start the **voltron** server thread (you could also put this in your `.lldbinit`)
+2. Fire up the debugger and start the `voltron` server thread. Unfortunately, this cannot be done from `.lldbinit` as it can with `.gdbinit` as a target must be loaded before `voltron`'s hooks can be installed. Hopefully this will be remedied with a more versatile hooking mechanism in a future version of LLDB (this has been discussed with the developers).
 
-        $ lldb whatever
+        $ lldb file_to_debug
         (lldb) voltron start
 
 3. In another terminal (I use iTerm panes) start one of the UI views
@@ -147,7 +149,12 @@ Usage - LLDB
         $ voltron view bt
         $ voltron view cmd 'reg read'
 
-4. The UI view code will attach to the server (via a domain socket) and refresh every time the debugger is stopped. So, set a break point and let the debugger hit it and everything should be updated. A forced update can be triggered with the following command:
+4. Set a breakpoint and run your inferior. Once the inferior has started, the views will be able to connect, but they won't update until the debugger hits the first breakpoint.
+
+        (lldb) b main
+        (lldb) run
+
+5. The debugger should hit the breakpoint and the `voltron` views will be updated. A forced update can be triggered with the following command:
 
         (lldb) voltron update
 
@@ -194,11 +201,4 @@ If you want to add a new view type you'll just need to add a new subclass of `Te
 License
 -------
 
-This software is released under the "Buy snare a beer" license. If you use this and don't hate it, buy me a beer at a conference some time.
-
-FAQ
----
-
-Q: Dude, why don't you just use X?
-
-A: IDA's debugger doesn't work with Y, LLDB doesn't work with Z, none of the GDB UIs are any good for assembly-level debugging, and I don't use Windows.
+This software is released under the "Buy snare a beer" license. If you use this and don't hate it, buy me a beer at a conference some time. This license also extends to other contributors - richo definitely deserves a few beers for his contributions.
