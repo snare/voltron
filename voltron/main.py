@@ -11,6 +11,7 @@ from .comms import *
 from .gdbproxy import *
 from .common import *
 from .env import *
+from .console import *
 
 log = configure_logging()
 
@@ -37,6 +38,7 @@ def main(debugger=None, dict=None):
     # And subcommands for the loathsome red-headed stepchildren
     StandaloneServer.configure_subparser(top_level_sp)
     GDB6Proxy.configure_subparser(top_level_sp)
+    Console.configure_subparser(top_level_sp)
 
     # Parse args
     args = parser.parse_args()
@@ -48,7 +50,7 @@ def main(debugger=None, dict=None):
     try:
         inst.run()
     except Exception as e:
-        log.error("Exception running module {}: {}".format(inst.__class__.__name__, str(e)))
+        log.error("Exception running module {}: {}".format(inst.__class__.__name__, sys.exc_info()))
     except KeyboardInterrupt:
         pass
     inst.cleanup()

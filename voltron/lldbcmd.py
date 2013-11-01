@@ -11,7 +11,6 @@ from .common import *
 log = configure_logging()
 inst = None
 
-
 class VoltronLLDBCommand (VoltronCommand):
     def __init__(self, debugger, dict):
         self.debugger = debugger
@@ -35,6 +34,19 @@ class VoltronLLDBCommand (VoltronCommand):
     def unregister_hooks(self):
         # XXX: Fix this so it only removes our stop-hook
         lldb.debugger.HandleCommand('target stop-hook delete')
+
+
+class VoltronLLDBConsoleCommand (VoltronCommand):
+    def __init__(self):
+        self.base_helper = LLDBHelper
+        self.running = False
+        self.server = None
+        self.helper = None
+
+    def start(self):
+        if self.server == None:
+            self.start_server()
+        super(VoltronLLDBConsoleCommand, self).start()
 
 
 class LLDBHelper (DebuggerHelper):

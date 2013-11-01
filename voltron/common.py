@@ -7,10 +7,25 @@ LOG_CONFIG = {
     'formatters': {
         'standard': {'format': 'voltron: [%(levelname)s] %(message)s'}
     },
+    'filters': {
+        'debug_only': {
+            '()': 'voltron.common.DebugOnlyFilter'
+        },
+        'debug_max': {
+            '()': 'voltron.common.DebugMaxFilter'
+        }
+    },
     'handlers': {
         'default': {
             'class': 'logging.StreamHandler',
-            'formatter': 'standard'
+            'formatter': 'standard',
+            'filters': ['debug_max']
+        },
+        'debug_file': {
+            'class': 'logging.FileHandler',
+            'formatter': 'standard',
+            'filename': 'voltron.debug.' + str(os.getpid()),
+            'filters': ['debug_only']
         }
     },
     'loggers': {
@@ -22,8 +37,18 @@ LOG_CONFIG = {
     }
 }
 
+class DebugOnlyFilter(logging.Filter):
+    def filter(self, record):
+        return record.levelno == logging.DEBUG
+
+class DebugMaxFilter(logging.Filter):
+    def filter(self, record):
+        return record.levelno > logging.DEBUG
+
 def configure_logging():
     logging.config.dictConfig(LOG_CONFIG)
+    logging_inited = True
+
     log = logging.getLogger('voltron')
     return log
 

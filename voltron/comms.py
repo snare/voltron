@@ -212,7 +212,20 @@ class ClientHandler(BaseSocket):
         else:
             raise SocketDisconnected("socket closed")
 
+    def handle_register(self, msg):
+        log.debug('Registering client {} with config: {}'.format(self, str(msg['config'])))
+        self.registration = msg
+
+    def handle_push_update(self, msg):
+        log.debug('Got a push update from client {} of type {} with data: {}'.format(self, msg['update_type'], str(msg['data'])))
+        event = {'msg_type': 'update', 'data': msg['data']}
+        for client in clients:
+            if client.registration != None and client.registration['config']['type'] == msg['update_type']:
+                queue.put((client, event))
+        self.send(pickle.dumps({'msg_type': 'ack'}))
+
     def handle_interactive_query(self, msg):
+        log.debug('Got an interactive query from client {} of type {}'.format(self, msg['query']))
         helper = voltron.cmd.inst.helper
         resp = {'value': None}
         if msg['query'] == 'get_register':
@@ -231,18 +244,6 @@ class ClientHandler(BaseSocket):
                 pass
 
         self.send_event(resp)
-
-    def handle_register(self, msg):
-        log.debug('Registering client {} with config: {}'.format(self, str(msg['config'])))
-        self.registration = msg
-
-    def handle_push_update(self, msg):
-        log.debug('Got a push update from client {} of type {} with data: {}'.format(self, msg['update_type'], str(msg['data'])))
-        event = {'msg_type': 'update', 'data': msg['data']}
-        for client in clients:
-            if client.registration != None and client.registration['config']['type'] == msg['update_type']:
-                queue.put((client, event))
-        self.send(pickle.dumps({'msg_type': 'ack'}))
 
     def send_event(self, event):
         log.debug('Sending event to client {}: {}'.format(self, event))
