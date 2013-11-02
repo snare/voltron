@@ -2,9 +2,9 @@ import pdb
 import socket
 import sys
 
-# Trying to debug a quirk in some code that gets called async by {ll,d}db?
+# Trying to debug a quirk in some code that gets called async by {ll,g}db?
 #
-# from .remote_debugger import Rdb
+# from .rdb import Rdb
 # Rdb().set_trace()
 #
 # Then: telnet localhost 4444
