@@ -30,7 +30,7 @@ ESCAPES = {
     'a_reverse':    7,
     'a_concealed':  8
 }
-TEMPLATE = '\033[{}m'
+ESC_TEMPLATE = '\033[{}m'
 
 def escapes():
     return ESCAPES
@@ -39,6 +39,6 @@ def get_esc(name):
     return ESCAPES[name]
 
 def fmt_esc(name):
-    return TEMPLATE.format(escapes()[name])
+    return ESC_TEMPLATE.format(escapes()[name])
 
 FMT_ESCAPES = dict((k, fmt_esc(k)) for k in ESCAPES)

@@ -24,6 +24,7 @@ from collections import defaultdict
 
 from .comms import *
 from .common import *
+from .colour import *
 
 log = configure_logging()
 
@@ -156,37 +157,6 @@ class VoltronView (object):
 
 
 class TerminalView (VoltronView):
-    COLOURS = {
-        'grey':     30,
-        'red':      31,
-        'green':    32,
-        'yellow':   33,
-        'blue':     34,
-        'magenta':  35,
-        'cyan':     36,
-        'white':    37
-    }
-    BACKGROUND = {
-        'grey':     40,
-        'red':      41,
-        'green':    42,
-        'yellow':   43,
-        'blue':     44,
-        'magenta':  45,
-        'cyan':     46,
-        'white':    47
-    }
-    ATTRIBUTES ={
-        'bold':     1,
-        'dark':     2,
-        'underline':4,
-        'blink':    5,
-        'reverse':  7,
-        'concealed':8
-    }
-    RESET = 0
-    TEMPLATE = '\033[{}m'
-
     def init_window(self):
         # Hide cursor
         os.system('tput civis')
@@ -223,15 +193,14 @@ class TerminalView (VoltronView):
 
     def colour(self, text='', colour=None, background=None, attrs=[]):
         s = ''
-        t = self.TEMPLATE
         if colour != None:
-            s += t.format(self.COLOURS[colour])
+            s += fmt_esc(colour)
         if background != None:
-            s += t.format(self.BACKGROUND[background])
+            s += fmt_esc('b_'+background)
         if attrs != []:
-            s += ''.join(map(lambda x: t.format(self.ATTRIBUTES[x]), attrs))
+            s += ''.join(map(lambda x: fmt_esc('a_'+x), attrs))
         s += text
-        s += t.format(self.RESET)
+        s += fmt_esc('reset')
         return s
 
     def format_header(self):
