@@ -25,12 +25,12 @@ LOG_CONFIG = {
             'class': 'logging.FileHandler',
             'formatter': 'standard',
             'filename': 'voltron.debug.' + str(os.getpid()),
-            'filters': ['debug_only']
+            'delay': True
         }
     },
     'loggers': {
         'voltron': {
-            'handlers': ['default'],
+            'handlers': ['default', 'debug_file'],
             'level': 'INFO',
             'propogate': True,
         }
@@ -47,8 +47,6 @@ class DebugMaxFilter(logging.Filter):
 
 def configure_logging():
     logging.config.dictConfig(LOG_CONFIG)
-    logging_inited = True
-
     log = logging.getLogger('voltron')
     return log
 
