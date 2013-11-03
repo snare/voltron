@@ -57,6 +57,7 @@ class VoltronCommand (object):
     def start_server(self):
         if self.server == None:
             self.server = Server()
+            self.server.base_helper = self.base_helper
             self.server.start()
         else:
             log.debug("Server thread is already running")
@@ -69,48 +70,17 @@ class VoltronCommand (object):
             log.debug("Server thread is not running")
 
     def status(self):
-        if self.running:
-            if self.server != None:
-                print("There are {} clients attached".format(len(self.server.clients)))
-                for client in self.server.clients:
-                    print("{} registered with type: {}".format(client, str(client.registration['config']['type'])))
-            else:
-                print("Server is not running (no inferior)")
+        if self.server != None:
+            summs = self.server.client_summary()
+            print("There are {} clients attached:".format(len(summs)))
+            for summary in summs:
+                print(summary)
         else:
-            print("Not running")
+            print("Server is not running (no inferior)")
 
     def update(self):
         log.debug("Updating clients")
-
-        # Make sure we have a target
-        if not self.base_helper.has_target():
-            return
-
-        # Make sure we have a server and helper running
-        if self.server == None:
-            self.start_server()
-        if self.helper == None:
-            self.helper = self.base_helper.helper()
-
-        # Process updates for registered clients
-        log.debug("Processing updates")
-        for client in filter(lambda c: c.registration['config']['update_on'] == 'stop', self.server.clients):
-            event = {'msg_type': 'update', 'arch': self.helper.arch_group}
-            if client.registration['config']['type'] == 'cmd':
-                event['data'] = self.helper.get_cmd_output(client.registration['config']['cmd'])
-            elif client.registration['config']['type'] == 'register':
-                event['data'] = {'regs': self.helper.get_registers(), 'inst': self.helper.get_next_instruction()}
-            elif client.registration['config']['type'] == 'disasm':
-                event['data'] = self.helper.get_disasm()
-            elif client.registration['config']['type'] == 'stack':
-                event['data'] = {'data': self.helper.get_stack(), 'sp': self.helper.get_sp()}
-            elif client.registration['config']['type'] == 'bt':
-                event['data'] = self.helper.get_backtrace()
-
-            try:
-                client.send_event(event)
-            except socket.error:
-                self.server.purge_client(client)
+        self.server.update_clients()
 
     # These methods are overridden by the debugger-specific classes
     def register_hooks(self):

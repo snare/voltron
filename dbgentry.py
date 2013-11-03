@@ -29,9 +29,9 @@ if in_gdb:
     # Called when the module is loaded by gdb
     if __name__ == "__main__":
         log.debug('Initialising GDB command')
-        print("Voltron loaded.")
         inst = voltron.gdbcmd.VoltronGDBCommand()
         voltron.cmd.inst = inst
+        print("Voltron loaded.")
 
 if not in_lldb and not in_gdb:
     print("Something wicked this way comes")

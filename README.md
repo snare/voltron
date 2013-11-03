@@ -36,6 +36,10 @@ A standard python setup script is included.
 
 This will install the `voltron` egg wherever that happens on your system, and an executable named `voltron` to `/usr/local/bin/`.
 
+`voltron console` requires the `rl` Python module. Install it with:
+
+    $ pip install rl
+
 Configuration
 -------------
 
@@ -45,11 +49,11 @@ In the example config at the top level, the `all_views` section sets up a base c
 
 There is also support for named view configurations for each type. The example configuration contains a config section called `some_named_stack_view`, which is a modified version of the example stack view configuration. If you specify this name with the `-n` option, this named configuration will be added to the existing config for that view type:
 
-        $ voltron stack -n "some_named_stack_view"
+    $ voltron stack -n "some_named_stack_view"
 
 Some options specified in the configuration file can also be overridden by command line arguments. At this stage, just the show/hide header/footer options.
 
-So the resulting order of precedence for configuration is:
+So the resulting order of precedence for view configuration is:
 
 1. defaults in defaults.cfg
 2. "all_views" config
@@ -157,6 +161,23 @@ Usage - LLDB
 5. The debugger should hit the breakpoint and the `voltron` views will be updated. A forced update can be triggered with the following command:
 
         (lldb) voltron update
+
+LLDB console
+------------
+
+`voltron` also provides a console built on top of LLDB. At this stage it is fairly experimental and quite sparse in features, but it supports all LLDB commands by passing them through to the underlying LLDB core. Currently the only real benefit gained from using this over the standard LLDB CLI is that you don't need to `voltron start` after loading binaries, but it will provide a more flexible and extensible platform on which to build than the stock LLDB (at least until LLDB implements more a useful notification API for loaded python modules). Also you can have a way prettier prompt.
+
+The console is launched like this:
+
+    $ voltron console
+
+My console looks like this:
+
+[![voltron console example](http://i.imgur.com/A9OO2lz.png)](#consoleexample)
+
+With this configuration:
+
+[![console config](http://i.imgur.com/LVtjPV9.png)](#consoleconfig)
 
 Layout automation
 -----------------

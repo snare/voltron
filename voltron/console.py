@@ -45,11 +45,15 @@ class Console(object):
         # set up lldb command interpreter
         self.ci = self.dbg.GetCommandInterpreter()
 
+        # set up voltron server
+        self.server = Server()
+        self.server.base_helper = LLDBHelper
+        self.server.start()
+
         # set up voltron console command
         self.cmd = VoltronLLDBConsoleCommand()
-        voltron.cmd.inst = self.cmd
-        self.cmd.start()
-        self.cmd.start_server()
+        self.cmd.server = self.server
+        voltron.lldbcmd.inst = self.cmd
 
     def run(self):
         # print banner

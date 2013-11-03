@@ -5,6 +5,7 @@ import argparse
 import logging
 import logging.config
 import struct
+import traceback
 
 from .view import *
 from .comms import *
@@ -50,7 +51,7 @@ def main(debugger=None, dict=None):
     try:
         inst.run()
     except Exception as e:
-        log.error("Exception running module {}: {}".format(inst.__class__.__name__, sys.exc_info()))
+        log.error("Exception running module {}: {}".format(inst.__class__.__name__, traceback.format_exc()))
     except KeyboardInterrupt:
         pass
     inst.cleanup()

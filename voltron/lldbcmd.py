@@ -11,14 +11,15 @@ from .common import *
 log = configure_logging()
 inst = None
 
+
 class VoltronLLDBCommand (VoltronCommand):
     def __init__(self, debugger, dict):
+        super(VoltronCommand, self).__init__()
         self.debugger = debugger
-        debugger.HandleCommand('command script add -f dbgentry.lldb_invoke voltron')
-        self.base_helper = LLDBHelper
+        lldb.debugger.HandleCommand('command script add -f dbgentry.lldb_invoke voltron')
         self.running = False
         self.server = None
-        self.helper = None
+        self.base_helper = LLDBHelper
 
     def invoke(self, debugger, command, result, dict):
         self.handle_command(command)
@@ -38,15 +39,11 @@ class VoltronLLDBCommand (VoltronCommand):
 
 class VoltronLLDBConsoleCommand (VoltronCommand):
     def __init__(self):
-        self.base_helper = LLDBHelper
+        # we just add a reference to a dummy script, and intercept calls to `voltron` in the console
+        # this kinda sucks, but it'll do for now
+        lldb.debugger.HandleCommand('command script add -f xxx voltron')
         self.running = False
         self.server = None
-        self.helper = None
-
-    def start(self):
-        if self.server == None:
-            self.start_server()
-        super(VoltronLLDBConsoleCommand, self).start()
 
 
 class LLDBHelper (DebuggerHelper):
@@ -60,13 +57,13 @@ class LLDBHelper (DebuggerHelper):
         return lldb.debugger.GetTargetAtIndex(0).process.selected_thread.GetFrameAtIndex(0)
 
     @staticmethod
-    def get_arch(self):
+    def get_arch():
         return lldb.debugger.GetTargetAtIndex(0).triple.split('-')[0]
 
     @staticmethod
     def helper():
         if LLDBHelper.has_target():
-            arch = lldb.debugger.GetTargetAtIndex(0).triple.split('-')[0]
+            arch = LLDBHelper.get_arch()
             for cls in LLDBHelper.__subclasses__():
                 if hasattr(cls, 'archs') and arch in cls.archs:
                     inst = cls()
