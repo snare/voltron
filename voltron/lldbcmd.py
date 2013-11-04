@@ -137,6 +137,9 @@ class LLDBHelper (DebuggerHelper):
             res = "<No command>"
         return res
 
+    def get_current_thread(self):
+        return lldb.debugger.GetTargetAtIndex(0).process.GetSelectedThread().idx
+
 
 class LLDBHelperX86 (LLDBHelper):
     archs = ['i386']

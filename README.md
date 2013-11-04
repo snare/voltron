@@ -173,11 +173,11 @@ The console is launched like this:
 
 My console looks like this:
 
-[![voltron console example](http://i.imgur.com/A9OO2lz.png)](#consoleexample)
+[![voltron console example](http://i.imgur.com/03GRqSo.png)](#consoleexample)
 
 With this configuration:
 
-[![console config](http://i.imgur.com/LVtjPV9.png)](#consoleconfig)
+[![console config](http://i.imgur.com/AV3Me2u.png)](#consoleconfig)
 
 Layout automation
 -----------------

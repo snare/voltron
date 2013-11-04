@@ -35,7 +35,6 @@ class Console(object):
         completer.parse_and_bind('TAB: complete')
         rl.history.read_file(CONSOLE_HISTORY)
         self.lastbuf = None
-        self.prompt = self.process_prompt(self.config['prompt'])
 
         # set up debugger
         self.dbg = lldb.SBDebugger.Create()
@@ -55,6 +54,9 @@ class Console(object):
         self.cmd.server = self.server
         voltron.lldbcmd.inst = self.cmd
 
+        # set prompt
+        self.update_prompt()
+
     def run(self):
         # print banner
         self.print_banner()
@@ -73,11 +75,18 @@ class Console(object):
         d = {'version': VERSION, 'lldb_version': self.dbg.GetVersionString()}
         print(BANNER.format(**d))
 
-    def set_prompt(self, prompt):
-        self.prompt = self.escape_prompt(prompt)
+    def update_prompt(self):
+        self.prompt = self.process_prompt(self.config['prompt'])
 
     def process_prompt(self, prompt):
-        return self.escape_prompt(prompt.format(**FMT_ESCAPES))
+        d = FMT_ESCAPES
+        if self.server.helper:
+            d['pc'] = self.server.helper.get_pc()
+            d['thread'] = self.server.helper.get_current_thread()
+        else:
+            d['pc'] = 0
+            d['thread'] = '-'
+        return self.escape_prompt(prompt['format'].format(**d))
 
     def escape_prompt(self, prompt, start = "\x01", end = "\x02"):
         escaped = False
@@ -95,6 +104,7 @@ class Console(object):
 
     def pre_prompt(self):
         log.debug("updating views")
+        self.update_prompt()
         self.cmd.update()
 
     def handle_command(self, cmd):
@@ -142,5 +152,5 @@ class Console(object):
         return self.res[state]
 
     def cleanup(self):
-        self.cmd.stop_server()
+        self.server.stop()
 
