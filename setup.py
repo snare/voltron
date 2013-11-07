@@ -10,7 +10,7 @@ setup(
     keywords = "voltron gdb lldb",
     url = "https://github.com/snarez/voltron",
     packages=['voltron'],
-    install_requires = [],
+    install_requires = ['rl'],
     data_files=['voltron.gdb', 'dbgentry.py'],
     package_data = {'voltron': ['config/*']},
     install_package_data = True,
