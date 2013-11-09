@@ -12,7 +12,11 @@ from .comms import *
 from .gdbproxy import *
 from .common import *
 from .env import *
-from .console import *
+try:
+    from .console import *
+    HAS_CONSOLE = True
+except ImportError:
+    HAS_CONSOLE = False
 
 log = configure_logging()
 
@@ -39,7 +43,8 @@ def main(debugger=None, dict=None):
     # And subcommands for the loathsome red-headed stepchildren
     StandaloneServer.configure_subparser(top_level_sp)
     GDB6Proxy.configure_subparser(top_level_sp)
-    Console.configure_subparser(top_level_sp)
+    if HAS_CONSOLE:
+        Console.configure_subparser(top_level_sp)
 
     # Parse args
     args = parser.parse_args()
