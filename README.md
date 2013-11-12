@@ -179,6 +179,10 @@ With this configuration:
 
 [![console config](http://i.imgur.com/AV3Me2u.png)](#consoleconfig)
 
+To use the console you'll need the LLDB python module in your `PYTHONPATH` environment variable. On OS X with the LLDB that comes with Xcode, this would be:
+
+    PYTHONPATH=/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Resources/Python
+
 Layout automation
 -----------------
 
