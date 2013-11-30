@@ -12,7 +12,6 @@ from .common import *
 from .colour import *
 from .lldbcmd import *
 
-CONSOLE_HISTORY = os.path.join(VOLTRON_DIR, 'history')
 VERSION = 'voltron-0.1'
 BANNER = "{version} (based on {lldb_version})"
 
@@ -33,7 +32,7 @@ class Console(object):
         # set up line editor
         completer.completer = self.complete
         completer.parse_and_bind('TAB: complete')
-        rl.history.read_file(CONSOLE_HISTORY)
+        rl.history.read_file(ENV['history'])
         self.lastbuf = None
 
         # set up debugger
@@ -69,7 +68,7 @@ class Console(object):
             except EOFError:
                 break
             self.handle_command(line)
-            rl.readline.write_history_file(CONSOLE_HISTORY)
+            rl.readline.write_history_file(ENV['history'])
 
     def print_banner(self):
         d = {'version': VERSION, 'lldb_version': self.dbg.GetVersionString()}

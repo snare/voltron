@@ -59,7 +59,7 @@ class Client(BaseSocket):
         success = False
         while not success:
             try:
-                self.sock.connect(VOLTRON_SOCKET)
+                self.sock.connect(ENV['sock'])
                 success = True
                 self.register()
             except Exception as e:
@@ -230,12 +230,12 @@ class ServerThread(threading.Thread):
     def run(self):
         # Make sure there's no left over socket
         try:
-            os.remove(VOLTRON_SOCKET)
+            os.remove(ENV['sock'])
         except:
             pass
 
         # Create a server socket instance
-        serv = ServerSocket(VOLTRON_SOCKET)
+        serv = ServerSocket(ENV['sock'])
         self.lock = threading.Lock()
 
         # Main event loop
@@ -266,7 +266,7 @@ class ServerThread(threading.Thread):
         os.close(self.exit_pipe)
         serv.close()
         try:
-            os.remove(VOLTRON_SOCKET)
+            os.remove(ENV['sock'])
         except:
             pass
 

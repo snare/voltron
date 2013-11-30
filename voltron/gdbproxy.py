@@ -31,7 +31,7 @@ class GDB6Proxy(BaseSocket):
         if not args.debug:
             log.setLevel(logging.WARNING)
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.sock.connect(VOLTRON_SOCKET)
+        self.sock.connect(ENV['socket'])
         self.handle_connect()
 
     def run(self):
