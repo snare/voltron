@@ -691,7 +691,7 @@ class RegisterView (TerminalView):
             if values['c'] or values['z']:
                 j = (True, 'c || z')
             else:
-                j = (True, '!c && !z')
+                j = (False, '!c && !z')
         elif inst in ['jcxz', 'jecxz', 'jrcxz']:
             if self.get_arch() == 'x64':
                 cx = regs['rcx']
