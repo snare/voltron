@@ -14,11 +14,15 @@ ENV = Environment({
     'files': {
         'config': {
             'type':     'config',
-            'default':  {
-                'path':     'config/default.cfg',
-                'rel_to':   'pkg',
-                'pkg':      'voltron'
-            },
+            'files': [
+                { 'name': 'user',
+                  'path':     '.voltron/config',
+                  'rel_to':   'home' },
+                { 'name': 'default',
+                  'path':     'config/default.cfg',
+                  'rel_to':   'pkg',
+                  'pkg':      'voltron' },
+                ],
             'read':     True
         },
         'sock': {
