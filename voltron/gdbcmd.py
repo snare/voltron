@@ -58,7 +58,7 @@ class GDBHelper (DebuggerHelper):
         try:
             return gdb.selected_frame().architecture().name()
         except:
-            return re.search('\(currently (.*)\)', gdb.execute('show architecture', to_string=True)).groups(0)
+            return re.search('\(currently (.*)\)', gdb.execute('show architecture', to_string=True)).group(1)
 
     @staticmethod
     def helper():
