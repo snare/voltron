@@ -185,6 +185,10 @@ class Server (object):
     def handle_interactive_query(self, client, msg):
         log.debug('Got an interactive query from client {} of type {}'.format(self, msg['query']))
         resp = {'value': None}
+
+        # Make sure we have a helper
+        self.refresh_helper()
+
         if msg['query'] == 'get_register':
             reg = msg['register']
             registers = self.helper.get_registers()
