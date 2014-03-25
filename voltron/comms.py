@@ -98,12 +98,47 @@ class Client(BaseSocket):
 
 # Used by calculon
 class InteractiveClient(Client):
+
+    def __init__(self, *args, **kwargs):
+        super(InteractiveClient, self).__init__(*args, **kwargs)
+        self.pending = Queue.Queue()
+        self.callback_thread = None
+
     def query(self, msg):
         self.send(pickle.dumps(msg))
         resp = self.recv()
         if len(resp) > 0:
             return pickle.loads(resp)
 
+    def recv(self):
+        if self.callback_thread:
+            return self.pending.get()
+        else:
+            return _recv()
+
+    def _recv(self):
+        return super(InteractiveClient, self).recv()
+
+    def start_callback_thread(self, lock, callback):
+        def _():
+            while True:
+                self.recv_block(lock, callback)
+        self.callback_thread = threading.Thread(target=_)
+        self.callback_thread.daemon = True
+        self.callback_thread.start()
+
+    def recv_block(self, lock, callback):
+        msg = self._recv()
+        if 'value' in msg:
+            # Interactive message
+            self.pending.put(msg)
+        elif 'data' in msg:
+            # Event happened in the debugger
+            try:
+                lock.acquire()
+                callback(msg)
+            finally:
+                lock.release()
 
 #
 # Server-side classes
@@ -168,6 +203,9 @@ class Server (object):
                 event['data'] = {'data': self.helper.get_stack(), 'sp': self.helper.get_sp()}
             elif client.registration['config']['type'] == 'bt':
                 event['data'] = self.helper.get_backtrace()
+            elif client.registration['config']['type'] == 'interactive':
+                # TODO Work is if there's some plausible state that should be sent
+                event['data'] = None
 
             try:
                 client.send_event(event)
