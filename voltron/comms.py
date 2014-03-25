@@ -114,7 +114,7 @@ class InteractiveClient(Client):
         if self.callback_thread:
             return self.pending.get()
         else:
-            return _recv()
+            return self._recv()
 
     def _recv(self):
         return super(InteractiveClient, self).recv()
