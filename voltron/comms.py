@@ -201,6 +201,9 @@ class Server (object):
                 pass
         client.send_event(resp)
 
+    def cleanup(self):
+        pass
+
 
 # Wrapper for a ServerThread to run in standalone mode for debuggers without python support
 class StandaloneServer(Server):
@@ -210,6 +213,7 @@ class StandaloneServer(Server):
         sp.set_defaults(func=StandaloneServer)
 
     def __init__(self, args={}, loaded_config={}):
+        super(StandaloneServer, self).__init__()
         self.args = args
 
     def run(self):
