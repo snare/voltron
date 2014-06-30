@@ -94,7 +94,7 @@ class LLDBHelper (DebuggerHelper):
                 except:
                     try:
                         val = int(reg.value)
-                    except Exception, e:
+                    except Exception as e:
                         log.debug("Exception converting register value: " + str(e))
                         val = 0
             regs[reg.name] = val

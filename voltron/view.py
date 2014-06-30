@@ -121,7 +121,7 @@ class VoltronView (object):
         try:
             while True:
                 self.client.read()
-        except SocketDisconnected, e:
+        except SocketDisconnected as e:
             if self.should_reconnect():
                 log.debug("Restarting process: " + str(type(e)))
                 log.debug("Restarting process")

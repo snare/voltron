@@ -9,7 +9,7 @@ ENV = Environment({
     'dir':  {
         'path': '~/.voltron',
         'create': True,
-        'mode': 0700
+        'mode': 448 # 0700
     },
     'files': {
         'config': {
