@@ -1,8 +1,11 @@
+import logging
+
 import voltron
 from voltron.api import *
 
 from scruffy.plugin import Plugin
 
+log = logging.getLogger('api')
 
 class APIExecuteCommandRequest(APIRequest):
     """

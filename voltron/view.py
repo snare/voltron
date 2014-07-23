@@ -19,7 +19,6 @@ except:
 from collections import defaultdict
 
 from .core import *
-from .common import *
 from .colour import *
 
 log = logging.getLogger("view")

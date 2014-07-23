@@ -30,7 +30,6 @@ class APIStateRequest(APIRequest):
             state = self.debugger.state(target_id=self.target_id)
             log.debug("Got state from debugger: {}".format(state))
             res = APIStateResponse()
-            res.status = "success"
             res.state = state
         except TargetBusyException:
             res = APITargetBusyErrorResponse()

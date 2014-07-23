@@ -3,7 +3,7 @@ import logging
 
 from voltron.api import *
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('api')
 
 
 class APIReadRegistersRequest(APIRequest):

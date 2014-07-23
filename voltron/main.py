@@ -8,7 +8,6 @@ import logging.config
 import voltron
 from .view import *
 from .core import *
-from .common import *
 try:
     from .console import *
     HAS_CONSOLE = True

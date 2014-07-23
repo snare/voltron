@@ -133,11 +133,13 @@ if HAVE_LLDB:
             avoid API locking related errors with LLDB
             """
             def inner(self, *args, **kwargs):
-                print("locking host")
                 self.host_lock.acquire()
-                res = func(self, *args, **kwargs)
-                self.host_lock.release()
-                print("unlocking host")
+                try:
+                    res = func(self, *args, **kwargs)
+                    self.host_lock.release()
+                except Exception, e:
+                    self.host_lock.release()
+                    raise e
                 return res
             return inner
 
@@ -208,6 +210,7 @@ if HAVE_LLDB:
 
             return d
 
+        @lock_host
         def target(self, target_id=0):
             """
             Return information about the specified target.
@@ -216,6 +219,7 @@ if HAVE_LLDB:
             """
             return self._target(target_id=target_id)
 
+        @lock_host
         def targets(self, target_ids=None):
             """
             Return information about the debugger's current targets.
@@ -248,6 +252,7 @@ if HAVE_LLDB:
             return targets
 
         @validate_target
+        @lock_host
         def state(self, target_id=0):
             """
             Get the state of a given target.
@@ -261,6 +266,7 @@ if HAVE_LLDB:
 
         @validate_busy
         @validate_target
+        @lock_host
         def read_registers(self, target_id=0, thread_id=None):
             """
             Get the register values for a given target/thread.
@@ -301,6 +307,7 @@ if HAVE_LLDB:
 
         @validate_busy
         @validate_target
+        @lock_host
         def read_stack_pointer(self, target_id=0, thread_id=None):
             """
             Get the value of the stack pointer register.
@@ -323,6 +330,7 @@ if HAVE_LLDB:
 
         @validate_busy
         @validate_target
+        @lock_host
         def read_program_counter(self, target_id=0, thread_id=None):
             """
             Get the value of the program counter register.
@@ -345,6 +353,7 @@ if HAVE_LLDB:
 
         @validate_busy
         @validate_target
+        @lock_host
         def read_memory(self, address, length, target_id=0):
             """
             Get the register values for .
@@ -369,6 +378,7 @@ if HAVE_LLDB:
 
         @validate_busy
         @validate_target
+        @lock_host
         def read_stack(self, length, target_id=0, thread_id=None):
             """
             Get the register values for .
@@ -387,6 +397,7 @@ if HAVE_LLDB:
 
         @validate_busy
         @validate_target
+        @lock_host
         def disassemble(self, target_id=0, address=None, count=None):
             """
             Get a disassembly of the instructions at the given address.
@@ -405,6 +416,7 @@ if HAVE_LLDB:
 
             return output
 
+        @lock_host
         def execute_command(self, command=None):
             """
             Execute a command in the debugger.

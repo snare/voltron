@@ -13,7 +13,6 @@ from collections import defaultdict
 from scruffy.plugin import Plugin
 
 import voltron
-from .common import *
 from .plugin import PluginManager, APIPlugin
 
 log = logging.getLogger('api')

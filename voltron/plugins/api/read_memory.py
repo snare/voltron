@@ -4,7 +4,7 @@ import base64
 
 from voltron.api import *
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('api')
 
 
 class APIReadMemoryRequest(APIRequest):

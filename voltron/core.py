@@ -8,7 +8,6 @@ import logging.config
 import json
 
 import voltron
-from .common import *
 from .api import *
 from .plugin import PluginManager
 
@@ -33,10 +32,6 @@ class Server(object):
             self.plugin_mgr = plugin_mgr
         else:
             self.plugin_mgr = PluginManager()
-
-        # prepare an APIDispatcher
-        # self.dispatcher = APIDispatcher(is_server=True, debugger=debugger, plugin_mgr=plugin_mgr)
-        # self.debugger = self.dispatcher.debugger
 
     def start(self):
         # spin off a server thread

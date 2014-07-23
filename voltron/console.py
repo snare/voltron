@@ -9,7 +9,6 @@ import logging
 from rl import completer, generator, completion
 
 from .core import *
-from .common import *
 from .colour import *
 
 VERSION = 'voltron-0.1'
