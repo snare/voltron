@@ -227,3 +227,8 @@ License
 -------
 
 This software is released under the "Buy snare a beer" license. If you use this and don't hate it, buy me a beer at a conference some time. This license also extends to other contributors - richo definitely deserves a few beers for his contributions.
+
+Credits
+-------
+
+Big thanks to Richo Healy for all his contributions to Voltron, and a big thanks to my employer, Azimuth Security, for some of the time I spend on building stuff like this.

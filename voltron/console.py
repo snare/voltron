@@ -5,17 +5,17 @@ import os
 import sys
 import lldb
 import rl
+import logging
 from rl import completer, generator, completion
 
-from .comms import *
+from .core import *
 from .common import *
 from .colour import *
-from .lldbcmd import *
 
 VERSION = 'voltron-0.1'
 BANNER = "{version} (based on {lldb_version})"
 
-log = configure_logging()
+log = logging.getLogger(__name__)
 
 class Console(object):
     @classmethod
@@ -32,26 +32,28 @@ class Console(object):
         # set up line editor
         completer.completer = self.complete
         completer.parse_and_bind('TAB: complete')
-        rl.history.read_file(ENV['history'])
+        rl.history.read_file(voltron.env['history'])
         self.lastbuf = None
 
+        # set up plugin manager
+        self.pm = PluginManager()
+
         # set up debugger
-        self.dbg = lldb.SBDebugger.Create()
-        self.dbg.SetAsync(False)
-        lldb.debugger = self.dbg
+        plugin = self.pm.debugger_plugin_for_host('lldb')
+        self.adaptor = plugin.adaptor_class()
+        self.dbg = self.adaptor.host
 
         # set up lldb command interpreter
-        self.ci = self.dbg.GetCommandInterpreter()
+        self.ci = self.adaptor.host.GetCommandInterpreter()
 
         # set up voltron server
-        self.server = Server()
-        self.server.base_helper = LLDBHelper
+        self.server = Server(debugger=self.adaptor)
         self.server.start()
 
         # set up voltron console command
-        self.cmd = VoltronLLDBConsoleCommand()
-        self.cmd.server = self.server
-        voltron.lldbcmd.inst = self.cmd
+        # self.cmd = VoltronLLDBConsoleCommand()
+        # self.cmd.server = self.server
+        # voltron.lldbcmd.inst = self.cmd
 
         # set prompt
         self.update_prompt()
@@ -68,7 +70,7 @@ class Console(object):
             except EOFError:
                 break
             self.handle_command(line)
-            rl.readline.write_history_file(ENV['history'])
+            rl.readline.write_history_file(voltron.env['history'])
 
     def print_banner(self):
         d = {'version': VERSION, 'lldb_version': self.dbg.GetVersionString()}
@@ -79,12 +81,12 @@ class Console(object):
 
     def process_prompt(self, prompt):
         d = FMT_ESCAPES
-        if self.server.helper:
-            d['pc'] = self.server.helper.get_pc()
-            d['thread'] = self.server.helper.get_current_thread()
-        else:
-            d['pc'] = 0
-            d['thread'] = '-'
+        # if self.server.helper:
+        #     d['pc'] = self.server.helper.get_pc()
+        #     d['thread'] = self.server.helper.get_current_thread()
+        # else:
+        d['pc'] = 0
+        d['thread'] = '-'
         return self.escape_prompt(prompt['format'].format(**d))
 
     def escape_prompt(self, prompt, start = "\x01", end = "\x02"):
@@ -104,7 +106,7 @@ class Console(object):
     def pre_prompt(self):
         log.debug("updating views")
         self.update_prompt()
-        self.cmd.update()
+        # self.cmd.update()
 
     def handle_command(self, cmd):
         if cmd.startswith('voltron'):
@@ -131,7 +133,7 @@ class Console(object):
             matches = lldb.SBStringList()
             r = self.ci.HandleCompletion(buf, completion.rl_point, completion.rl_point, -1, matches)
             log.debug("completion: got matches: " + str([matches.GetStringAtIndex(i) for i in range(matches.GetSize())]))
-            
+
             # if there's a single fragment
             if len(matches.GetStringAtIndex(0).strip()) > 0:
                 # add it

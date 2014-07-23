@@ -5,37 +5,32 @@ import logging.config
 LOG_CONFIG = {
     'version': 1,
     'formatters': {
-        'standard': {'format': 'voltron: [%(levelname)s] %(message)s'}
-    },
-    'filters': {
-        'debug_only': {
-            '()': 'voltron.common.DebugOnlyFilter'
-        },
-        'debug_max': {
-            '()': 'voltron.common.DebugMaxFilter'
-        }
+        'standard': {'format': 'voltron: [%(levelname)s] %(message)s'},
+        'verbose': {'format': "%(levelname)-7s %(filename)12s:%(lineno)-4s %(funcName)20s -- %(message)s"}
     },
     'handlers': {
         'default': {
             'class': 'logging.StreamHandler',
-            'formatter': 'standard',
-            'filters': ['debug_max']
+            'formatter': 'standard'
         },
         'debug_file': {
             'class': 'logging.FileHandler',
-            'formatter': 'standard',
+            'formatter': 'verbose',
             'filename': 'voltron.debug.' + str(os.getpid()),
             'delay': True
         }
     },
     'loggers': {
-        'voltron': {
+        '': {
             'handlers': ['default', 'debug_file'],
             'level': 'INFO',
-            'propogate': True,
+            'propagate': True,
         }
     }
 }
+
+def configure_logging():
+    logging.config.dictConfig(LOG_CONFIG)
 
 class DebugOnlyFilter(logging.Filter):
     def filter(self, record):
@@ -44,11 +39,6 @@ class DebugOnlyFilter(logging.Filter):
 class DebugMaxFilter(logging.Filter):
     def filter(self, record):
         return record.levelno > logging.DEBUG
-
-def configure_logging():
-    logging.config.dictConfig(LOG_CONFIG)
-    log = logging.getLogger('voltron')
-    return log
 
 def merge(d1, d2):
     for k1,v1 in d1.items():

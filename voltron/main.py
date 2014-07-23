@@ -1,29 +1,27 @@
-#!/usr/bin/env python
-
 import os
 import argparse
 import logging
-import logging.config
-import struct
 import traceback
+import logging
+import logging.config
 
+import voltron
 from .view import *
-from .comms import *
-from .gdbproxy import *
+from .core import *
 from .common import *
-from .env import *
 try:
     from .console import *
     HAS_CONSOLE = True
 except ImportError:
     HAS_CONSOLE = False
 
-log = configure_logging()
+log = logging.getLogger('main')
 
-def main(debugger=None, dict=None):
-    global log, queue, inst
-
+def main(debugger=None):
     # Load config
+    voltron.setup_env()
+    voltron.setup_logging('main')
+
     # Set up command line arg parser
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', '-d', action='store_true', help='print debug logging')
@@ -31,18 +29,11 @@ def main(debugger=None, dict=None):
     view_parser = top_level_sp.add_parser('view', help='display a view')
     view_sp = view_parser.add_subparsers(title='views', description='valid view types', help='additional help')
 
-    # Update the view base class
-    base = CursesView if 'curses' in CONFIG.keys() and CONFIG['curses'] else TerminalView
-    for cls in TerminalView.__subclasses__():
-        cls.__bases__ = (base,)
-
     # Set up a subcommand for each view class
-    for cls in base.__subclasses__():
-        cls.configure_subparser(view_sp)
+    pm = PluginManager()
+    for plugin in pm.view_plugins:
+        pm.view_plugins[plugin].view_class.configure_subparser(view_sp)
 
-    # And subcommands for the loathsome red-headed stepchildren
-    StandaloneServer.configure_subparser(top_level_sp)
-    GDB6Proxy.configure_subparser(top_level_sp)
     if HAS_CONSOLE:
         Console.configure_subparser(top_level_sp)
 
@@ -52,7 +43,8 @@ def main(debugger=None, dict=None):
         log.setLevel(logging.DEBUG)
 
     # Instantiate and run the appropriate module
-    inst = args.func(args, loaded_config=CONFIG)
+    inst = args.func(args, loaded_config=voltron.config)
+    inst.pm = pm
     try:
         inst.run()
     except Exception as e:
