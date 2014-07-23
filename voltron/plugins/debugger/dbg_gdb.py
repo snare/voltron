@@ -5,7 +5,7 @@ import sys
 import logging
 import re
 
-from voltron.api import APIRequest, APIResponse, APIDispatcher
+from voltron.api import *
 
 log = logging.getLogger(__name__)
 

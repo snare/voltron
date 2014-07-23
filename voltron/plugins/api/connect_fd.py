@@ -1,5 +1,5 @@
 import voltron
-from voltron.api import APIRequest, APIResponse, APIDispatcher
+from voltron.api import *
 
 class APIConnectFDRequest(APIRequest):
     request = "connect_fd"
