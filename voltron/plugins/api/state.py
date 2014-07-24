@@ -44,7 +44,7 @@ class APIStateRequest(APIRequest):
 
     @target_id.setter
     def target_id(self, value):
-        self.data['target_id'] = value
+        self.data['target_id'] = int(value)
 
 
 class APIStateResponse(APISuccessResponse):
@@ -64,7 +64,7 @@ class APIStateResponse(APISuccessResponse):
 
     @state.setter
     def state(self, value):
-        self.data['state'] = value
+        self.data['state'] = str(value)
 
 
 class APIStatePlugin(APIPlugin):

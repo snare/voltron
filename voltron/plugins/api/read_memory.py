@@ -79,7 +79,7 @@ class APIReadMemoryRequest(APIRequest):
 
     @target_id.setter
     def target_id(self, value):
-        self.data['target_id'] = value
+        self.data['target_id'] = int(value)
 
 
 

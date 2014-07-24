@@ -6,8 +6,10 @@ import threading
 import logging
 import logging.config
 import json
+import cherrypy
 
 import voltron
+import voltron.http
 from .api import *
 from .plugin import PluginManager
 
@@ -24,8 +26,13 @@ class Server(object):
     def __init__(self, debugger=None, plugin_mgr=None):
         self.clients = []
 
-        # pipes for controlling ServerThread
-        self.exit_out, self.exit_in = os.pipe()
+        self.d_thread = None
+        self.t_thread = None
+        self.h_thread = None
+
+        # pipes for controlling ServerThreads
+        self.d_exit_out, self.d_exit_in = os.pipe()
+        self.t_exit_out, self.t_exit_in = os.pipe()
 
         self.debugger = debugger
         if plugin_mgr:
@@ -34,22 +41,127 @@ class Server(object):
             self.plugin_mgr = PluginManager()
 
     def start(self):
-        # spin off a server thread
-        log.debug("Starting server thread")
-        self.thread = ServerThread(self, self.clients, self.exit_out, self.debugger, self.plugin_mgr)
-        self.thread.start()
+        listen = voltron.config['server']['listen']
+        if listen['domain']:
+            log.debug("Starting server thread for domain socket")
+            self.d_thread = ServerThread(self, self.clients, self.d_exit_out, self.debugger, self.plugin_mgr,
+                voltron.env['sock'])
+            self.d_thread.start()
+        if listen['tcp']:
+            log.debug("Starting server thread for TCP socket")
+            self.t_thread = ServerThread(self, self.clients, self.t_exit_out, self.debugger, self.plugin_mgr,
+                tuple(listen['tcp']))
+            self.t_thread.start()
+        if voltron.config['server']['listen']['http']:
+            log.debug("Starting server thread for HTTP server")
+            (host, port) = tuple(listen['http'])
+            voltron.http.app.server = self
+            self.h_thread = HTTPServerThread(self, self.clients, self.debugger, self.plugin_mgr, host, port)
+            self.h_thread.start()
 
     def stop(self):
         # terminate the server thread by writing some data to the exit pipe
-        log.debug("Stopping server thread")
-        os.write(self.exit_in, chr(0))
-        self.thread.join(10)
+        log.debug("Stopping server threads")
+        if self.d_thread:
+            os.write(self.d_exit_in, chr(0))
+            self.d_thread.join(10)
+        if self.t_thread:
+            os.write(self.t_exit_in, chr(0))
+            self.t_thread.join(10)
+        if self.h_thread:
+            self.h_thread.stop()
 
     def client_summary(self):
         sums = []
         for client in self.clients:
             sums.append(str(client))
         return sums
+
+    def handle_request(self, data, client=None):
+        req = None
+        res = None
+
+        log.debug("Received API request: {}".format(data))
+
+        #
+        # preprocess the request to make sure the data and environment are OK
+        #
+
+        # make sure we have a debugger, or we're gonna have a bad time
+        if self.debugger:
+            # parse incoming request with the top level APIRequest class so we can determine the request type
+            try:
+                req = APIRequest(data=data, debugger=self.debugger)
+            except Exception, e:
+                req = None
+                log.error(log.error("Exception raised while parsing API request: {}".format(e)))
+
+            if req:
+                # find the api plugin for the incoming request type
+                plugin = self.plugin_mgr.api_plugin_for_request(req.request)
+                if plugin:
+                    # make sure request class supports the debugger platform we're using
+                    # XXX do this
+
+                    if True:
+                        # instantiate the request class
+                        req = plugin.request_class(data=data, debugger=self.debugger)
+                    else:
+                        res = APIDebuggerHostNotSupportedErrorResponse()
+                else:
+                    res = APIPluginNotFoundErrorResponse()
+            else:
+                res = APIInvalidRequestErrorResponse()
+        else:
+            res = APIDebuggerNotPresentErrorResponse()
+
+        #
+        # validate and dispatch the request
+        #
+
+        if not res:
+            # dispatch the request and send the response
+            if req and req.request == 'wait':
+                # wait requests get handled in a background thread
+                t = threading.Thread(target=self.dispatch_request, args=[req, client])
+                t.start()
+            else:
+                # everything else is handled on the main thread
+                return self.dispatch_request(req, client)
+        else:
+            if client:
+                # already got an error response and we have a client, send it
+                client.send_response(str(res))
+            else:
+                return res
+
+    def dispatch_request(self, req, client=None):
+        """
+        Dispatch a request object.
+        """
+        # make sure it's valid
+        res = None
+        try:
+            req.validate()
+        except InvalidMessageException, e:
+            res = APIInvalidRequestErrorResponse(str(e))
+
+        # dispatch the request
+        if not res:
+            try:
+                res = req.dispatch()
+            except Exception, e:
+                msg = "Exception raised while dispatching request: {}".format(e)
+                log.error(msg)
+                res = APIGenericErrorResponse(message=msg)
+
+        # send the response
+        if client:
+            log.debug("Client was passed to dispatch_request() - sending response")
+            client.send_response(str(res))
+        else:
+            log.debug("Client was NOT passed to dispatch_request() - returning response")
+            return res
 
 
 class ServerThread(threading.Thread):
@@ -60,24 +172,21 @@ class ServerThread(threading.Thread):
     passes them off to the APIDispatcher to be fulfilled. Then the responses
     returned (synchronously) are sent back to the requesting client.
     """
-    def __init__(self, server, clients, exit_pipe, debugger, plugin_mgr):
+    def __init__(self, server, clients, exit_pipe, debugger, plugin_mgr, sock):
         threading.Thread.__init__(self)
         self.server = server
         self.clients = clients
         self.exit_pipe = exit_pipe
         self.debugger = debugger
         self.plugin_mgr = plugin_mgr
+        self.sock = sock
 
     def run(self):
-        # make sure there's no left over socket
-        try:
-            os.remove(voltron.env['sock'])
-        except:
-            pass
+        # make sure there's no left over socket file
+        self.cleanup_socket()
 
         # set up the server socket
-        serv = ServerSocket(voltron.env['sock'])
-        self.lock = threading.Lock()
+        serv = ServerSocket(self.sock)
 
         # main event loop
         running = True
@@ -102,12 +211,9 @@ class ServerThread(threading.Thread):
                     data = None
                     try:
                         data = fd.recv_request()
-                        self.handle_request(data, fd)
-                    except socket.error:
-                        log.error("Socket error")
-                        self.purge_client(fd)
-                    except SocketDisconnected:
-                        log.error("Socket disconnected")
+                        self.server.handle_request(data, fd)
+                    except Exception, e:
+                        log.error("Exception raised while handling request: {} {}".format(type(e), str(e)))
                         self.purge_client(fd)
 
         # clean up
@@ -115,10 +221,14 @@ class ServerThread(threading.Thread):
             self.purge_client(client)
         os.close(self.exit_pipe)
         serv.close()
-        try:
-            os.remove(voltron.env['sock'])
-        except:
-            pass
+        self.cleanup_socket()
+
+    def cleanup_socket(self):
+        if type(self.sock) == str:
+            try:
+                os.remove(self.sock)
+            except:
+                pass
 
     def purge_client(self, client):
         try:
@@ -128,88 +238,38 @@ class ServerThread(threading.Thread):
         if client in self.clients:
             self.clients.remove(client)
 
-    def handle_request(self, data, client):
-        res = None
 
-        log.debug("Received API request: {}".format(data))
+class HTTPServerThread(threading.Thread):
+    """
+    Background thread to run the HTTP server.
+    """
+    def __init__(self, server, clients, debugger, plugin_mgr, host="127.0.0.1", port=6969):
+        threading.Thread.__init__(self)
+        self.server = server
+        self.clients = clients
+        self.debugger = debugger
+        self.plugin_mgr = plugin_mgr
+        self.host = host
+        self.port = port
 
-        # preprocess the request to determine whether or not it needs to be dispatched in a background thread
-        try:
-            req = APIRequest(data=data, debugger=self.debugger)
-        except Exception, e:
-            req = None
-            log.error(log.error("Exception raised while parsing API request: {}".format(e)))
+    def run(self):
+        # graft the flask app (see http.py) onto the cherry tree
+        cherrypy.tree.graft(voltron.http.app, '/')
 
-        # dispatch the request and send the response
-        if req and req.request == 'wait':
-            # wait requests get handled in a background thread
-            t = threading.Thread(target=self.dispatch_request, args=[data, client])
-            t.start()
-        else:
-            # everything else is handled on the main thread
-            self.dispatch_request(data, client)
+        # configure the cherrypy server
+        cherrypy.config.update({
+            'engine.autoreload.on': True,
+            'log.screen': False,
+            'server.socket_port': self.port,
+            'server.socket_host': str(self.host)
+        })
 
-    def dispatch_request(self, data, client):
-        """
-        Dispatch an API request. This method parses the data, determines the
-        request type, looks up the appropriate plugin, uses it to carry out
-        the request and sends the response to the client.
+        # make with the serving
+        cherrypy.engine.start()
+        cherrypy.engine.block()
 
-        This function may be run in a background thread in order to process a
-        request that blocks without interfering with the main thread.
-        """
-        # make sure we have a debugger, or we're gonna have a bad time
-        if self.debugger:
-            # parse incoming request with the top level APIRequest class so we can determine the request type
-            try:
-                req = APIRequest(data=data, debugger=self.debugger)
-            except Exception, e:
-                req = None
-                log.error(log.error("Exception raised while parsing API request: {}".format(e)))
-
-            if req:
-                # find the api plugin for the incoming request type
-                plugin = self.plugin_mgr.api_plugin_for_request(req.request)
-                if plugin:
-                    # make sure request class supports the debugger platform we're using
-                    # XXX do this
-
-                    if True:
-                        # instantiate the request class
-                        req = plugin.request_class(data=data, debugger=self.debugger)
-
-                        # make sure it's valid
-                        res = None
-                        try:
-                            req.validate()
-                        except InvalidMessageException, e:
-                            res = APIInvalidRequestErrorResponse(str(e))
-
-                        if not res:
-                            # dispatch the request
-                            try:
-                                res = req.dispatch()
-                            except Exception, e:
-                                msg = "Exception raised while dispatching request: {}".format(e)
-                                log.error(msg)
-                                res = APIGenericErrorResponse(message=msg)
-                    else:
-                        res = APIDebuggerHostNotSupportedErrorResponse()
-                else:
-                    res = APIPluginNotFoundErrorResponse()
-            else:
-                res = APIInvalidRequestErrorResponse()
-        else:
-            res = APIDebuggerNotPresentErrorResponse()
-
-        log.debug("Returning API response: {} {}".format(type(res), str(res)))
-
-        # send the response
-        try:
-            client.send_response(str(res))
-        except Exception, e:
-            log.error("Exception {} sending response: {}".format(type(e), e))
-            self.purge_client(client)
+    def stop(self):
+        cherrypy.engine.exit()
 
 
 class Client(object):
@@ -287,15 +347,7 @@ class Client(object):
         plugin, whose request class is instantiated and passed the remaining
         arguments passed to this function.
         """
-        # look up the plugin
-        plugin = self.plugin_mgr.api_plugin_for_request(request_type)
-        if plugin and plugin.request_class:
-            #create a request
-            req = plugin.request_class(*args, **kwargs)
-        else:
-            raise InvalidRequestTypeException()
-
-        return req
+        return self.plugin_mgr.api_request(request_type, *args, **kwargs)
 
     def perform_request(self, request_type, *args, **kwargs):
         """
@@ -306,7 +358,7 @@ class Client(object):
         arguments passed to this function.
         """
         # create a request
-        req = self.create_request(request_type, *args, **kwargs)
+        req = self.plugin_mgr.api_request(request_type, *args, **kwargs)
 
         # send it
         res = self.send_request(req)
@@ -339,9 +391,12 @@ class ServerSocket(BaseSocket):
     """
     Server socket for accepting new client connections.
     """
-    def __init__(self, sockfile):
-        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.sock.bind(sockfile)
+    def __init__(self, sock):
+        if type(sock) == str:
+            self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        elif type(sock) == tuple:
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.bind(sock)
         self.sock.listen(1)
 
     def accept(self):
@@ -371,4 +426,3 @@ class ClientSocket(BaseSocket):
 
     def send_response(self, response):
         self.send(response)
-

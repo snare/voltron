@@ -72,7 +72,7 @@ class APIWaitRequest(APIRequest):
 
     @target_id.setter
     def target_id(self, value):
-        self.data['target_id'] = value
+        self.data['target_id'] = int(value)
 
     @property
     def state_changes(self):
@@ -88,7 +88,7 @@ class APIWaitRequest(APIRequest):
 
     @timeout.setter
     def timeout(self, value):
-        self.data['timeout'] = value
+        self.data['timeout'] = float(value)
 
 
 class APIWaitResponse(APISuccessResponse):
@@ -108,7 +108,7 @@ class APIWaitResponse(APISuccessResponse):
 
     @state.setter
     def state(self, value):
-        self.data['state'] = value
+        self.data['state'] = str(value)
 
 
 

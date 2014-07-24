@@ -65,7 +65,7 @@ class APIDisassembleRequest(APIRequest):
 
     @target_id.setter
     def target_id(self, value):
-        self.data['target_id'] = value
+        self.data['target_id'] = int(value)
 
     @property
     def count(self):
@@ -73,7 +73,7 @@ class APIDisassembleRequest(APIRequest):
 
     @count.setter
     def count(self, value):
-        self.data['count'] = value
+        self.data['count'] = int(value)
 
     @property
     def address(self):
@@ -81,7 +81,7 @@ class APIDisassembleRequest(APIRequest):
 
     @address.setter
     def address(self, value):
-        self.data['address'] = value
+        self.data['address'] = int(value)
 
 
 class APIDisassembleResponse(APISuccessResponse):
@@ -102,7 +102,7 @@ class APIDisassembleResponse(APISuccessResponse):
 
     @disassembly.setter
     def disassembly(self, value):
-        self.data['disassembly'] = value
+        self.data['disassembly'] = str(value)
 
 
 class APIDisassemblePlugin(APIPlugin):

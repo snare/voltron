@@ -65,7 +65,7 @@ class APIReadStackRequest(APIRequest):
 
     @target_id.setter
     def target_id(self, value):
-        self.data['target_id'] = value
+        self.data['target_id'] = int(value)
 
     @property
     def thread_id(self):
@@ -73,7 +73,7 @@ class APIReadStackRequest(APIRequest):
 
     @thread_id.setter
     def thread_id(self, value):
-        self.data['thread_id'] = value
+        self.data['thread_id'] = int(value)
 
     @property
     def length(self):
@@ -115,7 +115,7 @@ class APIReadStackResponse(APISuccessResponse):
 
     @stack_pointer.setter
     def stack_pointer(self, value):
-        self.data['stack_pointer'] = value
+        self.data['stack_pointer'] = int(value)
 
 
 

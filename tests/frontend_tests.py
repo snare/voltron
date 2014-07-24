@@ -3,7 +3,7 @@ These tests load an inferior into an LLDB instance and then issue API requests
 using the client.
 
 Tests:
-Client -> Server -> APIDispatcher-> LLDBAdaptor
+Client -> Server -> LLDBAdaptor
 
 Using an instantiated SBDebugger instance
 """

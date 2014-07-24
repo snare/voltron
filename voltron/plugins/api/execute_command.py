@@ -46,7 +46,7 @@ class APIExecuteCommandRequest(APIRequest):
 
     @command.setter
     def command(self, value):
-        self.data['command'] = value
+        self.data['command'] = str(value)
 
 
 class APIExecuteCommandResponse(APISuccessResponse):
@@ -67,7 +67,7 @@ class APIExecuteCommandResponse(APISuccessResponse):
 
     @output.setter
     def output(self, value):
-        self.data['output'] = value
+        self.data['output'] = str(value)
 
 
 class APIExecuteCommandPlugin(APIPlugin):

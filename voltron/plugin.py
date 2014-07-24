@@ -128,6 +128,24 @@ class PluginManager(object):
         """
         return self.view_plugins[host]
 
+    def api_request(self, request_type, *args, **kwargs):
+        """
+        Create an API request.
+
+        `request_type` is the request type (string). This is used to look up a
+        plugin, whose request class is instantiated and passed the remaining
+        arguments passed to this function.
+        """
+        # look up the plugin
+        plugin = self.api_plugin_for_request(request_type)
+        if plugin and plugin.request_class:
+            #create a request
+            req = plugin.request_class(*args, **kwargs)
+        else:
+            raise InvalidRequestTypeException()
+
+        return req
+
 
 class APIPlugin(Plugin):
     """
@@ -182,3 +200,38 @@ class ViewPlugin(Plugin):
     plugin_type = 'view'
     name = None
     view_class = None
+
+
+#
+# Shared plugin manager and convenience methods
+#
+
+pm = None
+
+def api_request(request, *args, **kwargs):
+    plugin = pm.api_plugin_for_request(request)
+    if plugin:
+        return plugin.request_class(*args, **kwargs)
+    else:
+        return None
+
+def api_response(request, *args, **kwargs):
+    plugin = pm.api_plugin_for_request(request)
+    if plugin:
+        return plugin.response_class(*args, **kwargs)
+    else:
+        return None
+
+def debugger_adaptor(host, *args, **kwargs):
+    plugin = pm.debugger_plugin_for_host(host)
+    if plugin:
+        return plugin.adaptor_class(*args, **kwargs)
+    else:
+        return None
+
+def view(name, *args, **kwargs):
+    plugin = pm.view_plugin_with_name(name)
+    if plugin:
+        return plugin.view_class(*args, **kwargs)
+    else:
+        return None

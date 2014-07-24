@@ -247,7 +247,7 @@ class APIRequest(APIMessage):
 
     @request.setter
     def request(self, value):
-        self.props['request'] = value
+        self.props['request'] = str(value)
 
     @property
     def debugger(self):
@@ -280,7 +280,7 @@ class APIResponse(APIMessage):
 
     @status.setter
     def status(self, value):
-        self.props['status'] = value
+        self.props['status'] = str(value)
 
     @property
     def is_success(self):
@@ -298,7 +298,7 @@ class APIResponse(APIMessage):
 
     @error_code.setter
     def error_code(self, value):
-        self.data['code'] = value
+        self.data['code'] = int(value)
 
     @property
     def error_message(self):
@@ -308,7 +308,7 @@ class APIResponse(APIMessage):
 
     @error_message.setter
     def error_message(self, value):
-        self.data['message'] = value
+        self.data['message'] = str(value)
 
     def validate(self):
         if not self.status:
@@ -330,8 +330,8 @@ class APIErrorResponse(APIResponse):
     """
     A generic API error response.
     """
-    def __init__(self, code=None, message=None):
-        super(APIErrorResponse, self).__init__()
+    def __init__(self, code=None, message=None, *args, **kwargs):
+        super(APIErrorResponse, self).__init__(*args, **kwargs)
         self.status = "error"
         if hasattr(self.__class__, 'code'):
             self.error_code = self.__class__.code

@@ -2,7 +2,7 @@
 Tests that test voltron in the lldb cli driver
 
 Tests:
-Client -> Server -> APIDispatcher-> LLDBAdaptor
+Client -> Server -> LLDBAdaptor
 
 Inside an LLDB CLI driver instance
 """
@@ -46,9 +46,9 @@ def setup():
     start_debugger()
     time.sleep(1)
 
-
 def teardown():
-    p.terminate()
+    read_data()
+    p.terminate(True)
 
 def start_debugger(do_break=True):
     global p, client
@@ -66,10 +66,7 @@ def start_debugger(do_break=True):
     client.connect()
 
 def stop_debugger():
-    try:
-        p.terminate()
-    except:
-        pass
+    p.terminate(True)
 
 def read_data():
     try:

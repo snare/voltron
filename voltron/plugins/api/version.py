@@ -41,7 +41,7 @@ class APIVersionResponse(APISuccessResponse):
 
     @api_version.setter
     def api_version(self, value):
-        self.data['api_version'] = value
+        self.data['api_version'] = float(value)
 
     @property
     def host_version(self):
@@ -49,7 +49,7 @@ class APIVersionResponse(APISuccessResponse):
 
     @host_version.setter
     def host_version(self, value):
-        self.data['host_version'] = value
+        self.data['host_version'] = str(value)
 
 
 

@@ -265,3 +265,12 @@ class TerminalView (VoltronView):
             pad = 0
 
         self.body += int(pad)*'\n'
+
+
+def merge(d1, d2):
+    for k1,v1 in d1.items():
+        if isinstance(v1, dict) and k1 in d2.keys() and isinstance(d2[k1], dict):
+            merge(v1, d2[k1])
+        else:
+            d2[k1] = v1
+    return d2

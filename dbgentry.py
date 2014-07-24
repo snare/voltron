@@ -97,8 +97,11 @@ if in_lldb:
             # load plugins
             self.pm = PluginManager()
 
-            # set up an lldb adaptor and start the voltron server
+            # set up an lldb adaptor and set it as the package-wide adaptor
             self.adaptor = self.pm.debugger_plugin_for_host('lldb').adaptor_class()
+            voltron.debugger = self.adaptor
+
+            # start the server
             self.server = Server(debugger=self.adaptor)
             self.server.start()
 

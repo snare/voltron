@@ -4,6 +4,8 @@ import logging.config
 
 from .main import main
 
+import plugin
+
 from scruffy import Environment
 
 # scruffy environment containing config, plugins, etc
@@ -55,6 +57,9 @@ def setup_env():
         'basename': 'voltron'
     })
     config = env['config']
+
+    # create shared instance of plugin manager
+    plugin.pm = plugin.PluginManager()
 
 LOGGER_DEFAULT = {
     'handlers': ['null'],
