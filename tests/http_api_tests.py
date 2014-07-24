@@ -1,0 +1,142 @@
+"""
+Tests that emulate the debugger adaptor and just test the interaction between
+the front end and back end API classes. HTTP edition!
+
+Tests:
+Server (via HTTP)
+"""
+
+import logging
+import sys
+import json
+import time
+import subprocess
+import requests
+
+from nose.tools import *
+
+import voltron
+from voltron.core import *
+from voltron.api import *
+from voltron.plugin import *
+
+import platform
+if platform.system() == 'Darwin':
+    sys.path.append("/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Resources/Python")
+
+from common import *
+
+log = logging.getLogger('tests')
+
+class APIHostNotSupportedRequest(APIRequest):
+    @server_side
+    def dispatch(self):
+        return APIDebuggerHostNotSupportedErrorResponse()
+
+
+class APIHostNotSupportedPlugin(APIPlugin):
+    request = "host_not_supported"
+    request_class = APIHostNotSupportedRequest
+    response_class = APIResponse
+
+
+def setup():
+    global server, client, target, pm, adaptor, methods
+
+    log.info("setting up API tests")
+
+    # set up voltron
+    voltron.setup_env()
+    pm = PluginManager()
+    plugin = pm.debugger_plugin_for_host('lldb')
+    adaptor = plugin.adaptor_class()
+    voltron.debugger = adaptor
+
+    # inject mock methods
+    inject_mock(adaptor)
+
+    # start up a voltron server
+    server = Server(plugin_mgr=pm, debugger=adaptor)
+    server.start()
+
+def teardown():
+    server.stop()
+
+def test_disassemble():
+    data = requests.get('http://localhost:5555/disassemble?count=16').text
+    res = APIResponse(data=data)
+    assert res.is_success
+    assert res.data['disassembly'] == disassemble_response
+
+def test_execute_command():
+    data = requests.get('http://localhost:5555/execute_command?command=reg%20read').text
+    res = APIResponse(data=data)
+    assert res.is_success
+    assert res.data['output'] == execute_command_response
+
+def test_list_targets():
+    data = requests.get('http://localhost:5555/list_targets').text
+    res = api_response('list_targets', data=data)
+    assert res.is_success
+    assert res.targets == targets_response
+
+def test_read_memory():
+    data = requests.get('http://localhost:5555/read_memory').text
+    res = api_response('read_memory', data=data)
+    assert res.is_success
+    assert res.memory == read_memory_response
+
+def test_read_registers():
+    data = requests.get('http://localhost:5555/read_registers').text
+    res = api_response('read_registers', data=data)
+    assert res.is_success
+    assert res.registers == read_registers_response
+
+def test_read_stack_length_missing():
+    data = requests.get('http://localhost:5555/read_stack').text
+    res = APIErrorResponse(data=data)
+    assert res.is_error
+    assert res.error_message == 'Length missing'
+
+def test_read_stack():
+    data = requests.get('http://localhost:5555/read_stack?length=64').text
+    res = api_response('read_stack', data=data)
+    assert res.is_success
+    assert res.memory == read_stack_response
+
+def test_state():
+    data = requests.get('http://localhost:5555/state').text
+    res = api_response('state', data=data)
+    assert res.is_success
+    assert res.state == state_response
+
+def test_version():
+    data = requests.get('http://localhost:5555/version').text
+    res = api_response('version', data=data)
+    assert res.is_success
+    assert res.data['api_version'] == 1.0
+    assert res.data['host_version'] == 'lldb-something'
+
+def test_wait():
+    data = requests.get('http://localhost:5555/wait?timeout=2').text
+    res = APIResponse(data=data)
+    assert res.is_error
+    assert res.error_code == 0x1004
+
+def test_bad_json():
+    data = requests.post('http://localhost:5555/api', data='xxx').text
+    res = APIResponse(data=data)
+    assert res.is_error
+    assert res.error_code == 0x1001
+
+def test_bad_request():
+    data = requests.post('http://localhost:5555/api', data='{"type":"request","request":"no_such_request"}').text
+    res = APIResponse(data=data)
+    assert res.is_error
+    assert res.error_code == 0x1002
+
+def test_host_not_supported():
+    data = requests.post('http://localhost:5555/api', data='{"type":"request","request":"host_not_supported"}').text
+    res = APIResponse(data=data)
+    assert res.is_error
+    assert res.error_code == 0x1003
