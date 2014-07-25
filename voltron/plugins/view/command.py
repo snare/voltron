@@ -32,7 +32,7 @@ class CommandView (TerminalView):
                 # Get the command output
                 self.body = res.output
             else:
-                log.error("Error disassembling: {}".format(res.message))
+                log.error("Error executing command: {}".format(res.message))
                 self.body = self.colour(res.message, 'red')
 
         self.pad_body()

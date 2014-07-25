@@ -11,7 +11,7 @@ import cherrypy
 import voltron
 import voltron.http
 from .api import *
-from .plugin import PluginManager
+from .plugin import *
 
 log = logging.getLogger("core")
 
@@ -95,18 +95,9 @@ class Server(object):
                 log.error(log.error("Exception raised while parsing API request: {} {}".format(type(e), e)))
 
             if req:
-                # find the api plugin for the incoming request type
-                plugin = api_request(req.request)
-                if plugin:
-                    # make sure request class supports the debugger platform we're using
-                    # XXX do this
-
-                    if True:
-                        # instantiate the request class
-                        req = plugin.request_class(data=data, debugger=self.debugger)
-                    else:
-                        res = APIDebuggerHostNotSupportedErrorResponse()
-                else:
+                # instantiate the request class
+                req = api_request(req.request, data=data, debugger=self.debugger)
+                if not req:
                     res = APIPluginNotFoundErrorResponse()
             else:
                 res = APIInvalidRequestErrorResponse()
