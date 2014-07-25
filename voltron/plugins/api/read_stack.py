@@ -27,20 +27,17 @@ class APIReadStackRequest(APIRequest):
 
     This request will return immediately.
     """
-    def __init__(self, length=None, target_id=0, thread_id=None, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
-        if length != None:
-            self.length = length
-        if target_id != None:
-            self.target_id = target_id
-        if thread_id != None:
-            self.thread_id = thread_id
+    _fields = {'target_id': False, 'thread_id': False, 'length': True}
+
+    target_id = 0
+    thread_id = None
+    length = None
 
     @server_side
     def dispatch(self):
         try:
-            sp = self.debugger.read_stack_pointer(target_id=self.target_id)
-            memory = self.debugger.read_stack(length=self.length, target_id=self.target_id)
+            sp = voltron.debugger.read_stack_pointer(target_id=self.target_id)
+            memory = voltron.debugger.read_stack(length=self.length, target_id=self.target_id)
             res = APIReadStackResponse()
             res.memory = memory
             res.stack_pointer = sp
@@ -54,34 +51,6 @@ class APIReadStackRequest(APIRequest):
             res = APIErrorResponse(code=0, message=msg)
 
         return res
-
-    def validate(self):
-        if self.length == None:
-            raise InvalidMessageException("Length missing")
-
-    @property
-    def target_id(self):
-        return self.data['target_id']
-
-    @target_id.setter
-    def target_id(self, value):
-        self.data['target_id'] = int(value)
-
-    @property
-    def thread_id(self):
-        return self.data['thread_id']
-
-    @thread_id.setter
-    def thread_id(self, value):
-        self.data['thread_id'] = int(value)
-
-    @property
-    def length(self):
-        return self.data['length']
-
-    @length.setter
-    def length(self, value):
-        self.data['length'] = int(value)
 
 
 class APIReadStackResponse(APISuccessResponse):
@@ -97,26 +66,12 @@ class APIReadStackResponse(APISuccessResponse):
         }
     }
     """
-    @property
-    def memory(self):
-        if self.data['memory']:
-            return base64.b64decode(self.data['memory'])
-        else:
-            return None
+    _fields = {'memory': True, 'stack_pointer': True}
 
-    @memory.setter
-    def memory(self, value):
-        if value:
-            self.data['memory'] = base64.b64encode(value)
+    _encode_fields = ['memory']
 
-    @property
-    def stack_pointer(self):
-        return self.data['stack_pointer']
-
-    @stack_pointer.setter
-    def stack_pointer(self, value):
-        self.data['stack_pointer'] = int(value)
-
+    memory = None
+    stack_pointer = None
 
 
 class APIReadStackPlugin(APIPlugin):

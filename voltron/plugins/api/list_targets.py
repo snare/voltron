@@ -16,11 +16,13 @@ class APIListTargetsRequest(APIRequest):
         "request":      "list_targets"
     }
     """
+    _fields = {}
+
     @server_side
     def dispatch(self):
         try:
             res = APIListTargetsResponse()
-            res.targets = self.debugger.targets()
+            res.targets = voltron.debugger.targets()
         except NoSuchTargetException:
             res = APINoSuchTargetErrorResponse()
         except Exception, e:
@@ -49,13 +51,9 @@ class APIListTargetsResponse(APISuccessResponse):
         }
     }
     """
-    @property
-    def targets(self):
-        return self.data['targets']
+    _fields = {'targets': True}
 
-    @targets.setter
-    def targets(self, value):
-        self.data['targets'] = value
+    targets = []
 
 
 class APIListTargetsPlugin(APIPlugin):

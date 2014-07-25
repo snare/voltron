@@ -19,15 +19,12 @@ class APIExecuteCommandRequest(APIRequest):
         }
     }
     """
-    def __init__(self, command=None, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
-        if command != None:
-            self.command = command
+    _fields = {'command': True}
 
     @server_side
     def dispatch(self):
         try:
-            output = self.debugger.execute_command(self.command)
+            output = voltron.debugger.execute_command(self.command)
             res = APIExecuteCommandResponse()
             res.output = output
         except NoSuchTargetException:
@@ -39,14 +36,6 @@ class APIExecuteCommandRequest(APIRequest):
             res.error_message = msg
 
         return res
-
-    @property
-    def command(self):
-        return self.data['command']
-
-    @command.setter
-    def command(self, value):
-        self.data['command'] = str(value)
 
 
 class APIExecuteCommandResponse(APISuccessResponse):
@@ -61,13 +50,9 @@ class APIExecuteCommandResponse(APISuccessResponse):
         }
     }
     """
-    @property
-    def output(self):
-        return self.data['output']
+    _fields = {'output': True}
 
-    @output.setter
-    def output(self, value):
-        self.data['output'] = str(value)
+    output = None
 
 
 class APIExecuteCommandPlugin(APIPlugin):

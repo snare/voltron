@@ -84,7 +84,7 @@ def test_bad_request():
     req.request = 'xxx'
     res = client.send_request(req)
     assert res.is_error
-    assert res.error_code == 0x1002
+    assert res.code == 0x1002
 
 def test_version():
     req = client.create_request('version')
@@ -129,7 +129,7 @@ def test_wait_timeout():
     time.sleep(1)
     res = client.perform_request('wait', timeout=2)
     assert res.is_error
-    assert res.error_code == 0x1004
+    assert res.code == 0x1004
 
 def test_list_targets():
     restart_debugger()

@@ -18,7 +18,7 @@ class APIVersionRequest(APIRequest):
     def dispatch(self):
         res = APIVersionResponse()
         res.api_version = voltron.api.version
-        res.host_version = self.debugger.version()
+        res.host_version = voltron.debugger.version()
         return res
 
 
@@ -35,23 +35,10 @@ class APIVersionResponse(APISuccessResponse):
         }
     }
     """
-    @property
-    def api_version(self):
-        return self.data['api_version']
+    _fields = {'api_version': True, 'host_version': True}
 
-    @api_version.setter
-    def api_version(self, value):
-        self.data['api_version'] = float(value)
-
-    @property
-    def host_version(self):
-        return self.data['host_version']
-
-    @host_version.setter
-    def host_version(self, value):
-        self.data['host_version'] = str(value)
-
-
+    api_version = None
+    host_version = None
 
 class APIVersionPlugin(APIPlugin):
     request = 'version'

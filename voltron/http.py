@@ -41,7 +41,8 @@ def read_registers():
 
 @app.route("/read_stack")
 def read_stack():
-    return str(app.server.dispatch_request(api_request('read_stack', **request.args.to_dict())))
+    req = api_request('read_stack', **request.args.to_dict())
+    return str(app.server.dispatch_request(req))
 
 @app.route("/state")
 def state():

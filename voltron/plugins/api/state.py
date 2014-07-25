@@ -19,15 +19,14 @@ class APIStateRequest(APIRequest):
 
     This request will return immediately.
     """
-    def __init__(self, target_id=0, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
-        if target_id != None:
-            self.target_id = target_id
+    _fields = {'target_id': False}
+
+    target_id = 0
 
     @server_side
     def dispatch(self):
         try:
-            state = self.debugger.state(target_id=self.target_id)
+            state = voltron.debugger.state(target_id=self.target_id)
             log.debug("Got state from debugger: {}".format(state))
             res = APIStateResponse()
             res.state = state
@@ -37,14 +36,6 @@ class APIStateRequest(APIRequest):
             res = APINoSuchTargetErrorResponse()
 
         return res
-
-    @property
-    def target_id(self):
-        return self.data['target_id']
-
-    @target_id.setter
-    def target_id(self, value):
-        self.data['target_id'] = int(value)
 
 
 class APIStateResponse(APISuccessResponse):
@@ -58,13 +49,9 @@ class APIStateResponse(APISuccessResponse):
         }
     }
     """
-    @property
-    def state(self):
-        return self.data['state']
+    _fields = {'state': True}
 
-    @state.setter
-    def state(self, value):
-        self.data['state'] = str(value)
+    state = None
 
 
 class APIStatePlugin(APIPlugin):

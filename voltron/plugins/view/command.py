@@ -1,7 +1,7 @@
 import logging
 
 from voltron.view import *
-from voltron.plugin import ViewPlugin
+from voltron.plugin import *
 
 log = logging.getLogger('view')
 
@@ -25,15 +25,15 @@ class CommandView (TerminalView):
             self.body = self.colour(error, 'red')
         else:
             # Get the command output
-            req = self.pm.api_plugin_for_request('execute_command').request_class()
+            req = api_request('execute_command')
             req.command = self.config['cmd']
             res = self.client.send_request(req)
             if res.is_success:
                 # Get the command output
                 self.body = res.output
             else:
-                log.error("Error disassembling: {}".format(res.error_message))
-                self.body = self.colour(res.error_message, 'red')
+                log.error("Error disassembling: {}".format(res.message))
+                self.body = self.colour(res.message, 'red')
 
         self.pad_body()
 

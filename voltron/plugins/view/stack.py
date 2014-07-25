@@ -24,7 +24,7 @@ class StackView (TerminalView):
             self.body = self.colour(error, 'red')
         else:
             # Request data
-            req = self.pm.api_plugin_for_request('read_stack').request_class()
+            req = api_request('read_stack')
             req.length = self.body_height()*self.args.bytes
             res = self.client.send_request(req)
             if res.is_success:
@@ -41,8 +41,8 @@ class StackView (TerminalView):
                 self.info = '[0x{0:0=4x}:'.format(len(stack_raw)) + ADDR_FORMAT_64.format(sp) + ']'
                 self.body = stack.strip()
             else:
-                log.error("Error requesting stack: {}".format(res.error_message))
-                self.body = self.colour(res.error_message, 'red')
+                log.error("Error requesting stack: {}".format(res.message))
+                self.body = self.colour(res.message, 'red')
 
         self.pad_body()
 

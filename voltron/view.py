@@ -20,6 +20,7 @@ from collections import defaultdict
 
 from .core import *
 from .colour import *
+from .plugin import *
 
 log = logging.getLogger("view")
 
@@ -121,7 +122,7 @@ class VoltronView (object):
                         self.render()
 
                     # wait for the debugger to stop again
-                    wait_req = self.pm.api_plugin_for_request('wait').request_class()
+                    wait_req = api_request('wait')
                     res = self.client.send_request(wait_req)
                 else:
                     # if we're not connected, try again in a second

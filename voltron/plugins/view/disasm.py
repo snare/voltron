@@ -1,5 +1,5 @@
 from voltron.view import *
-from voltron.plugin import ViewPlugin
+from voltron.plugin import *
 
 
 class DisasmView (TerminalView):
@@ -20,7 +20,7 @@ class DisasmView (TerminalView):
             self.body = self.colour(error, 'red')
         else:
             # Request data
-            req = self.pm.api_plugin_for_request('disassemble').request_class()
+            req = api_request('disassemble')
             req.count = self.body_height()
             res = self.client.send_request(req)
             if res.is_success:
@@ -39,8 +39,8 @@ class DisasmView (TerminalView):
                 # Build output
                 self.body = disasm.rstrip()
             else:
-                log.error("Error disassembling: {}".format(res.error_message))
-                self.body = self.colour(res.error_message, 'red')
+                log.error("Error disassembling: {}".format(res.message))
+                self.body = self.colour(res.message, 'red')
 
         self.pad_body()
 

@@ -53,11 +53,11 @@ class PluginManager(object):
         if self.valid_api_plugin(plugin):
             log.debug("Registering API plugin: {}".format(plugin))
 
-            # instantiate the API plugin, give its request class a ref to the
+            # instantiate the API plugin, give its classes a ref to the
             # plugin, and set its request type
             p = plugin()
             p.request_class._plugin = plugin
-            p.request_class._request = plugin.request
+            p.request_class.request = plugin.request
             self._api_plugins[plugin.request] = p
         elif self.valid_debugger_plugin(plugin):
             log.debug("Registering debugger plugin: {}".format(plugin))

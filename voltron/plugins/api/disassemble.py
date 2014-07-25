@@ -27,21 +27,18 @@ class APIDisassembleRequest(APIRequest):
 
     This request will return immediately.
     """
-    def __init__(self, target_id=0, count=None, address=None, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
-        if count != None:
-            self.count = count
-        if target_id != None:
-            self.target_id = target_id
-        if address != None:
-            self.address = address
+    _fields = {'target_id': False, 'address': False, 'count': True}
+
+    target_id = 0
+    address = None
+    count = 16
 
     @server_side
     def dispatch(self):
         try:
             if self.address == None:
-                self.address = self.debugger.read_program_counter(target_id=self.target_id)
-            disasm = self.debugger.disassemble(target_id=self.target_id, address=self.address, count=self.count)
+                self.address = voltron.debugger.read_program_counter(target_id=self.target_id)
+            disasm = voltron.debugger.disassemble(target_id=self.target_id, address=self.address, count=self.count)
             res = APIDisassembleResponse()
             res.disassembly = disasm
         except NoSuchTargetException:
@@ -54,34 +51,6 @@ class APIDisassembleRequest(APIRequest):
             res = APIErrorResponse(code=0, message=msg)
 
         return res
-
-    def validate(self):
-        if self.count == None:
-            raise InvalidMessageException("Count missing")
-
-    @property
-    def target_id(self):
-        return self.data['target_id']
-
-    @target_id.setter
-    def target_id(self, value):
-        self.data['target_id'] = int(value)
-
-    @property
-    def count(self):
-        return self.data['count']
-
-    @count.setter
-    def count(self, value):
-        self.data['count'] = int(value)
-
-    @property
-    def address(self):
-        return self.data['address']
-
-    @address.setter
-    def address(self, value):
-        self.data['address'] = int(value)
 
 
 class APIDisassembleResponse(APISuccessResponse):
@@ -96,13 +65,9 @@ class APIDisassembleResponse(APISuccessResponse):
         }
     }
     """
-    @property
-    def disassembly(self):
-        return self.data['disassembly']
+    _fields = {'disassembly': True}
 
-    @disassembly.setter
-    def disassembly(self, value):
-        self.data['disassembly'] = str(value)
+    disassembly = None
 
 
 class APIDisassemblePlugin(APIPlugin):

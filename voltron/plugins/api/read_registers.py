@@ -24,17 +24,15 @@ class APIReadRegistersRequest(APIRequest):
 
     This request will return immediately.
     """
-    def __init__(self, target_id=0, thread_id=None, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
-        if target_id != None:
-            self.target_id = target_id
-        if thread_id != None:
-            self.thread_id = thread_id
+    _fields = {'target_id': False, 'thread_id': False}
+
+    target_id = 0
+    thread_id = None
 
     @server_side
     def dispatch(self):
         try:
-            regs = self.debugger.read_registers(target_id=self.target_id, thread_id=self.thread_id)
+            regs = voltron.debugger.read_registers(target_id=self.target_id, thread_id=self.thread_id)
             res = APIReadRegistersResponse()
             res.registers = regs
         except TargetBusyException:
@@ -49,22 +47,6 @@ class APIReadRegistersRequest(APIRequest):
 
         return res
 
-    @property
-    def target_id(self):
-        return self.data['target_id']
-
-    @target_id.setter
-    def target_id(self, value):
-        self.data['target_id'] = value
-
-    @property
-    def thread_id(self):
-        return self.data['thread_id']
-
-    @thread_id.setter
-    def thread_id(self, value):
-        self.data['thread_id'] = value
-
 
 class APIReadRegistersResponse(APISuccessResponse):
     """
@@ -74,18 +56,11 @@ class APIReadRegistersResponse(APISuccessResponse):
         "type":         "response",
         "status":       "success",
         "data": {
-            "target":   "stopped"
+            "registers": { "rip": 0x12341234, ... }
         }
     }
     """
-    @property
-    def registers(self):
-        return self.data['registers']
-
-    @registers.setter
-    def registers(self, value):
-        self.data['registers'] = value
-
+    _fields = {'registers': True}
 
 
 class APIReadRegistersPlugin(APIPlugin):

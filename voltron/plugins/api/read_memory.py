@@ -30,19 +30,18 @@ class APIReadMemoryRequest(APIRequest):
 
     This request will return immediately.
     """
-    def __init__(self, target_id=0, address=None, length=None, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
-        if address != None:
-            self.address = address
-        if length != None:
-            self.length = length
-        if target_id != None:
-            self.target_id = target_id
+    _fields = {'target_id': False, 'address': True, 'length': True}
+
+    request = 'read_memory'
+
+    target_id = 0
+    address = None
+    length = None
 
     @server_side
     def dispatch(self):
         try:
-            memory = self.debugger.read_memory(address=self.address, length=self.length, target_id=self.target_id)
+            memory = voltron.debugger.read_memory(address=self.address, length=self.length, target_id=self.target_id)
             res = APIReadMemoryResponse()
             res.memory = memory
         except TargetBusyException:
@@ -57,31 +56,6 @@ class APIReadMemoryRequest(APIRequest):
 
         return res
 
-    @property
-    def address(self):
-        return self.data['address']
-
-    @address.setter
-    def address(self, value):
-        self.data['address'] = int(value)
-
-    @property
-    def length(self):
-        return self.data['length']
-
-    @length.setter
-    def length(self, value):
-        self.data['length'] = int(value)
-
-    @property
-    def target_id(self):
-        return self.data['target_id']
-
-    @target_id.setter
-    def target_id(self, value):
-        self.data['target_id'] = int(value)
-
-
 
 class APIReadMemoryResponse(APISuccessResponse):
     """
@@ -91,22 +65,16 @@ class APIReadMemoryResponse(APISuccessResponse):
         "type":         "response",
         "status":       "success",
         "data": {
-            "memory":   "\xff..."
+            "memory":   "ABCDEF" # base64 encoded memory
         }
     }
     """
-    @property
-    def memory(self):
-        if self.data['memory']:
-            return base64.b64decode(self.data['memory'])
-        else:
-            return None
+    _fields = {'memory': True}
+    _encode_fields = ['memory']
 
-    @memory.setter
-    def memory(self, value):
-        if value:
-            self.data['memory'] = base64.b64encode(value)
+    request = 'read_memory'
 
+    memory = None
 
 
 class APIReadMemoryPlugin(APIPlugin):

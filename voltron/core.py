@@ -81,8 +81,6 @@ class Server(object):
         req = None
         res = None
 
-        log.debug("Received API request: {}".format(data))
-
         #
         # preprocess the request to make sure the data and environment are OK
         #
@@ -94,11 +92,11 @@ class Server(object):
                 req = APIRequest(data=data, debugger=self.debugger)
             except Exception, e:
                 req = None
-                log.error(log.error("Exception raised while parsing API request: {}".format(e)))
+                log.error(log.error("Exception raised while parsing API request: {} {}".format(type(e), e)))
 
             if req:
                 # find the api plugin for the incoming request type
-                plugin = self.plugin_mgr.api_plugin_for_request(req.request)
+                plugin = api_request(req.request)
                 if plugin:
                     # make sure request class supports the debugger platform we're using
                     # XXX do this
@@ -143,8 +141,8 @@ class Server(object):
         res = None
         try:
             req.validate()
-        except InvalidMessageException, e:
-            res = APIInvalidRequestErrorResponse(str(e))
+        except MissingFieldError, e:
+            res = APIMissingFieldErrorResponse(str(e))
 
         # dispatch the request
         if not res:
@@ -274,7 +272,7 @@ class HTTPServerThread(threading.Thread):
 
 class Client(object):
     """
-    Used by a client application (ie. a view) to communicate with the server.
+    Used by a client (ie. a view) to communicate with the server.
     """
     def __init__(self):
         """
@@ -312,7 +310,7 @@ class Client(object):
         # receive response data
         data = self.sock.recv(READ_MAX)
         if len(data) > 0:
-            log.debug('Received message: ' + data)
+            log.debug('Client received message: ' + data)
 
             try:
                 # parse the response data
@@ -320,14 +318,13 @@ class Client(object):
 
                 # if there's an error, return an error response
                 if generic_response.is_error:
-                    res = APIErrorResponse(code=generic_response.error_code, message=generic_response.error_message)
+                    res = APIErrorResponse(data=data)
                 else:
                     # success; generate a proper response
-                    plugin = self.plugin_mgr.api_plugin_for_request(request.request)
+                    plugin = voltron.plugin.pm.api_plugin_for_request(request.request)
                     if plugin and plugin.response_class:
                         # found a plugin for the request we sent, use its response type
-                        res = plugin.response_class()
-                        res.props = generic_response.props
+                        res = plugin.response_class(data=data)
                     else:
                         # didn't find a plugin, just return the generic APIResponse we already generated
                         res = generic_response
@@ -421,8 +418,13 @@ class ClientSocket(BaseSocket):
         # read request from socket
         data = self.sock.recv(READ_MAX).strip()
 
-        # if len(data) == 0
+        log.debug("Received request client -> server: {}".format(data))
+
+        if len(data) == 0:
+            raise SocketDisconnected()
+
         return data
 
     def send_response(self, response):
+        log.debug("Sending response server -> client: {}".format(response))
         self.send(response)

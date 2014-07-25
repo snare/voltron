@@ -7,6 +7,7 @@ import logging
 import logging.config
 import json
 import inspect
+import base64
 
 from collections import defaultdict
 
@@ -18,18 +19,6 @@ from .plugin import PluginManager, APIPlugin
 log = logging.getLogger('api')
 
 version = 1.0
-
-
-class VoltronAPIException(Exception):
-    """
-    Generic Voltron API exception
-    """
-    def __init__(self, code, message):
-        self.code = code
-        self.message = message
-
-    def __str__(self):
-        return "<{} code={} message=\"{}\">".format(self.__class__.__name__, self.code, self.message)
 
 
 class InvalidRequestTypeException(Exception):
@@ -81,6 +70,13 @@ class TargetBusyException(Exception):
     """
     pass
 
+class MissingFieldError(Exception):
+    """
+    Raised when an APIMessage is validated and has a required field missing.
+    """
+    pass
+
+
 def server_side(func):
     """
     Decorator to designate an API method applicable only to server-side
@@ -91,7 +87,7 @@ def server_side(func):
     """
     def inner(*args, **kwargs):
         if len(args) and hasattr(args[0], 'is_server'):
-            if args[0].is_server == True:
+            if voltron.debugger:
                 return func(*args, **kwargs)
             else:
                 raise ServerSideOnlyException("This method can only be called on a server-side instance")
@@ -110,7 +106,7 @@ def client_side(func):
     """
     def inner(*args, **kwargs):
         if len(args) and hasattr(args[0], 'is_server'):
-            if args[0].is_server == False:
+            if not voltron.debugger:
                 return func(*args, **kwargs)
             else:
                 raise ClientSideOnlyException("This method can only be called on a client-side instance")
@@ -123,81 +119,77 @@ class APIMessage(object):
     """
     Top-level API message class.
     """
-    _type = None
-    _plugin = None
+    _top_fields = ['type']
+    _fields = {}
+    _encode_fields = []
 
-    def __init__(self, data=None):
-        """
-        Top-level initialiser for all API messages.
+    type = None
 
-        `data` is a string containing JSON data.
-        """
-        # initialise properties
-        self.props = {}
-
-        # set type
-        self.type = self._type
-
+    def __init__(self, data=None, *args, **kwargs):
         # process any data that was passed in
         if data:
             try:
-                self.props = dict(self.props.items() + json.loads(data).items())
+                d = json.loads(data)
             except ValueError:
-                raise InvalidMessageException("Invalid message")
+                raise InvalidMessageException()
+            for key in d:
+                if key == 'data':
+                    for dkey in d['data']:
+                        # base64 decode the field if necessary
+                        if dkey in self._encode_fields:
+                            setattr(self, str(dkey), base64.b64decode(d['data'][dkey]))
+                        else:
+                            setattr(self, str(dkey), d['data'][dkey])
+
+                else:
+                    setattr(self, str(key), d[key])
+
+        # any other kwargs are treated as field values
+        for field in kwargs:
+            setattr(self, field, kwargs[field])
 
     def __str__(self):
         """
         Return a string containing the API message properties in JSON format.
         """
-        return json.dumps(self.props)
+        d = {}
+        # set values of top-level fields
+        for field in self._top_fields:
+            if hasattr(self, field):
+                d[field] = getattr(self, field)
 
-    @property
-    def props(self):
-        return self._props
+        # set values of data fields
+        d['data'] = {}
+        for field in self._fields:
+            if hasattr(self, field):
+                # base64 encode the field for transmission if necessary
+                if field in self._encode_fields:
+                    d['data'][field] = base64.b64encode(str(getattr(self, field)))
+                else:
+                    d['data'][field] = getattr(self, field)
 
-    @props.setter
-    def props(self, value):
-        self._props = defaultdict(lambda: None, value)
-        if self.data:
-            self.data = self.data
-        else:
-            self.data = {}
+        return json.dumps(d)
+
+    def __getattr__(self, name):
+        """
+        Attribute accessor.
+
+        If a defined field is requested that doesn't have a value set,
+        return None.
+        """
+        if name in self._fields:
+            return None
 
     def validate(self):
-        raise InvalidMessageException("Implement the validate method for your APIMessage subclass")
+        """
+        Validate the message.
 
-    @property
-    def type(self):
-        if 'type' in self.props:
-            return self.props['type']
-        return None
-
-    @type.setter
-    def type(self, value):
-        self.props['type'] = value
-
-    @property
-    def data(self):
-        if 'data' in self.props:
-            return self.props['data']
-        return None
-
-    @data.setter
-    def data(self, value):
-        self.props['data'] = defaultdict(lambda: None, value)
-
-    @property
-    def has_data(self):
-        return 'data' in self.props and self.data != None
-
-    @property
-    def plugin(self):
-        return self._plugin
-
-    @plugin.setter
-    def plugin(self, value):
-        self._plugin = value
-
+        Ensure all the required fields are present and not None.
+        """
+        required_fields = filter(lambda x: self._fields[x], self._fields.keys())
+        for field in (self._top_fields + required_fields):
+            if not hasattr(self, field) or hasattr(self, field) and getattr(self, field) == None:
+                raise MissingFieldError(field)
 
 class APIRequest(APIMessage):
     """
@@ -205,30 +197,15 @@ class APIRequest(APIMessage):
     request types.
 
     Subclasses of APIRequest are used on both the client and server sides. On
-    the server side they are instantiated by APIDispatcher's `handle_request()`
+    the server side they are instantiated by Server's `handle_request()`
     method. On the client side they are instantiated by whatever class is doing
     the requesting (probably a view class).
     """
-    _type = "request"
-    _debugger = None
-    _request = None
+    _top_fields = ['type', 'request']
+    _fields = {}
 
-    def __init__(self, data=None, debugger=None):
-        # initialise the request with whatever data was passed
-        super(APIRequest, self).__init__(data=data)
-
-        # initialise the request type and plugin from the one provided by the plugin manager
-        if not data:
-            self.request = self._request
-        self.plugin = self._plugin
-
-        # keep a reference to the debugger
-        if debugger:
-            self.debugger = debugger
-
-        # if we don't have a debugger yet, try the package-wide global
-        if not self.debugger:
-            self.debugger = voltron.debugger
+    type = 'request'
+    request = None
 
     @server_side
     def dispatch(self):
@@ -238,28 +215,6 @@ class APIRequest(APIMessage):
         exception.
         """
         raise NotImplementedError("Subclass APIRequest")
-
-    @property
-    def request(self):
-        if 'request' in self.props:
-            return self.props['request']
-        return None
-
-    @request.setter
-    def request(self, value):
-        self.props['request'] = str(value)
-
-    @property
-    def debugger(self):
-        return self._debugger
-
-    @debugger.setter
-    def debugger(self, value):
-        self._debugger = value
-
-    def validate(self):
-        if not self.request:
-            raise InvalidMessageException("No request type")
 
 
 class APIResponse(APIMessage):
@@ -272,90 +227,51 @@ class APIResponse(APIMessage):
     in order to serialise and send to the client. On the client side they are
     instantiated by the Client class and returned by `send_request`.
     """
-    _type = "response"
+    _top_fields = ['type', 'status']
+    _fields = {}
 
-    @property
-    def status(self):
-        return self.props['status']
-
-    @status.setter
-    def status(self, value):
-        self.props['status'] = str(value)
+    type = 'response'
+    status = None
 
     @property
     def is_success(self):
-        return self.props['status'] == 'success'
+        return self.status == 'success'
 
     @property
     def is_error(self):
-        return self.props['status'] == 'error'
-
-    @property
-    def error_code(self):
-        if self.status == 'error' and 'code' in self.data:
-            return self.data['code']
-        return None
-
-    @error_code.setter
-    def error_code(self, value):
-        self.data['code'] = int(value)
-
-    @property
-    def error_message(self):
-        if self.status == 'error' and 'message' in self.data:
-            return self.data['message']
-        return None
-
-    @error_message.setter
-    def error_message(self, value):
-        self.data['message'] = str(value)
-
-    def validate(self):
-        if not self.status:
-            raise InvalidMessageException("No status")
-        if self.is_error and (not self.error_code or not self.error_message):
-            raise InvalidMessageException("Error status without full error report")
+        return self.status == 'error'
 
 
 class APISuccessResponse(APIResponse):
     """
     A generic API success response.
     """
-    def __init__(self, data=None):
-        super(APIResponse, self).__init__(data=data)
-        self.status = "success"
+    status = 'success'
 
 
 class APIErrorResponse(APIResponse):
     """
     A generic API error response.
     """
-    def __init__(self, code=None, message=None, *args, **kwargs):
-        super(APIErrorResponse, self).__init__(*args, **kwargs)
-        self.status = "error"
-        if hasattr(self.__class__, 'code'):
-            self.error_code = self.__class__.code
-        if hasattr(self.__class__, 'message'):
-            self.error_message = self.__class__.message
-        if code:
-            self.error_code = code
-        if message:
-            self.error_message = message
+    _fields = {'code': True, 'message': True}
+
+    status = 'error'
 
 
 class APIGenericErrorResponse(APIErrorResponse):
     code = 0x1000
     message = "An error occurred"
 
+    def __init__(self, message=None):
+        super(APIGenericErrorResponse, self).__init__()
+        if message:
+            self.message = message
+
 
 class APIInvalidRequestErrorResponse(APIErrorResponse):
     code = 0x1001
     message = "Invalid API request"
 
-    def __init__(self, message=None):
-        super(APIInvalidRequestErrorResponse, self).__init__()
-        if message:
-            self.error_message = message
 
 class APIPluginNotFoundErrorResponse(APIErrorResponse):
     code = 0x1002
@@ -385,3 +301,8 @@ class APINoSuchTargetErrorResponse(APIErrorResponse):
 class APITargetBusyErrorResponse(APIErrorResponse):
     code = 0x1006
     message = "Target busy"
+
+
+class APIMissingFieldErrorResponse(APIGenericErrorResponse):
+    code = 0x1007
+    message = "Missing field"

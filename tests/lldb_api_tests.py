@@ -37,8 +37,6 @@ log.setLevel(logging.DEBUG)
 def setup():
     global adaptor, dbg, target
 
-    time.sleep(2)
-
     log.info("setting up LLDB API tests")
 
     # create an LLDBAdaptor

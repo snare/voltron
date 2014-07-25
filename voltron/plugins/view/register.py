@@ -1,5 +1,5 @@
 from voltron.view import *
-from voltron.plugin import ViewPlugin
+from voltron.plugin import *
 
 # Class to actually render the view
 class RegisterView (TerminalView):
@@ -259,10 +259,10 @@ class RegisterView (TerminalView):
 
     def render(self, error=None):
         # get target info (ie. arch)
-        req = self.pm.api_plugin_for_request('list_targets').request_class()
+        req = api_request('list_targets')
         res = self.client.send_request(req)
         if res.is_error:
-            error = "Failed getting targets: {}".format(res.error_message)
+            error = "Failed getting targets: {}".format(res.message)
         else:
             if len(res.targets) == 0:
                 error = "No targets in debugger"
@@ -275,10 +275,10 @@ class RegisterView (TerminalView):
                 self.curr_inst = inst
 
                 # get registers for target
-                req = self.pm.api_plugin_for_request('read_registers').request_class()
+                req = api_request('read_registers')
                 res = self.client.send_request(req)
                 if res.is_error:
-                    error = "Failed getting registers: {}".format(res.error_message)
+                    error = "Failed getting registers: {}".format(res.message)
 
         # if everything is ok, render the view
         if not error:
