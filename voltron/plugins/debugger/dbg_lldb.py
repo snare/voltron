@@ -1,11 +1,11 @@
 from __future__ import print_function
 
 import logging
-import logging.config
 import threading
 
 from voltron.api import *
 from voltron.plugin import *
+from voltron.debugger import *
 
 try:
     import lldb
@@ -16,15 +16,8 @@ except ImportError:
 log = logging.getLogger('debugger')
 
 if HAVE_LLDB:
-    class LLDBException(Exception):
-        """
-        Raised when an LLDB operation fails
-        """
-        def __init__(self, error=None):
-            pass
 
-
-    class LLDBAdaptor (object):
+    class LLDBAdaptor(DebuggerAdaptor):
         """
         The interface with an instance of LLDB
         """
@@ -37,7 +30,6 @@ if HAVE_LLDB:
             "arm64":    {"pc": "pc", "sp": "sp"},
         }
         def __init__(self, host=None):
-            self.wait_event = threading.Event()
             self.host_lock = threading.RLock()
             self.listeners = []
             if host:
@@ -50,98 +42,6 @@ if HAVE_LLDB:
                 log.debug("No debugger host found - creating one")
                 self.host = lldb.SBDebugger.Create()
                 self.host.SetAsync(False)
-
-        @property
-        def host(self):
-            """
-            Get the debugger host object that this adaptor talks to. Used by
-            custom API plugins to talk directly to the debugger.
-            """
-            return self._host
-
-        @host.setter
-        def host(self, value):
-            self._host = value
-
-        def version(self):
-            """
-            Get the debugger's version.
-
-            Returns a string containing the debugger's version
-            (e.g. 'lldb-310.2.37')
-            """
-            return self.host.GetVersionString()
-
-        def validate_target(func, *args, **kwargs):
-            """
-            A decorator that ensures that the specified target_id exists and
-            is valid.
-
-            Expects the target ID to be either the 'target_id' param in kwargs,
-            or the first positional parameter.
-
-            Raises a NoSuchTargetException if the target does not exist.
-            """
-            def inner(self, *args, **kwargs):
-                # find the target param
-                target_id = None
-                if 'target_id' in kwargs and kwargs['target_id'] != None:
-                    target_id = kwargs['target_id']
-                elif len(args):
-                    target_id = args[0]
-                else:
-                    target_id = 0
-
-                # if there was a target specified, check that it's valid
-                if not self.target_is_valid(target_id):
-                    raise NoSuchTargetException()
-
-                # call the function
-                return func(self, *args, **kwargs)
-            return inner
-
-        def validate_busy(func, *args, **kwargs):
-            """
-            A decorator that raises an exception if the specified target is busy.
-
-            Expects the target ID to be either the 'target_id' param in kwargs,
-            or the first positional parameter.
-
-            Raises a TargetBusyException if the target does not exist.
-            """
-            def inner(self, *args, **kwargs):
-                # find the target param
-                target_id = None
-                if 'target_id' in kwargs and kwargs['target_id'] != None:
-                    target_id = kwargs['target_id']
-                elif len(args):
-                    target_id = args[0]
-                else:
-                    target_id = 0
-
-                # if there was a target specified, ensure it's not busy
-                if self.target_is_busy(target_id):
-                    raise TargetBusyException()
-
-                # call the function
-                return func(self, *args, **kwargs)
-            return inner
-
-        def lock_host(func, *args, **kwargs):
-            """
-            A decorator that acquires a lock before accessing the debugger to
-            avoid API locking related errors with LLDB
-            """
-            def inner(self, *args, **kwargs):
-                self.host_lock.acquire()
-                try:
-                    res = func(self, *args, **kwargs)
-                    self.host_lock.release()
-                except Exception, e:
-                    self.host_lock.release()
-                    raise e
-                return res
-            return inner
 
         def target_exists(self, target_id=0):
             """
@@ -182,6 +82,27 @@ if HAVE_LLDB:
             except:
                 raise NoSuchTargetException()
             return target['state'] == "running"
+
+        @property
+        def host(self):
+            """
+            Get the debugger host object that this adaptor talks to. Used by
+            custom API plugins to talk directly to the debugger.
+            """
+            return self._host
+
+        @host.setter
+        def host(self, value):
+            self._host = value
+
+        def version(self):
+            """
+            Get the debugger's version.
+
+            Returns a string containing the debugger's version
+            (e.g. 'lldb-310.2.37')
+            """
+            return self.host.GetVersionString()
 
         def _target(self, target_id=0):
             """
