@@ -85,11 +85,15 @@ class Server(object):
                 req = APIRequest(data=data)
             except Exception, e:
                 req = None
-                log.error(log.error("Exception raised while parsing API request: {} {}".format(type(e), e)))
+                log.error("Exception raised while parsing API request: {} {}".format(type(e), e))
 
             if req:
                 # instantiate the request class
-                req = api_request(req.request, data=data)
+                try:
+                    req = api_request(req.request, data=data)
+                except Exception, e:
+                    log.error("Exception raised while creating API request: {} {}".format(type(e), e))
+                    req = None
                 if not req:
                     res = APIPluginNotFoundErrorResponse()
             else:
@@ -121,6 +125,8 @@ class Server(object):
         """
         Dispatch a request object.
         """
+        log.debug("Dispatching request: {}".format(str(req)))
+
         # make sure it's valid
         res = None
         try:
@@ -137,12 +143,14 @@ class Server(object):
                 log.error(msg)
                 res = APIGenericErrorResponse(message=msg)
 
+        log.debug("Response: {}".format(str(res)))
+
         # send the response
         if client:
             log.debug("Client was passed to dispatch_request() - sending response")
             client.send_response(str(res))
         else:
-            log.debug("Client was NOT passed to dispatch_request() - returning response")
+            log.debug("Client was not passed to dispatch_request() - returning response")
             return res
 
 
@@ -231,8 +239,8 @@ class HTTPServerThread(threading.Thread):
         self.port = port
 
     def run(self):
-        # graft the flask app (see http.py) onto the cherry tree
-        cherrypy.tree.graft(voltron.http.app, '/api')
+        # register routes for all the API methods
+        voltron.http.register_http_api()
 
         # configure the cherrypy server
         cherrypy.config.update({
@@ -241,12 +249,42 @@ class HTTPServerThread(threading.Thread):
             'server.socket_host': str(self.host)
         })
 
-        # mount the static dir
-        cherrypy.tree.mount(None, '/', {'/' : {
-            'tools.staticdir.dir': os.path.join(os.path.dirname(__file__), 'web'),
+        # mount the main static dir
+        cherrypy.tree.mount(None, '/static', {'/' : {
+            'tools.staticdir.dir': os.path.join(os.path.dirname(__file__), 'web/static'),
             'tools.staticdir.on': True,
             'tools.staticdir.index': 'index.html'
         }})
+
+        # graft the main flask app (see http.py) onto the cherry tree
+        cherrypy.tree.graft(voltron.http.app, '/')
+
+        # mount web plugins
+        plugins = voltron.plugin.pm.web_plugins
+        for name in plugins:
+            plugin_root = '/view/{}'.format(name)
+            static_path = '/view/{}/static'.format(name)
+
+            # mount app
+            if plugins[name].app:
+                # if there's an app object, mount it at the root
+                log.debug("Mounting app for web plugin '{}' on {}".format(name, plugin_root))
+                cherrypy.tree.graft(plugins[name].app, plugin_root)
+            else:
+                # if there's no plugin app, mount the static dir at the plugin's root instead
+                # neater for static-only apps (ie. javascript-based)
+                static_path = plugin_root
+
+            # mount static directory
+            directory = os.path.join(plugins[name]._dir, 'static')
+            if os.path.isdir(directory):
+                log.debug("Mounting static directory for web plugin '{}' on {}: {}".format(name, static_path, directory))
+                cherrypy.tree.mount(None, static_path, {'/' : {
+                    'tools.staticdir.dir': directory,
+                    'tools.staticdir.on': True,
+                    'tools.staticdir.index': 'index.html'
+                }})
+
 
         # make with the serving
         cherrypy.engine.start()

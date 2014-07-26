@@ -1,4 +1,6 @@
 import logging
+import inspect
+import os
 from collections import defaultdict
 
 from scruffy.plugin import Plugin
@@ -22,6 +24,7 @@ class PluginManager(object):
         self._api_plugins = defaultdict(lambda: None)
         self._debugger_plugins = defaultdict(lambda: None)
         self._view_plugins = defaultdict(lambda: None)
+        self._web_plugins = defaultdict(lambda: None)
 
         log.debug("Initalising PluginManager {}".format(self))
 
@@ -41,6 +44,10 @@ class PluginManager(object):
     def view_plugins(self):
         return self._view_plugins
 
+    @property
+    def web_plugins(self):
+        return self._web_plugins
+
     def register_plugin(self, plugin):
         """
         Register a new plugin with the PluginManager.
@@ -52,9 +59,6 @@ class PluginManager(object):
         """
         if self.valid_api_plugin(plugin):
             log.debug("Registering API plugin: {}".format(plugin))
-
-            # instantiate the API plugin, give its classes a ref to the
-            # plugin, and set its request type
             p = plugin()
             p.request_class._plugin = plugin
             p.request_class.request = plugin.request
@@ -65,6 +69,9 @@ class PluginManager(object):
         elif self.valid_view_plugin(plugin):
             log.debug("Registering view plugin: {}".format(plugin))
             self._view_plugins[plugin.name] = plugin()
+        elif self.valid_web_plugin(plugin):
+            log.debug("Registering web plugin: {}".format(plugin))
+            self._web_plugins[plugin.name] = plugin()
         else:
             log.debug("Ignoring invalid plugin: {}".format(plugin))
 
@@ -110,6 +117,19 @@ class PluginManager(object):
             return True
         return False
 
+    def valid_web_plugin(self, plugin):
+        """
+        Validate a web plugin, ensuring it is a web plugin and has the
+        necessary fields present.
+
+        `plugin` is a subclass of scruffy's Plugin class.
+        """
+        if (issubclass(plugin, WebPlugin)      and
+            hasattr(plugin, 'plugin_type')      and plugin.plugin_type == 'web' and
+            hasattr(plugin, 'name')             and plugin.name != None):
+            return True
+        return False
+
     def api_plugin_for_request(self, request=None):
         """
         Find an API plugin that supports the given request type.
@@ -128,23 +148,11 @@ class PluginManager(object):
         """
         return self.view_plugins[host]
 
-    def api_request(self, request_type, *args, **kwargs):
+    def web_plugin_with_name(self, name=None):
         """
-        Create an API request.
-
-        `request_type` is the request type (string). This is used to look up a
-        plugin, whose request class is instantiated and passed the remaining
-        arguments passed to this function.
+        Find a web plugin that for the given view name.
         """
-        # look up the plugin
-        plugin = self.api_plugin_for_request(request_type)
-        if plugin and plugin.request_class:
-            #create a request
-            req = plugin.request_class(*args, **kwargs)
-        else:
-            raise InvalidRequestTypeException()
-
-        return req
+        return self.web_plugins[host]
 
 
 class APIPlugin(Plugin):
@@ -201,6 +209,22 @@ class ViewPlugin(Plugin):
     name = None
     view_class = None
 
+class WebPlugin(Plugin):
+    """
+    Web plugin parent class.
+
+    `plugin_type` is 'web'
+    `name` is the name of the web plugin (e.g. 'webview')
+    `app` is a Flask app (or whatever, optional)
+    """
+    _dir = None
+
+    plugin_type = 'web'
+    name = None
+    app = None
+
+    def __init__(self):
+        self._dir = os.path.dirname(inspect.getfile(self.__class__))
 
 #
 # Shared plugin manager and convenience methods
@@ -209,29 +233,45 @@ class ViewPlugin(Plugin):
 pm = None
 
 def api_request(request, *args, **kwargs):
+    """
+    Create an API request.
+
+    `request_type` is the request type (string). This is used to look up a
+    plugin, whose request class is instantiated and passed the remaining
+    arguments passed to this function.
+    """
     plugin = pm.api_plugin_for_request(request)
-    if plugin:
-        return plugin.request_class(*args, **kwargs)
+    if plugin and plugin.request_class:
+        req = plugin.request_class(*args, **kwargs)
     else:
-        return None
+        raise Exception("Invalid request type")
+    return req
 
 def api_response(request, *args, **kwargs):
     plugin = pm.api_plugin_for_request(request)
-    if plugin:
-        return plugin.response_class(*args, **kwargs)
+    if plugin and plugin.response_class:
+        req = plugin.response_class(*args, **kwargs)
     else:
-        return None
+        raise Exception("Invalid request type")
+    return req
 
 def debugger_adaptor(host, *args, **kwargs):
     plugin = pm.debugger_plugin_for_host(host)
-    if plugin:
-        return plugin.adaptor_class(*args, **kwargs)
+    if plugin and plugin.adaptor_class:
+        adaptor = plugin.adaptor_class(*args, **kwargs)
     else:
-        return None
+        raise Exception("Invalid debugger host")
+    return adaptor
 
 def view(name, *args, **kwargs):
     plugin = pm.view_plugin_with_name(name)
-    if plugin:
-        return plugin.view_class(*args, **kwargs)
+    if plugin and plugin.view_class:
+        view = plugin.view_class(*args, **kwargs)
     else:
-        return None
+        raise Exception("Invalid view name")
+    return view
+
+def web_plugins():
+    return pm.web_plugins
+
+

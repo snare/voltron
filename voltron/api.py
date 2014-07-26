@@ -14,7 +14,7 @@ from collections import defaultdict
 from scruffy.plugin import Plugin
 
 import voltron
-from .plugin import PluginManager, APIPlugin
+from .plugin import APIPlugin
 
 log = logging.getLogger('api')
 
@@ -26,6 +26,10 @@ class InvalidRequestTypeException(Exception):
     Exception raised when the client is requested to send an invalid request type.
     """
     pass
+
+class InvalidDebuggerHostException(Exception):pass
+class InvalidViewNameException(Exception): pass
+
 
 class InvalidMessageException(Exception):
     """

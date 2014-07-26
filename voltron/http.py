@@ -1,58 +1,54 @@
 import logging
-from flask import Flask, request
+import os
+from flask import *
 
 from .plugin import *
 from .api import *
 
-app = Flask('voltron')
+app = Flask('voltron', template_folder='web/templates')
 log = logging.getLogger('api')
+
+
+@app.route("/api/request", methods=['POST'])
+def handle_post():
+    """
+    Requests  are proxied straight through to the server's handle_request()
+    method. The entire request body is treated as a JSON request and passed
+    through unmodified.
+
+    e.g.
+    POST /api/request HTTP/1.1
+
+    {"type": "request", "request": "version"}
+    """
+    res = app.server.handle_request(str(request.data))
+    return Response(str(res), status=200, mimetype='application/json')
+
+def handle_get():
+    """
+    Handle an incoming HTTP API request via the GET method.
+
+    Query string parameters from the request are passed through as kwargs to
+    the api_request() function, which will create an API request of the
+    specified type with those args, then the resultant request is dispatched
+    and the result returned.
+
+    e.g. GET /api/execute_command?command=version HTTP/1.1
+
+    Routes to this method are registered by register_http_api()
+    """
+    res = app.server.dispatch_request(api_request(request.path.split('/')[-1], **request.args.to_dict()))
+    return Response(str(res), status=200, mimetype='application/json')
+
+def register_http_api():
+    """
+    Register URL routes for each API plugin. All routes go to handle_get().
+
+    e.g. Registers '/api/version' to call handle_get()
+    """
+    for plugin in voltron.plugin.pm.api_plugins:
+        app.add_url_rule('/api/{}'.format(plugin), plugin, handle_get)
 
 @app.route("/")
 def root():
-    return 'Voltron. Defender of the universe.'
-
-@app.route("/api", methods=['POST'])
-def api():
-    return str(app.server.handle_request(str(request.data)))
-
-@app.route("/disassemble")
-def disassemble():
-    return str(app.server.dispatch_request(api_request('disassemble', **request.args.to_dict())))
-
-@app.route("/execute_command")
-def execute_command():
-    return str(app.server.dispatch_request(api_request('execute_command', **request.args.to_dict())))
-
-@app.route("/list_breakpoints")
-def list_breakpoints():
-    return str(app.server.dispatch_request(api_request('list_breakpoints', **request.args.to_dict())))
-
-@app.route("/list_targets")
-def list_targets():
-    return str(app.server.dispatch_request(api_request('list_targets', **request.args.to_dict())))
-
-@app.route("/read_memory")
-def read_memory():
-    return str(app.server.dispatch_request(api_request('read_memory', **request.args.to_dict())))
-
-@app.route("/read_registers")
-def read_registers():
-    return str(app.server.dispatch_request(api_request('read_registers', **request.args.to_dict())))
-
-@app.route("/read_stack")
-def read_stack():
-    req = api_request('read_stack', **request.args.to_dict())
-    return str(app.server.dispatch_request(req))
-
-@app.route("/state")
-def state():
-    return str(app.server.dispatch_request(api_request('state', **request.args.to_dict())))
-
-@app.route("/version")
-def version():
-    return str(app.server.dispatch_request(api_request('version')))
-
-@app.route("/wait")
-def wait():
-    return str(app.server.dispatch_request(api_request('wait', **request.args.to_dict())))
-
+    return make_response(render_template('index.html', views=voltron.plugin.pm.web_plugins.keys()))
