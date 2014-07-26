@@ -73,7 +73,15 @@ if in_lldb:
         def status(self):
             if self.server != None:
                 summs = self.server.client_summary()
-                print("There are {} clients attached".format(len(summs)))
+                print("The following listeners are active:")
+                listen = voltron.config['server']['listen']
+                if listen['domain']:
+                    print("  domain socket ({})".format(voltron.env['sock']))
+                if listen['tcp']:
+                    print("  TCP socket ({})".format(listen['tcp']))
+                if listen['http']:
+                    print("  web server ({})".format(listen['http']))
+                print("There are {} clients attached:".format(len(summs)))
                 for summary in summs:
                     print("  " + summary)
             else:
@@ -102,7 +110,7 @@ if in_lldb:
             voltron.debugger = self.adaptor
 
             # start the server
-            self.server = Server(debugger=self.adaptor)
+            self.server = Server()
             self.server.start()
 
             self.hook_idx = None

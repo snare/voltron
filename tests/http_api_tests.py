@@ -63,83 +63,83 @@ def teardown():
     server.stop()
 
 def test_disassemble():
-    data = requests.get('http://localhost:5555/disassemble?count=16').text
+    data = requests.get('http://localhost:5555/api/disassemble?count=16').text
     res = APIResponse(data=data)
     assert res.is_success
     assert res.disassembly == disassemble_response
 
 def test_execute_command():
-    data = requests.get('http://localhost:5555/execute_command?command=reg%20read').text
+    data = requests.get('http://localhost:5555/api/execute_command?command=reg%20read').text
     res = APIResponse(data=data)
     assert res.is_success
     assert res.output == execute_command_response
 
 def test_list_targets():
-    data = requests.get('http://localhost:5555/list_targets').text
+    data = requests.get('http://localhost:5555/api/list_targets').text
     res = api_response('list_targets', data=data)
     assert res.is_success
     assert res.targets == targets_response
 
 def test_read_memory():
-    data = requests.get('http://localhost:5555/read_registers').text
+    data = requests.get('http://localhost:5555/api/read_registers').text
     res = api_response('read_registers', data=data)
-    url = 'http://localhost:5555/read_memory?address={}&length=64'.format(res.registers['rip'])
+    url = 'http://localhost:5555/api/read_memory?address={}&length=64'.format(res.registers['rip'])
     data = requests.get(url).text
     res = api_response('read_memory', data=data)
     assert res.is_success
     assert res.memory == read_memory_response
 
 def test_read_registers():
-    data = requests.get('http://localhost:5555/read_registers').text
+    data = requests.get('http://localhost:5555/api/read_registers').text
     res = api_response('read_registers', data=data)
     assert res.is_success
     assert res.registers == read_registers_response
 
 def test_read_stack_length_missing():
-    data = requests.get('http://localhost:5555/read_stack').text
+    data = requests.get('http://localhost:5555/api/read_stack').text
     res = APIErrorResponse(data=data)
     assert res.is_error
     assert res.message == 'length'
 
 def test_read_stack():
-    data = requests.get('http://localhost:5555/read_stack?length=64').text
+    data = requests.get('http://localhost:5555/api/read_stack?length=64').text
     res = api_response('read_stack', data=data)
     assert res.is_success
     assert res.memory == read_stack_response
 
 def test_state():
-    data = requests.get('http://localhost:5555/state').text
+    data = requests.get('http://localhost:5555/api/state').text
     res = api_response('state', data=data)
     assert res.is_success
     assert res.state == state_response
 
 def test_version():
-    data = requests.get('http://localhost:5555/version').text
+    data = requests.get('http://localhost:5555/api/version').text
     res = api_response('version', data=data)
     assert res.is_success
     assert res.api_version == 1.0
     assert res.host_version == 'lldb-something'
 
 def test_wait():
-    data = requests.get('http://localhost:5555/wait?timeout=2').text
+    data = requests.get('http://localhost:5555/api/wait?timeout=2').text
     res = APIResponse(data=data)
     assert res.is_error
     assert res.code == 0x1004
 
-# def test_bad_json():
-#     data = requests.post('http://localhost:5555/api', data='xxx').text
-#     res = APIResponse(data=data)
-#     assert res.is_error
-#     assert res.code == 0x1001
+def test_bad_json():
+    data = requests.post('http://localhost:5555/api/request', data='xxx').text
+    res = APIResponse(data=data)
+    assert res.is_error
+    assert res.code == 0x1001
 
-# def test_bad_request():
-#     data = requests.post('http://localhost:5555/api', data='{"type":"request","request":"no_such_request"}').text
-#     res = APIResponse(data=data)
-#     assert res.is_error
-#     assert res.code == 0x1002
+def test_bad_request():
+    data = requests.post('http://localhost:5555/api/request', data='{"type":"request","request":"no_such_request"}').text
+    res = APIResponse(data=data)
+    assert res.is_error
+    assert res.code == 0x1002
 
-# def test_host_not_supported():
-#     data = requests.post('http://localhost:5555/api', data='{"type":"request","request":"host_not_supported"}').text
-#     res = APIResponse(data=data)
-#     assert res.is_error
-#     assert res.code == 0x1003
+def test_host_not_supported():
+    data = requests.post('http://localhost:5555/api/request', data='{"type":"request","request":"host_not_supported"}').text
+    res = APIResponse(data=data)
+    assert res.is_error
+    assert res.code == 0x1003

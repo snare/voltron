@@ -1,5 +1,6 @@
 from voltron.view import *
 from voltron.plugin import *
+from voltron.api import *
 
 
 class DisasmView (TerminalView):

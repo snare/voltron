@@ -2,6 +2,7 @@ import logging
 
 from voltron.view import *
 from voltron.plugin import *
+from voltron.api import *
 
 log = logging.getLogger('view')
 

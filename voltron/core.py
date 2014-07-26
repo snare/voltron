@@ -12,6 +12,7 @@ import voltron
 import voltron.http
 from .api import *
 from .plugin import *
+from .api import *
 
 log = logging.getLogger("core")
 
@@ -23,7 +24,7 @@ class Server(object):
     controlling the background thread that communicates with clients, and
     handling requests forwarded from that thread.
     """
-    def __init__(self, debugger=None, plugin_mgr=None):
+    def __init__(self):
         self.clients = []
 
         self.d_thread = None
@@ -34,29 +35,21 @@ class Server(object):
         self.d_exit_out, self.d_exit_in = os.pipe()
         self.t_exit_out, self.t_exit_in = os.pipe()
 
-        self.debugger = debugger
-        if plugin_mgr:
-            self.plugin_mgr = plugin_mgr
-        else:
-            self.plugin_mgr = PluginManager()
-
     def start(self):
         listen = voltron.config['server']['listen']
         if listen['domain']:
             log.debug("Starting server thread for domain socket")
-            self.d_thread = ServerThread(self, self.clients, self.d_exit_out, self.debugger, self.plugin_mgr,
-                voltron.env['sock'])
+            self.d_thread = ServerThread(self, self.clients, self.d_exit_out, voltron.env['sock'])
             self.d_thread.start()
         if listen['tcp']:
             log.debug("Starting server thread for TCP socket")
-            self.t_thread = ServerThread(self, self.clients, self.t_exit_out, self.debugger, self.plugin_mgr,
-                tuple(listen['tcp']))
+            self.t_thread = ServerThread(self, self.clients, self.t_exit_out, tuple(listen['tcp']))
             self.t_thread.start()
         if voltron.config['server']['listen']['http']:
             log.debug("Starting server thread for HTTP server")
             (host, port) = tuple(listen['http'])
             voltron.http.app.server = self
-            self.h_thread = HTTPServerThread(self, self.clients, self.debugger, self.plugin_mgr, host, port)
+            self.h_thread = HTTPServerThread(self, self.clients, host, port)
             self.h_thread.start()
 
     def stop(self):
@@ -86,17 +79,17 @@ class Server(object):
         #
 
         # make sure we have a debugger, or we're gonna have a bad time
-        if self.debugger:
+        if voltron.debugger:
             # parse incoming request with the top level APIRequest class so we can determine the request type
             try:
-                req = APIRequest(data=data, debugger=self.debugger)
+                req = APIRequest(data=data)
             except Exception, e:
                 req = None
                 log.error(log.error("Exception raised while parsing API request: {} {}".format(type(e), e)))
 
             if req:
                 # instantiate the request class
-                req = api_request(req.request, data=data, debugger=self.debugger)
+                req = api_request(req.request, data=data)
                 if not req:
                     res = APIPluginNotFoundErrorResponse()
             else:
@@ -161,13 +154,11 @@ class ServerThread(threading.Thread):
     passes them off to the APIDispatcher to be fulfilled. Then the responses
     returned (synchronously) are sent back to the requesting client.
     """
-    def __init__(self, server, clients, exit_pipe, debugger, plugin_mgr, sock):
+    def __init__(self, server, clients, exit_pipe, sock):
         threading.Thread.__init__(self)
         self.server = server
         self.clients = clients
         self.exit_pipe = exit_pipe
-        self.debugger = debugger
-        self.plugin_mgr = plugin_mgr
         self.sock = sock
 
     def run(self):
@@ -232,26 +223,30 @@ class HTTPServerThread(threading.Thread):
     """
     Background thread to run the HTTP server.
     """
-    def __init__(self, server, clients, debugger, plugin_mgr, host="127.0.0.1", port=6969):
+    def __init__(self, server, clients, host="127.0.0.1", port=6969):
         threading.Thread.__init__(self)
         self.server = server
         self.clients = clients
-        self.debugger = debugger
-        self.plugin_mgr = plugin_mgr
         self.host = host
         self.port = port
 
     def run(self):
         # graft the flask app (see http.py) onto the cherry tree
-        cherrypy.tree.graft(voltron.http.app, '/')
+        cherrypy.tree.graft(voltron.http.app, '/api')
 
         # configure the cherrypy server
         cherrypy.config.update({
-            'engine.autoreload.on': True,
             'log.screen': False,
             'server.socket_port': self.port,
             'server.socket_host': str(self.host)
         })
+
+        # mount the static dir
+        cherrypy.tree.mount(None, '/', {'/' : {
+            'tools.staticdir.dir': os.path.join(os.path.dirname(__file__), 'web'),
+            'tools.staticdir.on': True,
+            'tools.staticdir.index': 'index.html'
+        }})
 
         # make with the serving
         cherrypy.engine.start()
@@ -270,7 +265,6 @@ class Client(object):
         Initialise a new client
         """
         self.sock = None
-        self.plugin_mgr = PluginManager()
 
     def connect(self):
         """
@@ -335,7 +329,7 @@ class Client(object):
         plugin, whose request class is instantiated and passed the remaining
         arguments passed to this function.
         """
-        return self.plugin_mgr.api_request(request_type, *args, **kwargs)
+        return api_request(request_type, *args, **kwargs)
 
     def perform_request(self, request_type, *args, **kwargs):
         """
@@ -346,7 +340,7 @@ class Client(object):
         arguments passed to this function.
         """
         # create a request
-        req = self.plugin_mgr.api_request(request_type, *args, **kwargs)
+        req = api_request(request_type, *args, **kwargs)
 
         # send it
         res = self.send_request(req)

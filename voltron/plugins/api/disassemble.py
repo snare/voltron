@@ -3,6 +3,7 @@ import logging
 import base64
 
 from voltron.api import *
+from voltron.plugin import *
 
 log = logging.getLogger('api')
 
