@@ -46,7 +46,7 @@ def setup():
     voltron.debugger = adaptor
 
     # start up a voltron server
-    server = Server(plugin_mgr=pm, debugger=adaptor)
+    server = Server()
     server.start()
 
     time.sleep(0.1)

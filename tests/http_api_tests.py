@@ -43,6 +43,8 @@ class APIHostNotSupportedPlugin(APIPlugin):
 def setup():
     global server, client, target, pm, adaptor, methods
 
+    time.sleep(1)
+
     log.info("setting up API tests")
 
     # set up voltron
@@ -56,7 +58,7 @@ def setup():
     inject_mock(adaptor)
 
     # start up a voltron server
-    server = Server(plugin_mgr=pm, debugger=adaptor)
+    server = Server()
     server.start()
 
 def teardown():
