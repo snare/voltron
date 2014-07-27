@@ -65,7 +65,9 @@ class PluginManager(object):
             self._api_plugins[plugin.request] = p
         elif self.valid_debugger_plugin(plugin):
             log.debug("Registering debugger plugin: {}".format(plugin))
-            self._debugger_plugins[plugin.host] = plugin()
+            p = plugin()
+            p.adaptor_class._plugin = plugin
+            self._debugger_plugins[plugin.host] = p
         elif self.valid_view_plugin(plugin):
             log.debug("Registering view plugin: {}".format(plugin))
             self._view_plugins[plugin.name] = plugin()
