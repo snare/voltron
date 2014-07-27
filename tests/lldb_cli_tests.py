@@ -53,6 +53,7 @@ def teardown():
 def start_debugger(do_break=True):
     global p, client
     p = pexpect.spawn('lldb')
+    p.sendline("settings set target.x86-disassembly-flavor intel")
     p.sendline("command script import dbgentry.py")
     p.sendline("file tests/inferior")
     p.sendline("voltron init")
@@ -162,5 +163,5 @@ def test_disassemble():
     res = client.perform_request('disassemble', count=0x20)
     assert res.status == 'success'
     assert len(res.disassembly) > 0
-    assert 'pushq' in res.disassembly
+    assert 'push' in res.disassembly
 
