@@ -1,0 +1,5 @@
+file tests/inferior
+voltron init
+b main
+run loop
+
