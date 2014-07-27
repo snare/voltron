@@ -43,8 +43,6 @@ class APIHostNotSupportedPlugin(APIPlugin):
 def setup():
     global server, client, target, pm, adaptor, methods
 
-    time.sleep(1)
-
     log.info("setting up API tests")
 
     # set up voltron
@@ -60,6 +58,8 @@ def setup():
     # start up a voltron server
     server = Server()
     server.start()
+
+    time.sleep(2)
 
 def teardown():
     server.stop()
