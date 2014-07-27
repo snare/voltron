@@ -269,6 +269,7 @@ class HTTPServerThread(threading.Thread):
             if plugins[name].app:
                 # if there's an app object, mount it at the root
                 log.debug("Mounting app for web plugin '{}' on {}".format(name, plugin_root))
+                plugins[name].app.server = self.server
                 cherrypy.tree.graft(plugins[name].app, plugin_root)
             else:
                 # if there's no plugin app, mount the static dir at the plugin's root instead
