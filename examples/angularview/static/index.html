@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>voltron</title>
+  <link rel=stylesheet type=text/css href="/static/css/solarized.css">
+  <link rel=stylesheet type=text/css href="/static/css/fonts.css">
+  <link rel=stylesheet type=text/css href="/static/css/style.css">
+  <link rel=stylesheet type=text/css href="css/solarized.css">
+  <link rel=stylesheet type=text/css href="css/style.css">
+</head>
+
+<body ng-app="VoltronApp" ng-controller="voltronController">
+  <div id="tile">
+    <div><b>registers</b></div>
+    <div ng-repeat="reg in registers">
+      <span class="reg_label">{{reg.name}}</span>
+      <span class="{{reg.class}}">{{reg.value}}</span>
+    </div>
+  </div>
+  <div id="tile">
+    <div><b>disassembly</b></div>
+    <div ng-bind-html="disassembly" id="disasm" />
+  </div>
+  <script src="lib/angular.min.js"></script>
+  <script src="lib/angular-route.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/controllers.js"></script>
+  <script src="js/services.js"></script>
+</body>
+</html>

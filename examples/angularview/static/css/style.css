@@ -1,0 +1,29 @@
+.reg_label {
+    color: #b58900;
+    font-weight: bold;
+}
+
+.reg_highlight {
+    color: #dc322f;
+}
+
+.reg_normal {
+}
+
+#tile {
+    display:inline-block;
+    vertical-align: top;
+    background-color: #073642;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+    padding-top: 0.3em;
+    padding-bottom: 0.3em;
+}
+
+pre {
+    margin: 0;
+}
+
+#disasm {
+    background-color: #073642;
+}

@@ -1,0 +1,20 @@
+<!doctype html>
+<head>
+  <title>voltron</title>
+  <link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/solarized.css') }}">
+  <link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/fonts.css') }}">
+  <link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div>
+    <h1>voltron</h1>
+    Welcome to voltron's embedded web server.
+    <h2>views</h2>
+    <b>The following web views are installed:</b>
+    <ul>
+    {% for view in views %}
+      <li><a href="/view/{{ view }}">{{ view }}</a></li>
+    {% endfor %}
+    </ul>
+  </div>
+</body>
