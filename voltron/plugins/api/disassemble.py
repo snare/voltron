@@ -42,6 +42,8 @@ class APIDisassembleRequest(APIRequest):
             disasm = voltron.debugger.disassemble(target_id=self.target_id, address=self.address, count=self.count)
             res = APIDisassembleResponse()
             res.disassembly = disasm
+            res.flavor = voltron.debugger.disassembly_flavor()
+            res.host = voltron.debugger._plugin.host
         except NoSuchTargetException:
             res = APINoSuchTargetErrorResponse()
         except TargetBusyException:
@@ -66,9 +68,10 @@ class APIDisassembleResponse(APISuccessResponse):
         }
     }
     """
-    _fields = {'disassembly': True}
+    _fields = {'disassembly': True, 'formatted': False, 'flavor': False, 'host': False}
 
     disassembly = None
+    formatted = None
 
 
 class APIDisassemblePlugin(APIPlugin):
