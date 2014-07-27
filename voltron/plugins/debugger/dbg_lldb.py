@@ -356,6 +356,26 @@ if HAVE_LLDB:
             else:
                 raise Exception("No command specified")
 
+        @lock_host
+        def disassembly_flavor(self):
+            """
+            Return the disassembly flavor setting for the debugger.
+
+            Returns 'intel' or 'att'
+            """
+            res = lldb.SBCommandReturnObject()
+            ci = self.host.GetCommandInterpreter()
+            ci.HandleCommand('settings show target.x86-disassembly-flavor', res)
+            if res.Succeeded():
+                output = res.GetOutput().strip()
+                flavor = output.split()[-1]
+                if flavor == 'default':
+                    flavor = 'att'
+            else:
+                raise Exception(res.GetError().strip())
+
+            return flavor
+
         #
         # Other methods
         #
@@ -383,7 +403,6 @@ if HAVE_LLDB:
             """
             for listener in self.listeners:
                 listener['callback']()
-
 
 
     class LLDBAdaptorPlugin(DebuggerAdaptorPlugin):
