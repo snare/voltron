@@ -53,14 +53,16 @@ def main(debugger=None, dict=None):
 
     # Instantiate and run the appropriate module
     inst = args.func(args, loaded_config=CONFIG)
+    suppress_exit_log = False
     try:
         inst.run()
     except Exception as e:
         log.error("Exception running module {}: {}".format(inst.__class__.__name__, traceback.format_exc()))
     except KeyboardInterrupt:
-        pass
+        suppress_exit_log = True
     inst.cleanup()
-    log.info('Exiting')
+    if not suppress_exit_log:
+        log.info('Exiting')
 
 
 if __name__ == "__main__":
