@@ -30,7 +30,13 @@ class VoltronLLDBCommand (VoltronCommand):
         super(VoltronLLDBCommand, self).start()
 
     def register_hooks(self):
-        lldb.debugger.HandleCommand('target stop-hook add -o \'voltron update\'')
+        cro = lldb.SBCommandReturnObject()
+        ci = lldb.debugger.GetCommandInterpreter()
+        ci.HandleCommand('target stop-hook add -o \'voltron update\'', cro)
+        ret = cro.Succeeded()
+        if not ret:
+            print(cro.GetError())
+        return ret
 
     def unregister_hooks(self):
         # XXX: Fix this so it only removes our stop-hook

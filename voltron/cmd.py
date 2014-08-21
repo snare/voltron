@@ -40,8 +40,7 @@ class VoltronCommand (object):
     def start(self):
         if not self.running:
             print("Starting voltron")
-            self.running = True
-            self.register_hooks()
+            self.running = self.register_hooks() is not False
         else:
             print("Already running")
 
