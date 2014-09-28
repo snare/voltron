@@ -13,6 +13,7 @@ import time
 import logging
 import subprocess
 import base64
+import time
 
 from mock import Mock
 from nose.tools import *
@@ -28,7 +29,7 @@ if platform.system() == 'Darwin':
 
 from common import *
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('tests')
 
 class APIHostNotSupportedRequest(APIRequest):
     @server_side
@@ -69,6 +70,7 @@ def setup():
 
 def teardown():
     server.stop()
+    time.sleep(2)
 
 def make_direct_request(request):
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)

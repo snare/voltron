@@ -1,11 +1,13 @@
 """
-Tests that test voltron in the lldb cli driver
+Tests that test voltron in the gdb cli driver
 
 Tests:
-Client -> Server -> LLDBAdaptor
+Client -> Server -> GDBAdaptor
 
-Inside an LLDB CLI driver instance
+Inside a GDB instance
 """
+
+from __future__ import print_function
 
 import tempfile
 import sys
@@ -23,8 +25,6 @@ from voltron.core import *
 from voltron.api import *
 from voltron.plugin import PluginManager, DebuggerAdaptorPlugin
 
-import lldb
-
 from common import *
 
 log = logging.getLogger('tests')
@@ -35,7 +35,7 @@ client = None
 def setup():
     global p, client, pm
 
-    log.info("setting up LLDB CLI tests")
+    log.info("setting up GDB CLI tests")
 
     voltron.setup_env()
 
@@ -44,36 +44,39 @@ def setup():
 
     # start debugger
     start_debugger()
-    time.sleep(1)
 
 def teardown():
     read_data()
     p.terminate(True)
-    time.sleep(2)
+    time.sleep(3)
 
 def start_debugger(do_break=True):
     global p, client
-    p = pexpect.spawn('lldb')
-    p.sendline("settings set target.x86-disassembly-flavor intel")
-    p.sendline("command script import dbgentry.py")
+    p = pexpect.spawn('gdb')
+    p.sendline("source dbgentry.py")
     p.sendline("file tests/inferior")
+    p.sendline("set disassembly-flavor intel")
     p.sendline("voltron init")
-    p.sendline("process kill")
-    p.sendline("break delete 1")
     if do_break:
         p.sendline("b main")
     p.sendline("run loop")
     read_data()
+
+    time.sleep(2)
+
     client = Client()
     client.connect()
 
 def stop_debugger():
+    # p.sendline("kill")
+    read_data()
     p.terminate(True)
 
 def read_data():
     try:
         while True:
-            p.read_nonblocking(size=64, timeout=1)
+            data = p.read_nonblocking(size=64, timeout=1)
+            # print(data, end='')
     except:
         pass
 
@@ -92,7 +95,7 @@ def test_version():
     req = client.create_request('version')
     res = client.send_request(req)
     assert res.api_version == 1.0
-    assert 'lldb' in res.host_version
+    assert 'gdb' in res.host_version
 
 def test_read_registers():
     global registers
@@ -118,6 +121,15 @@ def test_state_stopped():
     res = client.perform_request('state')
     assert res.is_success
     assert res.state == "stopped"
+
+# def test_state_invalid():
+#     restart_debugger()
+#     p.sendline("continue")
+#     read_data()
+#     time.sleep(1)
+#     res = client.perform_request('state')
+#     assert res.is_success
+#     assert res.state == "invalid"
 
 def test_wait_timeout():
     restart_debugger()
@@ -146,7 +158,7 @@ def test_read_stack():
 def test_execute_command():
     restart_debugger()
     time.sleep(1)
-    res = client.perform_request('execute_command', command="reg read")
+    res = client.perform_request('execute_command', command="info reg")
     assert res.status == 'success'
     assert len(res.output) > 0
     assert 'rax' in res.output
@@ -157,5 +169,5 @@ def test_disassemble():
     res = client.perform_request('disassemble', count=0x20)
     assert res.status == 'success'
     assert len(res.disassembly) > 0
-    assert 'push' in res.disassembly
+    assert 'DWORD' in res.disassembly
 

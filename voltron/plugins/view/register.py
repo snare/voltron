@@ -272,6 +272,7 @@ class RegisterView (TerminalView):
                 self.curr_arch = arch
 
                 # get next instruction
+                # XXX probably fix this
                 inst = 'jmp x'
                 self.curr_inst = inst
 

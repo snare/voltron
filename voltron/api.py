@@ -80,6 +80,11 @@ class MissingFieldError(Exception):
     """
     pass
 
+class NoSuchThreadException(Exception):
+    pass
+
+class UnknownArchitectureException(Exception):
+    pass
 
 def server_side(func):
     """

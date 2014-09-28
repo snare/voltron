@@ -31,8 +31,8 @@ import lldb
 from common import *
 
 voltron.setup_env()
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+log = logging.getLogger('tests')
 
 def setup():
     global adaptor, dbg, target
@@ -49,7 +49,7 @@ def setup():
     target = adaptor.host.CreateTargetWithFileAndArch("tests/inferior", lldb.LLDB_ARCH_DEFAULT)
 
 def teardown():
-    pass
+    time.sleep(2)
 
 def test_version():
     assert 'lldb' in adaptor.version()

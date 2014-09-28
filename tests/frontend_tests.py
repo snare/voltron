@@ -14,6 +14,7 @@ import json
 import time
 import logging
 import subprocess
+import time
 
 from mock import Mock
 from nose.tools import *
@@ -31,7 +32,7 @@ import lldb
 
 from common import *
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("tests")
 
 def setup():
     global server, client, target, pm, adaptor, methods
@@ -47,6 +48,7 @@ def setup():
 
     # start up a voltron server
     server = Server()
+    # import pdb;pdb.set_trace()
     server.start()
 
     time.sleep(0.1)
@@ -61,6 +63,7 @@ def setup():
 
 def teardown():
     server.stop()
+    time.sleep(2)
 
 def test_state_no_target():
     req = api_request('state')

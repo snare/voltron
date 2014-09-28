@@ -63,6 +63,7 @@ def setup():
 
 def teardown():
     server.stop()
+    time.sleep(2)
 
 def test_disassemble():
     data = requests.get('http://localhost:5555/api/disassemble?count=16').text

@@ -1,50 +1,26 @@
-import logging
-
-import voltron
-from voltron.core import Server
-from voltron.plugin import PluginManager
 try:
-    import lldb
-    in_lldb = True
-except:
-    in_lldb = False
-try:
-    import gdb
-    in_gdb = True
-except:
-    in_gdb = False
+    import logging
+    import blessed
 
-voltron.setup_env()
-log = voltron.setup_logging('debugger')
+    import voltron
+    from voltron.core import Server
+    from voltron.plugin import PluginManager
+    try:
+        import lldb
+        in_lldb = True
+    except ImportError:
+        in_lldb = False
+    try:
+        import gdb
+        in_gdb = True
+    except ImportError:
+        in_gdb = False
 
-cmd = None
+    voltron.setup_env()
+    log = voltron.setup_logging('debugger')
 
-if in_lldb:
-    def __lldb_init_module(debugger, dict):
-        """
-        Called by LLDB when the module is loaded
-        """
-        global cmd
-        log.debug("Initialising LLDB command")
-        cmd = VoltronLLDBCommand(debugger, dict)
+    cmd = None
 
-    def lldb_invoke(debugger, command, result, dict):
-        """
-        Called when the voltron command is invoked within LLDB
-        """
-        cmd.invoke(debugger, command, result, dict)
-
-elif in_gdb:
-    # Called when the module is loaded by gdb
-    if __name__ == "__main__":
-        log.debug('Initialising GDB command')
-        inst = VoltronGDBCommand()
-        print("Voltron loaded.")
-else:
-    print("Something wicked this way comes")
-
-
-if in_lldb:
     class VoltronCommand (object):
         """
         Parent class for common methods across all debugger hosts.
@@ -88,89 +64,123 @@ if in_lldb:
                 print("Server is not running (no inferior)")
 
 
-    class VoltronLLDBCommand (VoltronCommand):
-        """
-        Debugger command class for LLDB
-        """
-        def __init__(self, debugger, dict):
-            super(VoltronCommand, self).__init__()
+    if in_lldb:
+        class VoltronLLDBCommand (VoltronCommand):
+            """
+            Debugger command class for LLDB
+            """
+            def __init__(self, debugger, dict):
+                super(VoltronCommand, self).__init__()
 
-            # grab the debugger and command interpreter
-            self.debugger = debugger
-            self.ci = self.debugger.GetCommandInterpreter()
+                # grab the debugger and command interpreter
+                self.debugger = debugger
+                self.ci = self.debugger.GetCommandInterpreter()
 
-            # install the voltron command handler
-            self.debugger.HandleCommand('command script add -f dbgentry.lldb_invoke voltron')
+                # install the voltron command handler
+                self.debugger.HandleCommand('command script add -f dbgentry.lldb_invoke voltron')
 
-            # load plugins
-            self.pm = PluginManager()
+                # load plugins
+                self.pm = PluginManager()
 
-            # set up an lldb adaptor and set it as the package-wide adaptor
-            self.adaptor = self.pm.debugger_plugin_for_host('lldb').adaptor_class()
-            voltron.debugger = self.adaptor
+                # set up an lldb adaptor and set it as the package-wide adaptor
+                self.adaptor = self.pm.debugger_plugin_for_host('lldb').adaptor_class()
+                voltron.debugger = self.adaptor
 
-            # start the server
-            self.server = Server()
-            self.server.start()
+                # start the server
+                self.server = Server()
+                self.server.start()
 
-            self.hook_idx = None
+                self.hook_idx = None
 
-        def invoke(self, debugger, command, result, dict):
-            self.handle_command(command)
+            def invoke(self, debugger, command, result, dict):
+                self.handle_command(command)
 
-        def register_hooks(self):
-            try:
-                output = self.adaptor.execute_command("target stop-hook list")
-                if not 'voltron' in output:
-                    output = self.adaptor.execute_command('target stop-hook add -o \'voltron stopped\'')
-                    try:
-                        self.hook_idx = int(res.GetOutput().strip().split()[2][1:])
-                    except:
-                        pass
-                print("Registered stop-hook")
-            except:
-                print("No targets")
+            def register_hooks(self):
+                try:
+                    output = self.adaptor.execute_command("target stop-hook list")
+                    if not 'voltron' in output:
+                        output = self.adaptor.execute_command('target stop-hook add -o \'voltron stopped\'')
+                        try:
+                            # hahaha this sucks
+                            self.hook_idx = int(res.GetOutput().strip().split()[2][1:])
+                        except:
+                            pass
+                    print("Registered stop-hook")
+                except:
+                    print("No targets")
 
-        def unregister_hooks(self):
-            cmd = 'target stop-hook delete {}'.format(self.hook_idx if self.hook_idx else '')
-            self.debugger.HandleCommand(cmd)
+            def unregister_hooks(self):
+                cmd = 'target stop-hook delete {}'.format(self.hook_idx if self.hook_idx else '')
+                self.debugger.HandleCommand(cmd)
+
+        def __lldb_init_module(debugger, dict):
+            """
+            Called by LLDB when the module is loaded
+            """
+            global cmd
+            log.debug("Initialising LLDB command")
+            cmd = VoltronLLDBCommand(debugger, dict)
+            print(blessed.Terminal().bold_red("Voltron loaded."))
+            print("Run `voltron init` after you load a target.")
+
+        def lldb_invoke(debugger, command, result, dict):
+            """
+            Called when the voltron command is invoked within LLDB
+            """
+            cmd.invoke(debugger, command, result, dict)
 
 
-if in_gdb:
-    class VoltronGDBCommand (VoltronCommand, gdb.Command):
-        """
-        Debugger command class for GDB
-        """
-        def __init__(self):
-            super(VoltronCommand, self).__init__("voltron", gdb.COMMAND_NONE, gdb.COMPLETE_NONE)
+    if in_gdb:
+        class VoltronGDBCommand (VoltronCommand, gdb.Command):
+            """
+            Debugger command class for GDB
+            """
+            def __init__(self):
+                super(VoltronCommand, self).__init__("voltron", gdb.COMMAND_NONE, gdb.COMPLETE_NONE)
 
-            # load plugins
-            self.pm = PluginManager()
+                # load plugins
+                self.pm = PluginManager()
 
-            # set up an lldb adaptor and start the voltron server
-            self.adaptor = self.pm.debugger_plugin_for_host('gdb').adaptor_class()
-            self.server = Server(debugger=self.adaptor)
-            self.server.start()
+                # set up a gdb adaptor and set it as the package-wide adaptor
+                self.adaptor = self.pm.debugger_plugin_for_host('gdb').adaptor_class()
+                voltron.debugger = self.adaptor
 
-        def invoke(self, arg, from_tty):
-            self.handle_command(arg)
+                # server is started and stopped with the inferior to avoid GDB hanging on exit
+                self.server = None
 
-        def register_hooks(self):
-            gdb.events.stop.connect(self.stop_handler)
-            gdb.events.exited.connect(self.exit_handler)
-            gdb.events.cont.connect(self.cont_handler)
+            def invoke(self, arg, from_tty):
+                self.handle_command(arg)
 
-        def unregister_hooks(self):
-            gdb.events.stop.disconnect(self.stop_handler)
-            gdb.events.exited.disconnect(self.exit_handler)
-            gdb.events.cont.disconnect(self.cont_handler)
+            def register_hooks(self):
+                gdb.events.stop.connect(self.stop_handler)
+                gdb.events.exited.connect(self.exit_handler)
+                gdb.events.cont.connect(self.cont_handler)
 
-        def stop_handler(self, event):
-            log.debug('Inferior stopped')
+            def unregister_hooks(self):
+                gdb.events.stop.disconnect(self.stop_handler)
+                gdb.events.exited.disconnect(self.exit_handler)
+                gdb.events.cont.disconnect(self.cont_handler)
 
-        def exit_handler(self, event):
-            log.debug('Inferior exited')
-            self.server.stop()
+            def stop_handler(self, event):
+                self.adaptor.update_state()
+                log.debug('Inferior stopped')
 
-        def cont_handler(self, event):
-            log.debug('Inferior continued')
+            def exit_handler(self, event):
+                log.debug('Inferior exited')
+                self.server.stop()
+
+            def cont_handler(self, event):
+                log.debug('Inferior continued')
+                if self.server == None:
+                    self.server = Server()
+                    self.server.start()
+                    
+
+        if __name__ == "__main__":
+            log.debug('Initialising GDB command')
+            inst = VoltronGDBCommand()
+            print(blessed.Terminal().bold_red("Voltron loaded."))
+
+
+except Exception, e:
+    print(blessed.Terminal().bold_red("Exception {} raised while loading Voltron: {}".format(type(e), str(e))))

@@ -59,7 +59,7 @@ def validate_busy(func, *args, **kwargs):
 def lock_host(func, *args, **kwargs):
     """
     A decorator that acquires a lock before accessing the debugger to
-    avoid API locking related errors with LLDB
+    avoid API locking related errors with the debugger host.
     """
     def inner(self, *args, **kwargs):
         self.host_lock.acquire()
@@ -73,8 +73,16 @@ def lock_host(func, *args, **kwargs):
     return inner
 
 
-
 class DebuggerAdaptor(object):
+    reg_names = {
+        "x86":      {"pc": "eip", "sp": "esp"},
+        "x86_64":   {"pc": "rip", "sp": "rsp"},
+        "armv6":    {"pc": "pc", "sp": "sp"},
+        "armv7":    {"pc": "pc", "sp": "sp"},
+        "armv7s":   {"pc": "pc", "sp": "sp"},
+        "arm64":    {"pc": "pc", "sp": "sp"},
+    }
+
     def target_exists(self, target_id=0):
         """
         Returns True or False indicating whether or not the specified
@@ -114,3 +122,27 @@ class DebuggerAdaptor(object):
         except:
             raise NoSuchTargetException()
         return target['state'] == "running"
+
+    def add_listener(self, callback, state_changes=["stopped"]):
+        """
+        Add a listener for state changes.
+        """
+        self.listeners.append({"callback": callback, "state_changes": state_changes})
+
+    def remove_listener(self, callback):
+        """
+        Remove a listener.
+        """
+        listeners = filter(lambda x: x['callback'] == callback, self.listeners)
+        for l in listeners:
+            self.listeners.remove(l)
+
+    def update_state(self):
+        """
+        Notify all the listeners (probably `wait` plugins) that the state
+        has changed.
+
+        This is called by the debugger's stop-hook.
+        """
+        for listener in self.listeners:
+            listener['callback']()

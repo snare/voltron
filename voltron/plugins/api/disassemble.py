@@ -1,6 +1,5 @@
 import voltron
 import logging
-import base64
 
 from voltron.api import *
 from voltron.plugin import *
@@ -72,6 +71,8 @@ class APIDisassembleResponse(APISuccessResponse):
 
     disassembly = None
     formatted = None
+    flavor = None
+    host = None
 
 
 class APIDisassemblePlugin(APIPlugin):

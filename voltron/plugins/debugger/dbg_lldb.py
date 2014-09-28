@@ -21,17 +21,9 @@ if HAVE_LLDB:
         """
         The interface with an instance of LLDB
         """
-        reg_names = {
-            "x86":      {"pc": "eip", "sp": "esp"},
-            "x86_64":   {"pc": "rip", "sp": "rsp"},
-            "armv6":    {"pc": "pc", "sp": "sp"},
-            "armv7":    {"pc": "pc", "sp": "sp"},
-            "armv7s":   {"pc": "pc", "sp": "sp"},
-            "arm64":    {"pc": "pc", "sp": "sp"},
-        }
         def __init__(self, host=None):
-            self.host_lock = threading.RLock()
             self.listeners = []
+            self.host_lock = threading.RLock()
             if host:
                 log.debug("Passed a debugger host")
                 self.host = host
@@ -42,46 +34,6 @@ if HAVE_LLDB:
                 log.debug("No debugger host found - creating one")
                 self.host = lldb.SBDebugger.Create()
                 self.host.SetAsync(False)
-
-        def target_exists(self, target_id=0):
-            """
-            Returns True or False indicating whether or not the specified
-            target is present and valid.
-
-            `target_id` is a target ID (or None for the first target)
-            """
-            try:
-                target = self._target(target_id=target_id)
-            except Exception, e:
-                log.error("Exception checking if target exists: {} {}".format(type(e), e))
-                return False
-            return target != None
-
-        def target_is_valid(self, target_id=0):
-            """
-            Returns True or False indicating whether or not the specified
-            target is present and valid.
-
-            `target_id` is a target ID (or None for the first target)
-            """
-            try:
-                target = self._target(target_id=target_id)
-            except:
-                return False
-            return target['state'] != "invalid"
-
-        def target_is_busy(self, target_id=0):
-            """
-            Returns True or False indicating whether or not the specified
-            target is busy.
-
-            `target_id` is a target ID (or None for the first target)
-            """
-            try:
-                target = self._target(target_id=target_id)
-            except:
-                raise NoSuchTargetException()
-            return target['state'] == "running"
 
         @property
         def host(self):
@@ -135,8 +87,6 @@ if HAVE_LLDB:
         def target(self, target_id=0):
             """
             Return information about the specified target.
-
-            Same as `target` but the target_id is validated.
             """
             return self._target(target_id=target_id)
 
@@ -201,7 +151,10 @@ if HAVE_LLDB:
             # get the thread
             if not thread_id:
                 thread_id = target.process.selected_thread.id
-            thread = target.process.GetThreadByID(thread_id)
+            try:
+                thread = target.process.GetThreadByID(thread_id)
+            except:
+                raise NoSuchThreadException()
 
             # get the registers
             regs = thread.GetFrameAtIndex(0).GetRegisters()
@@ -375,34 +328,6 @@ if HAVE_LLDB:
                 raise Exception(res.GetError().strip())
 
             return flavor
-
-        #
-        # Other methods
-        #
-
-        def add_listener(self, callback, state_changes=["stopped"]):
-            """
-            Add a listener for state changes.
-            """
-            self.listeners.append({"callback": callback, "state_changes": state_changes})
-
-        def remove_listener(self, callback):
-            """
-            Remove a listener.
-            """
-            listeners = filter(lambda x: x['callback'] == callback, self.listeners)
-            for l in listeners:
-                self.listeners.remove(l)
-
-        def update_state(self):
-            """
-            Notify all the listeners (probably `wait` plugins) that the state
-            has changed.
-
-            This is called by the debugger's stop-hook.
-            """
-            for listener in self.listeners:
-                listener['callback']()
 
 
     class LLDBAdaptorPlugin(DebuggerAdaptorPlugin):

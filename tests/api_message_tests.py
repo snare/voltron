@@ -1,3 +1,4 @@
+import time
 
 from nose.tools import *
 
@@ -6,6 +7,7 @@ from voltron.core import *
 from voltron.api import *
 from voltron.plugin import *
 
+log = logging.getLogger('tests')
 
 class APITestRequest(APIRequest):
     _fields = {'target_id':False, 'address':False, 'count':True}
@@ -29,7 +31,7 @@ def setup():
     voltron.setup_env()
 
 def teardown():
-    pass
+    time.sleep(2)
 
 def test_parent_message_validation_fail():
     msg = APIMessage()
