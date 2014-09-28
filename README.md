@@ -13,7 +13,7 @@ Voltron also provides a platform on which to build your own UI views, requesting
 Support
 -------
 
-`voltron` supports GDB version 7 and later, and recent LLDB versions.
+`voltron` is build primarily for LLDB, and also supports GDB version 7 and later.
 
 The following architectures are supported:
 * x86
@@ -36,13 +36,42 @@ This will install the `voltron` egg wherever that happens on your system, and an
 
     $ pip install rl
 
+Quick Start - LLDB
+------------------
+
+1. Load `voltron` into your debugger (this could go in your `.lldbinit`). The full path will be inside the `voltron` egg. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron-0.1-py2.7.egg/dbgentry.py*.
+
+        command script import /path/to/voltron/dbgentry.py
+
+2. Fire up the debugger and start the `voltron` server thread. Unfortunately, this cannot be done from `.lldbinit` as it can with `.gdbinit` as a target must be loaded before `voltron`'s hooks can be installed. Hopefully this will be remedied with a more versatile hooking mechanism in a future version of LLDB (this has been discussed with the developers).
+
+        $ lldb file_to_debug
+        (lldb) voltron init
+
+3. In another terminal (I use iTerm panes) start one of the UI views
+
+        $ voltron view reg -v
+        $ voltron view stack
+        $ voltron view disasm
+        $ voltron view bt
+        $ voltron view cmd 'reg read'
+
+4. Set a breakpoint and run your inferior. Once the inferior has started, the views will be able to connect, but they won't update until the debugger hits the first breakpoint.
+
+        (lldb) b main
+        (lldb) run
+
+5. The debugger should hit the breakpoint and the `voltron` views will be updated. A forced update can be triggered with the following command:
+
+        (lldb) voltron stopped
+
 Quick Start - GDB
 -----------------
 
 1. Add `voltron` to your `.gdbinit`. The full path will be inside the `voltron` egg. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron-0.1-py2.7.egg/dbgentry.py*. Add the following lines to your `.gdbinit` to load voltron and install its hooks:
 
         source /path/to/voltron/dbgentry.py
-        voltron start
+        voltron init
 
 2. Fire up the debugger:
 
@@ -63,36 +92,7 @@ Quick Start - GDB
 
 5. The debugger should hit the breakpoint and the `voltron` views will be updated. A forced update can be triggered with the following command:
 
-        gdb$ voltron update
-
-Quick Start - LLDB
-------------------
-
-1. Load `voltron` into your debugger (this could go in your `.lldbinit`). The full path will be inside the `voltron` egg. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron-0.1-py2.7.egg/dbgentry.py*.
-
-        command script import /path/to/voltron/dbgentry.py
-
-2. Fire up the debugger and start the `voltron` server thread. Unfortunately, this cannot be done from `.lldbinit` as it can with `.gdbinit` as a target must be loaded before `voltron`'s hooks can be installed. Hopefully this will be remedied with a more versatile hooking mechanism in a future version of LLDB (this has been discussed with the developers).
-
-        $ lldb file_to_debug
-        (lldb) voltron start
-
-3. In another terminal (I use iTerm panes) start one of the UI views
-
-        $ voltron view reg -v
-        $ voltron view stack
-        $ voltron view disasm
-        $ voltron view bt
-        $ voltron view cmd 'reg read'
-
-4. Set a breakpoint and run your inferior. Once the inferior has started, the views will be able to connect, but they won't update until the debugger hits the first breakpoint.
-
-        (lldb) b main
-        (lldb) run
-
-5. The debugger should hit the breakpoint and the `voltron` views will be updated. A forced update can be triggered with the following command:
-
-        (lldb) voltron update
+        gdb$ voltron stopped
 
 Documentation
 -------------
