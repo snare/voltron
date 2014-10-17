@@ -1,7 +1,7 @@
 Voltron
 =======
 
-Voltron is an extensible debugger UI for hackers. It allows you to attach utility views running in other terminals to your debugger, displaying helpful information such as disassembly, stack contents, register values, etc, while still giving you the same GDB or LLDB CLI you're used to. You can still have your pimped out custom prompt, macros, GDB and LLDB plugins, terminal colour scheme - whatever you're used to - but you get the added bonus of a sweet customisable heads-up display.
+Voltron is an extensible debugger UI for hackers. It allows you to attach utility views running in other terminals to your debugger, displaying helpful information such as disassembly, stack contents, register values, etc, while still giving you the same debugger CLI you're used to. You can still have your pimped out custom prompt, macros, plugins, terminal colour scheme - whatever you're used to - but you get the added bonus of a sweet customisable heads-up display.
 
 Voltron also provides a platform on which to build your own UI views, requesting and processing data from the debugger back end to suit your own requirements. To this end, Voltron provides (and uses internally) a JSON API available over UNIX domain sockets, TCP sockets and an HTTP server.
 
