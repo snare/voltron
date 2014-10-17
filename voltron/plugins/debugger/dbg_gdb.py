@@ -70,7 +70,7 @@ if HAVE_GDB:
 
             # get target state
             d["state"] = self._state()
-            
+
             # get inferior file (doesn't seem to be available through the API)
             lines = filter(lambda x: x != '', gdb.execute('info inferiors', to_string=True).split('\n'))
             if len(lines) > 1:
@@ -119,7 +119,7 @@ if HAVE_GDB:
         @validate_busy
         @validate_target
         @lock_host
-        def read_registers(self, target_id=0, thread_id=None):
+        def registers(self, target_id=0, thread_id=None):
             """
             Get the register values for a given target/thread.
             """
@@ -140,7 +140,7 @@ if HAVE_GDB:
         @validate_busy
         @validate_target
         @lock_host
-        def read_stack_pointer(self, target_id=0, thread_id=None):
+        def stack_pointer(self, target_id=0, thread_id=None):
             """
             Get the value of the stack pointer register.
             """
@@ -156,7 +156,7 @@ if HAVE_GDB:
         @validate_busy
         @validate_target
         @lock_host
-        def read_program_counter(self, target_id=0, thread_id=None):
+        def program_counter(self, target_id=0, thread_id=None):
             """
             Get the value of the program counter register.
             """
@@ -172,7 +172,7 @@ if HAVE_GDB:
         @validate_busy
         @validate_target
         @lock_host
-        def read_memory(self, address, length, target_id=0):
+        def memory(self, address, length, target_id=0):
             """
             Get the register values for .
 
@@ -181,13 +181,13 @@ if HAVE_GDB:
             """
             # read memory
             log.debug('Reading 0x{:x} bytes of memory at 0x{:x}'.format(length, address))
-            memory = str(gdb.selected_inferior().read_memory(address, length))
+            memory = str(gdb.selected_inferior().memory(address, length))
             return memory
 
         @validate_busy
         @validate_target
         @lock_host
-        def read_stack(self, length, target_id=0, thread_id=None):
+        def stack(self, length, target_id=0, thread_id=None):
             """
             Get the register values for .
 
@@ -196,10 +196,10 @@ if HAVE_GDB:
             `thread_id` is a thread ID (or None for the selected thread)
             """
             # get the stack pointer
-            sp = self.read_stack_pointer(target_id=target_id, thread_id=thread_id)
+            sp = self.stack_pointer(target_id=target_id, thread_id=thread_id)
 
             # read memory
-            memory = self.read_memory(sp, length, target_id=target_id)
+            memory = self.memory(sp, length, target_id=target_id)
 
             return memory
 
@@ -216,7 +216,7 @@ if HAVE_GDB:
             """
             # make sure we have an address
             if address == None:
-                address = self.read_program_counter(target_id=target_id)
+                address = self.program_counter(target_id=target_id)
 
             # disassemble
             output = gdb.execute('x/{}i 0x{:x}'.format(count, address), to_string=True)
@@ -224,7 +224,7 @@ if HAVE_GDB:
             return output
 
         @lock_host
-        def execute_command(self, command=None):
+        def command(self, command=None):
             """
             Execute a command in the debugger.
 

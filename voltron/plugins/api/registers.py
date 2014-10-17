@@ -6,13 +6,13 @@ from voltron.api import *
 log = logging.getLogger('api')
 
 
-class APIReadRegistersRequest(APIRequest):
+class APIRegistersRequest(APIRequest):
     """
     API state request.
 
     {
         "type":         "request",
-        "request":      "read_registers",
+        "request":      "registers",
         "data": {
             "target_id": 0,
             "thread_id": 123456
@@ -32,8 +32,8 @@ class APIReadRegistersRequest(APIRequest):
     @server_side
     def dispatch(self):
         try:
-            regs = voltron.debugger.read_registers(target_id=self.target_id, thread_id=self.thread_id)
-            res = APIReadRegistersResponse()
+            regs = voltron.debugger.registers(target_id=self.target_id, thread_id=self.thread_id)
+            res = APIRegistersResponse()
             res.registers = regs
         except TargetBusyException:
             res = APITargetBusyErrorResponse()
@@ -48,7 +48,7 @@ class APIReadRegistersRequest(APIRequest):
         return res
 
 
-class APIReadRegistersResponse(APISuccessResponse):
+class APIRegistersResponse(APISuccessResponse):
     """
     API status response.
 
@@ -63,7 +63,7 @@ class APIReadRegistersResponse(APISuccessResponse):
     _fields = {'registers': True}
 
 
-class APIReadRegistersPlugin(APIPlugin):
-    request = 'read_registers'
-    request_class = APIReadRegistersRequest
-    response_class = APIReadRegistersResponse
+class APIRegistersPlugin(APIPlugin):
+    request = 'registers'
+    request_class = APIRegistersRequest
+    response_class = APIRegistersResponse

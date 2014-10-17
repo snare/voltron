@@ -26,7 +26,7 @@ class CommandView (TerminalView):
             self.body = self.colour(error, 'red')
         else:
             # Get the command output
-            req = api_request('execute_command')
+            req = api_request('command')
             req.command = self.config['cmd']
             res = self.client.send_request(req)
             if res.is_success:

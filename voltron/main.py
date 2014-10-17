@@ -51,9 +51,6 @@ def main(debugger=None):
     except KeyboardInterrupt:
         suppress_exit_log = True
     inst.cleanup()
-    if not suppress_exit_log:
-        log.info('Exiting')
-
 
 if __name__ == "__main__":
     main()

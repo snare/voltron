@@ -138,7 +138,7 @@ if HAVE_LLDB:
         @validate_busy
         @validate_target
         @lock_host
-        def read_registers(self, target_id=0, thread_id=None):
+        def registers(self, target_id=0, thread_id=None):
             """
             Get the register values for a given target/thread.
 
@@ -182,7 +182,7 @@ if HAVE_LLDB:
         @validate_busy
         @validate_target
         @lock_host
-        def read_stack_pointer(self, target_id=0, thread_id=None):
+        def stack_pointer(self, target_id=0, thread_id=None):
             """
             Get the value of the stack pointer register.
 
@@ -190,7 +190,7 @@ if HAVE_LLDB:
             `thread_id` is a thread ID (or None for the selected thread)
             """
             # get registers and targets
-            regs = self.read_registers(target_id=target_id, thread_id=thread_id)
+            regs = self.registers(target_id=target_id, thread_id=thread_id)
             target = self._target(target_id=target_id)
 
             # get stack pointer register
@@ -205,7 +205,7 @@ if HAVE_LLDB:
         @validate_busy
         @validate_target
         @lock_host
-        def read_program_counter(self, target_id=0, thread_id=None):
+        def program_counter(self, target_id=0, thread_id=None):
             """
             Get the value of the program counter register.
 
@@ -213,7 +213,7 @@ if HAVE_LLDB:
             `thread_id` is a thread ID (or None for the selected thread)
             """
             # get registers and targets
-            regs = self.read_registers(target_id=target_id, thread_id=thread_id)
+            regs = self.registers(target_id=target_id, thread_id=thread_id)
             target = self._target(target_id=target_id)
 
             # get stack pointer register
@@ -228,7 +228,7 @@ if HAVE_LLDB:
         @validate_busy
         @validate_target
         @lock_host
-        def read_memory(self, address, length, target_id=0):
+        def memory(self, address, length, target_id=0):
             """
             Get the register values for .
 
@@ -253,7 +253,7 @@ if HAVE_LLDB:
         @validate_busy
         @validate_target
         @lock_host
-        def read_stack(self, length, target_id=0, thread_id=None):
+        def stack(self, length, target_id=0, thread_id=None):
             """
             Get the register values for .
 
@@ -262,10 +262,10 @@ if HAVE_LLDB:
             `thread_id` is a thread ID (or None for the selected thread)
             """
             # get the stack pointer
-            sp = self.read_stack_pointer(target_id=target_id, thread_id=thread_id)
+            sp = self.stack_pointer(target_id=target_id, thread_id=thread_id)
 
             # read memory
-            memory = self.read_memory(sp, length, target_id=target_id)
+            memory = self.memory(sp, length, target_id=target_id)
 
             return memory
 
@@ -282,16 +282,16 @@ if HAVE_LLDB:
             """
             # make sure we have an address
             if address == None:
-                address = self.read_program_counter(target_id=target_id)
+                address = self.program_counter(target_id=target_id)
 
             # disassemble
             res = lldb.SBCommandReturnObject()
-            output = self.execute_command('disassemble -s {} -c {}'.format(address, count))
+            output = self.command('disassemble -s {} -c {}'.format(address, count))
 
             return output
 
         @lock_host
-        def execute_command(self, command=None):
+        def command(self, command=None):
             """
             Execute a command in the debugger.
 

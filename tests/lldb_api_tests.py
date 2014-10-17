@@ -79,41 +79,41 @@ def test_targets_stopped():
     assert t["state"] == "stopped"
     process.Destroy()
 
-def test_read_registers():
+def test_registers():
     main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
-    regs = adaptor.read_registers()
+    regs = adaptor.registers()
     assert regs != None
     assert len(regs) > 0
     assert regs['rip'] != 0
     process.Destroy()
 
-def test_read_stack_pointer():
+def test_stack_pointer():
     main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
-    sp = adaptor.read_stack_pointer()
+    sp = adaptor.stack_pointer()
     assert sp != 0
     process.Destroy()
 
-def test_read_program_counter():
+def test_program_counter():
     main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
-    pc = adaptor.read_program_counter()
+    pc = adaptor.program_counter()
     assert pc != 0
     process.Destroy()
 
-def test_read_memory():
+def test_memory():
     main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
-    regs = adaptor.read_registers()
-    mem = adaptor.read_memory(address=regs['rip'], length=0x40)
+    regs = adaptor.registers()
+    mem = adaptor.memory(address=regs['rip'], length=0x40)
     assert len(mem) == 0x40
     process.Destroy()
 
-def test_read_stack():
+def test_stack():
     main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
-    stack = adaptor.read_stack(length=0x40)
+    stack = adaptor.stack(length=0x40)
     assert len(stack) == 0x40
     process.Destroy()
 
@@ -124,10 +124,10 @@ def test_disassemble():
     assert len(output) > 0
     process.Destroy()
 
-def test_execute_command():
+def test_command():
     main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
-    output = adaptor.execute_command("reg read")
+    output = adaptor.command("reg read")
     assert len(output) > 0
     assert 'rax' in output
     process.Destroy()

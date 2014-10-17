@@ -71,44 +71,44 @@ def test_disassemble():
     assert res.is_success
     assert res.disassembly == disassemble_response
 
-def test_execute_command():
-    data = requests.get('http://localhost:5555/api/execute_command?command=reg%20read').text
+def test_command():
+    data = requests.get('http://localhost:5555/api/command?command=reg%20read').text
     res = APIResponse(data=data)
     assert res.is_success
-    assert res.output == execute_command_response
+    assert res.output == command_response
 
-def test_list_targets():
-    data = requests.get('http://localhost:5555/api/list_targets').text
-    res = api_response('list_targets', data=data)
+def test_targets():
+    data = requests.get('http://localhost:5555/api/targets').text
+    res = api_response('targets', data=data)
     assert res.is_success
     assert res.targets == targets_response
 
-def test_read_memory():
-    data = requests.get('http://localhost:5555/api/read_registers').text
-    res = api_response('read_registers', data=data)
-    url = 'http://localhost:5555/api/read_memory?address={}&length=64'.format(res.registers['rip'])
+def test_memory():
+    data = requests.get('http://localhost:5555/api/registers').text
+    res = api_response('registers', data=data)
+    url = 'http://localhost:5555/api/memory?address={}&length=64'.format(res.registers['rip'])
     data = requests.get(url).text
-    res = api_response('read_memory', data=data)
+    res = api_response('memory', data=data)
     assert res.is_success
-    assert res.memory == read_memory_response
+    assert res.memory == memory_response
 
-def test_read_registers():
-    data = requests.get('http://localhost:5555/api/read_registers').text
-    res = api_response('read_registers', data=data)
+def test_registers():
+    data = requests.get('http://localhost:5555/api/registers').text
+    res = api_response('registers', data=data)
     assert res.is_success
-    assert res.registers == read_registers_response
+    assert res.registers == registers_response
 
-def test_read_stack_length_missing():
-    data = requests.get('http://localhost:5555/api/read_stack').text
+def test_stack_length_missing():
+    data = requests.get('http://localhost:5555/api/stack').text
     res = APIErrorResponse(data=data)
     assert res.is_error
     assert res.message == 'length'
 
-def test_read_stack():
-    data = requests.get('http://localhost:5555/api/read_stack?length=64').text
-    res = api_response('read_stack', data=data)
+def test_stack():
+    data = requests.get('http://localhost:5555/api/stack?length=64').text
+    res = api_response('stack', data=data)
     assert res.is_success
-    assert res.memory == read_stack_response
+    assert res.memory == stack_response
 
 def test_state():
     data = requests.get('http://localhost:5555/api/state').text

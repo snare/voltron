@@ -97,9 +97,9 @@ try:
 
             def register_hooks(self):
                 try:
-                    output = self.adaptor.execute_command("target stop-hook list")
+                    output = self.adaptor.command("target stop-hook list")
                     if not 'voltron' in output:
-                        output = self.adaptor.execute_command('target stop-hook add -o \'voltron stopped\'')
+                        output = self.adaptor.command('target stop-hook add -o \'voltron stopped\'')
                         try:
                             # hahaha this sucks
                             self.hook_idx = int(res.GetOutput().strip().split()[2][1:])
@@ -174,7 +174,7 @@ try:
                 if self.server == None:
                     self.server = Server()
                     self.server.start()
-                    
+
 
         if __name__ == "__main__":
             log.debug('Initialising GDB command')

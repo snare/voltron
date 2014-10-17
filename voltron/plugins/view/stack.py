@@ -25,7 +25,7 @@ class StackView (TerminalView):
             self.body = self.colour(error, 'red')
         else:
             # Request data
-            req = api_request('read_stack')
+            req = api_request('stack')
             req.length = self.body_height()*self.args.bytes
             res = self.client.send_request(req)
             if res.is_success:

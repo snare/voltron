@@ -94,21 +94,21 @@ def test_version():
     assert res.api_version == 1.0
     assert 'lldb' in res.host_version
 
-def test_read_registers():
+def test_registers():
     global registers
     restart_debugger()
     time.sleep(1)
     read_data()
-    res = client.perform_request('read_registers')
+    res = client.perform_request('registers')
     registers = res.registers
     assert res.status == 'success'
     assert len(registers) > 0
     assert registers['rip'] != 0
 
-def test_read_memory():
+def test_memory():
     restart_debugger()
     time.sleep(1)
-    res = client.perform_request('read_memory', address=registers['rip'], length=0x40)
+    res = client.perform_request('memory', address=registers['rip'], length=0x40)
     assert res.status == 'success'
     assert len(res.memory) > 0
 
@@ -126,27 +126,27 @@ def test_wait_timeout():
     assert res.is_error
     assert res.code == 0x1004
 
-def test_list_targets():
+def test_targets():
     restart_debugger()
     time.sleep(1)
-    res = client.perform_request('list_targets')
+    res = client.perform_request('targets')
     assert res.is_success
     assert res.targets[0]['state'] == "stopped"
     assert res.targets[0]['arch'] == "x86_64"
     assert res.targets[0]['id'] == 0
     assert res.targets[0]['file'].endswith('tests/inferior')
 
-def test_read_stack():
+def test_stack():
     restart_debugger()
     time.sleep(1)
-    res = client.perform_request('read_stack', length=0x40)
+    res = client.perform_request('stack', length=0x40)
     assert res.status == 'success'
     assert len(res.memory) > 0
 
-def test_execute_command():
+def test_command():
     restart_debugger()
     time.sleep(1)
-    res = client.perform_request('execute_command', command="reg read")
+    res = client.perform_request('command', command="reg read")
     assert res.status == 'success'
     assert len(res.output) > 0
     assert 'rax' in res.output

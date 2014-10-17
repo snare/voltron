@@ -24,7 +24,7 @@ class BacktraceView (TerminalView):
         if error != None:
             self.body = self.colour(error, 'red')
         else:
-            req = api_request('execute_command')
+            req = api_request('command')
             req.command = "bt"
             res = self.client.send_request(req)
             if res.is_success:

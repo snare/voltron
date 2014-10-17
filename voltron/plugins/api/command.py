@@ -7,13 +7,13 @@ from scruffy.plugin import Plugin
 
 log = logging.getLogger('api')
 
-class APIExecuteCommandRequest(APIRequest):
+class APICommandRequest(APIRequest):
     """
     API execute command request.
 
     {
         "type":         "request",
-        "request":      "execute_command"
+        "request":      "command"
         "data": {
             "command":  "break list"
         }
@@ -24,8 +24,8 @@ class APIExecuteCommandRequest(APIRequest):
     @server_side
     def dispatch(self):
         try:
-            output = voltron.debugger.execute_command(self.command)
-            res = APIExecuteCommandResponse()
+            output = voltron.debugger.command(self.command)
+            res = APICommandResponse()
             res.output = output
         except NoSuchTargetException:
             res = APINoSuchTargetErrorResponse()
@@ -33,12 +33,12 @@ class APIExecuteCommandRequest(APIRequest):
             msg = "Exception executing debugger command: {}".format(e)
             log.error(msg)
             res = APIGenericErrorResponse()
-            res.error_message = msg
+            res.message = msg
 
         return res
 
 
-class APIExecuteCommandResponse(APISuccessResponse):
+class APICommandResponse(APISuccessResponse):
     """
     API list targets response.
 
@@ -55,7 +55,7 @@ class APIExecuteCommandResponse(APISuccessResponse):
     output = None
 
 
-class APIExecuteCommandPlugin(APIPlugin):
-    request = "execute_command"
-    request_class = APIExecuteCommandRequest
-    response_class = APIExecuteCommandResponse
+class APICommandPlugin(APIPlugin):
+    request = "command"
+    request_class = APICommandRequest
+    response_class = APICommandResponse

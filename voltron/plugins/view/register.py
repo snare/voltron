@@ -260,7 +260,7 @@ class RegisterView (TerminalView):
 
     def render(self, error=None):
         # get target info (ie. arch)
-        req = api_request('list_targets')
+        req = api_request('targets')
         res = self.client.send_request(req)
         if res.is_error:
             error = "Failed getting targets: {}".format(res.message)
@@ -277,7 +277,7 @@ class RegisterView (TerminalView):
                 self.curr_inst = inst
 
                 # get registers for target
-                req = api_request('read_registers')
+                req = api_request('registers')
                 res = self.client.send_request(req)
                 if res.is_error:
                     error = "Failed getting registers: {}".format(res.message)

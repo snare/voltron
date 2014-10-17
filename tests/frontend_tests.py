@@ -88,8 +88,8 @@ def test_wait_timeout():
     assert res.code == 0x1004
     target.process.Destroy()
 
-def test_list_targets():
-    req = api_request('list_targets')
+def test_targets():
+    req = api_request('targets')
     res = client.send_request(req)
     assert res.status == 'success'
     t = res.targets[0]
@@ -97,40 +97,40 @@ def test_list_targets():
     assert t["arch"] == "x86_64"
     assert t["file"].endswith("inferior")
 
-def test_read_registers():
+def test_registers():
     main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
-    req = api_request('read_registers')
+    req = api_request('registers')
     res = client.send_request(req)
     assert res.status == 'success'
     assert len(res.registers) > 0
     assert res.registers['rip'] != 0
     target.process.Destroy()
 
-def test_read_memory():
+def test_memory():
     main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
-    req = api_request('read_registers')
+    req = api_request('registers')
     res = client.send_request(req)
-    req = api_request('read_memory', address=res.registers['rip'], length=0x40)
-    res = client.send_request(req)
-    assert res.status == 'success'
-    assert len(res.memory) > 0
-    target.process.Destroy()
-
-def test_read_stack():
-    main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
-    process = target.LaunchSimple(None, None, os.getcwd())
-    req = api_request('read_stack', length=0x40)
+    req = api_request('memory', address=res.registers['rip'], length=0x40)
     res = client.send_request(req)
     assert res.status == 'success'
     assert len(res.memory) > 0
     target.process.Destroy()
 
-def test_execute_command():
+def test_stack():
     main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
-    req = api_request('execute_command', command="reg read")
+    req = api_request('stack', length=0x40)
+    res = client.send_request(req)
+    assert res.status == 'success'
+    assert len(res.memory) > 0
+    target.process.Destroy()
+
+def test_command():
+    main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
+    process = target.LaunchSimple(None, None, os.getcwd())
+    req = api_request('command', command="reg read")
     res = client.send_request(req)
     assert res.status == 'success'
     assert len(res.output) > 0

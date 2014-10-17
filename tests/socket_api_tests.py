@@ -154,60 +154,60 @@ def test_frontend_wait_timeout():
     res = client.send_request(req)
     assert res.is_error
 
-def test_backend_list_targets():
-    res = api_request('list_targets').dispatch()
+def test_backend_targets():
+    res = api_request('targets').dispatch()
     assert res.is_success
     assert res.targets == targets_response
 
-def test_direct_list_targets():
+def test_direct_targets():
     data = make_direct_request(json.dumps(
         {
             "type":         "request",
-            "request":      "list_targets"
+            "request":      "targets"
         }
     ))
-    res = api_response('list_targets', data=data)
+    res = api_response('targets', data=data)
     assert res.is_success
     assert res.targets == targets_response
 
-def test_frontend_list_targets():
-    req = api_request('list_targets')
+def test_frontend_targets():
+    req = api_request('targets')
     res = client.send_request(req)
     assert res.is_success
     assert res.targets == targets_response
 
-def test_backend_read_registers():
-    res = api_request('read_registers').dispatch()
+def test_backend_registers():
+    res = api_request('registers').dispatch()
     assert res.is_success
-    assert res.registers == read_registers_response
+    assert res.registers == registers_response
 
-def test_direct_read_registers():
+def test_direct_registers():
     data = make_direct_request(json.dumps(
         {
             "type":         "request",
-            "request":      "read_registers"
+            "request":      "registers"
         }
     ))
-    res = api_response('read_registers', data=data)
+    res = api_response('registers', data=data)
     assert res.is_success
-    assert res.registers == read_registers_response
+    assert res.registers == registers_response
 
-def test_frontend_read_registers():
-    req = api_request('read_registers')
+def test_frontend_registers():
+    req = api_request('registers')
     res = client.send_request(req)
     assert res.is_success
-    assert res.registers == read_registers_response
+    assert res.registers == registers_response
 
-def test_backend_read_memory():
-    res = api_request('read_memory', address=0x1000, length=0x40).dispatch()
+def test_backend_memory():
+    res = api_request('memory', address=0x1000, length=0x40).dispatch()
     assert res.is_success
-    assert res.memory == read_memory_response
+    assert res.memory == memory_response
 
-def test_direct_read_memory():
+def test_direct_memory():
     data = make_direct_request(json.dumps(
         {
             "type":         "request",
-            "request":      "read_memory",
+            "request":      "memory",
             "data": {
                 "target_id": 0,
                 "address": 0x1000,
@@ -215,66 +215,66 @@ def test_direct_read_memory():
             }
         }
     ))
-    res = api_response('read_memory', data=data)
+    res = api_response('memory', data=data)
     assert res.is_success
-    assert res.memory == read_memory_response
+    assert res.memory == memory_response
 
-def test_frontend_read_memory():
-    req = api_request('read_memory', address=0x1000, length=0x40)
+def test_frontend_memory():
+    req = api_request('memory', address=0x1000, length=0x40)
     res = client.send_request(req)
     assert res.is_success
-    assert res.memory == read_memory_response
+    assert res.memory == memory_response
 
-def test_backend_read_stack():
-    res = api_request('read_stack', length=0x40).dispatch()
+def test_backend_stack():
+    res = api_request('stack', length=0x40).dispatch()
     assert res.is_success
-    assert res.memory == read_stack_response
+    assert res.memory == stack_response
 
-def test_direct_read_stack():
+def test_direct_stack():
     data = make_direct_request(json.dumps(
         {
             "type":         "request",
-            "request":      "read_stack",
+            "request":      "stack",
             "data": {
                 "target_id": 0,
                 "length": 0x40
             }
         }
     ))
-    res = api_response('read_stack', data=data)
+    res = api_response('stack', data=data)
     assert res.is_success
-    assert res.memory == read_stack_response
+    assert res.memory == stack_response
 
-def test_frontend_read_stack():
-    req = api_request('read_stack', length=0x40)
+def test_frontend_stack():
+    req = api_request('stack', length=0x40)
     res = client.send_request(req)
     assert res.is_success
-    assert res.memory == read_stack_response
+    assert res.memory == stack_response
 
-def test_backend_execute_command():
-    res = api_request('execute_command', command='reg read').dispatch()
+def test_backend_command():
+    res = api_request('command', command='reg read').dispatch()
     assert res.is_success
-    assert res.output == execute_command_response
+    assert res.output == command_response
 
-def test_direct_execute_command():
+def test_direct_command():
     data = make_direct_request(json.dumps(
         {
             "type":         "request",
-            "request":      "execute_command",
+            "request":      "command",
             "data": {
                 "command": "reg read"
             }
         }
     ))
-    res = api_response('execute_command', data=data)
+    res = api_response('command', data=data)
     assert res.is_success
-    assert res.output == execute_command_response
+    assert res.output == command_response
 
-def test_frontend_execute_command():
-    req = api_request('execute_command', command='reg read')
+def test_frontend_command():
+    req = api_request('command', command='reg read')
     res = client.send_request(req)
     assert res.is_success
-    assert res.output == execute_command_response
+    assert res.output == command_response
 
 def test_backend_disassemble():
     res = api_request('disassemble', count=16).dispatch()

@@ -7,13 +7,13 @@ from voltron.api import *
 log = logging.getLogger('api')
 
 
-class APIReadMemoryRequest(APIRequest):
+class APIMemoryRequest(APIRequest):
     """
     API read memory request.
 
     {
         "type":         "request",
-        "request":      "read_memory",
+        "request":      "memory",
         "data": {
             "target_id":0,
             "address":  0x12341234,
@@ -32,8 +32,6 @@ class APIReadMemoryRequest(APIRequest):
     """
     _fields = {'target_id': False, 'address': True, 'length': True}
 
-    request = 'read_memory'
-
     target_id = 0
     address = None
     length = None
@@ -41,8 +39,8 @@ class APIReadMemoryRequest(APIRequest):
     @server_side
     def dispatch(self):
         try:
-            memory = voltron.debugger.read_memory(address=self.address, length=self.length, target_id=self.target_id)
-            res = APIReadMemoryResponse()
+            memory = voltron.debugger.memory(address=self.address, length=self.length, target_id=self.target_id)
+            res = APIMemoryResponse()
             res.memory = memory
             res.bytes = len(memory)
         except TargetBusyException:
@@ -58,7 +56,7 @@ class APIReadMemoryRequest(APIRequest):
         return res
 
 
-class APIReadMemoryResponse(APISuccessResponse):
+class APIMemoryResponse(APISuccessResponse):
     """
     API read memory response.
 
@@ -73,13 +71,11 @@ class APIReadMemoryResponse(APISuccessResponse):
     _fields = {'memory': True, 'bytes': True}
     _encode_fields = ['memory']
 
-    request = 'read_memory'
-
     memory = None
     bytes = None
 
 
 class APIReadMemoryPlugin(APIPlugin):
-    request = 'read_memory'
-    request_class = APIReadMemoryRequest
-    response_class = APIReadMemoryResponse
+    request = 'memory'
+    request_class = APIMemoryRequest
+    response_class = APIMemoryResponse

@@ -7,13 +7,13 @@ from scruffy.plugin import Plugin
 
 log = logging.getLogger('api')
 
-class APIListTargetsRequest(APIRequest):
+class APITargetsRequest(APIRequest):
     """
     API list targets request.
 
     {
         "type":         "request",
-        "request":      "list_targets"
+        "request":      "targets"
     }
     """
     _fields = {}
@@ -21,7 +21,7 @@ class APIListTargetsRequest(APIRequest):
     @server_side
     def dispatch(self):
         try:
-            res = APIListTargetsResponse()
+            res = APITargetsResponse()
             res.targets = voltron.debugger.targets()
         except NoSuchTargetException:
             res = APINoSuchTargetErrorResponse()
@@ -34,7 +34,7 @@ class APIListTargetsRequest(APIRequest):
         return res
 
 
-class APIListTargetsResponse(APISuccessResponse):
+class APITargetsResponse(APISuccessResponse):
     """
     API list targets response.
 
@@ -56,8 +56,8 @@ class APIListTargetsResponse(APISuccessResponse):
     targets = []
 
 
-class APIListTargetsPlugin(APIPlugin):
-    request = 'list_targets'
-    request_class = APIListTargetsRequest
-    response_class = APIListTargetsResponse
+class APITargetsPlugin(APIPlugin):
+    request = 'targets'
+    request_class = APITargetsRequest
+    response_class = APITargetsResponse
 

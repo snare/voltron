@@ -6,13 +6,13 @@ from voltron.api import *
 
 log = logging.getLogger('api')
 
-class APIReadStackRequest(APIRequest):
+class APIStackRequest(APIRequest):
     """
     API read stack request.
 
     {
         "type":         "request",
-        "request":      "read_stack"
+        "request":      "stack"
         "data": {
             "target_id":    0,
             "thread_id":    123456,
@@ -36,9 +36,9 @@ class APIReadStackRequest(APIRequest):
     @server_side
     def dispatch(self):
         try:
-            sp = voltron.debugger.read_stack_pointer(target_id=self.target_id)
-            memory = voltron.debugger.read_stack(length=self.length, target_id=self.target_id)
-            res = APIReadStackResponse()
+            sp = voltron.debugger.stack_pointer(target_id=self.target_id)
+            memory = voltron.debugger.stack(length=self.length, target_id=self.target_id)
+            res = APIStackResponse()
             res.memory = memory
             res.stack_pointer = sp
         except NoSuchTargetException:
@@ -53,7 +53,7 @@ class APIReadStackRequest(APIRequest):
         return res
 
 
-class APIReadStackResponse(APISuccessResponse):
+class APIStackResponse(APISuccessResponse):
     """
     API read stack response.
 
@@ -74,7 +74,7 @@ class APIReadStackResponse(APISuccessResponse):
     stack_pointer = None
 
 
-class APIReadStackPlugin(APIPlugin):
-    request = 'read_stack'
-    request_class = APIReadStackRequest
-    response_class = APIReadStackResponse
+class APIStackPlugin(APIPlugin):
+    request = 'stack'
+    request_class = APIStackRequest
+    response_class = APIStackResponse
