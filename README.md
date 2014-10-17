@@ -13,7 +13,7 @@ Voltron also provides a platform on which to build your own UI views, requesting
 Support
 -------
 
-`voltron` is build primarily for LLDB, and also supports GDB version 7 and later.
+`voltron` is built primarily for LLDB, and also supports GDB version 7 and later.
 
 The following architectures are supported:
 * x86
