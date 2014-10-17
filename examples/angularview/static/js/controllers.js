@@ -45,13 +45,13 @@ controller('voltronController', function($scope, voltronAPIservice)
 
     var update = function() {
         // get target info
-        voltronAPIservice.listTargets().success(function (response) {
+        voltronAPIservice.targets().success(function (response) {
             targets = response.data.targets;
 
             // make sure we have a target
             if (targets[0]['arch'] != null) {
                 // update registers
-                voltronAPIservice.readRegisters().success(function (response) {
+                voltronAPIservice.registers().success(function (response) {
                     // get new register values
                     new_regs = response.data.registers
 

@@ -23,24 +23,24 @@ factory('voltronAPIservice', function($http)
         });
     }
 
-    voltronAPI.executeCommand = function(command) {
-        return voltronAPI.request(createRequest('execute_command', {command: command}))
+    voltronAPI.command = function(command) {
+        return voltronAPI.request(createRequest('command', {command: command}))
     }
 
-    voltronAPI.listTargets = function() {
-        return voltronAPI.request(createRequest('list_targets', {}))
+    voltronAPI.targets = function() {
+        return voltronAPI.request(createRequest('targets', {}))
     }
 
-    voltronAPI.readMemory = function(address, length) {
-        return voltronAPI.request(createRequest('read_memory', {address: address, length: length}))
+    voltronAPI.memory = function(address, length) {
+        return voltronAPI.request(createRequest('memory', {address: address, length: length}))
     }
 
-    voltronAPI.readRegisters = function() {
-        return voltronAPI.request(createRequest('read_registers', {}))
+    voltronAPI.registers = function() {
+        return voltronAPI.request(createRequest('registers', {}))
     }
 
-    voltronAPI.readStack = function(length) {
-        return voltronAPI.request(createRequest('read_stack', {length: length}))
+    voltronAPI.stack = function(length) {
+        return voltronAPI.request(createRequest('stack', {length: length}))
     }
 
     voltronAPI.state = function() {
