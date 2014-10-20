@@ -260,8 +260,7 @@ class RegisterView (TerminalView):
 
     def render(self, error=None):
         # get target info (ie. arch)
-        req = api_request('targets')
-        res = self.client.send_request(req)
+        res = self.client.perform_request('targets')
         if res.is_error:
             error = "Failed getting targets: {}".format(res.message)
         else:
@@ -272,13 +271,14 @@ class RegisterView (TerminalView):
                 self.curr_arch = arch
 
                 # get next instruction
-                # XXX probably fix this
-                inst = 'jmp x'
-                self.curr_inst = inst
+                res = self.client.perform_request('disassemble', count=1)
+                try:
+                    self.curr_inst = res.disassembly.strip().split('\n')[-1].split(':')[1].strip()
+                except:
+                    self.curr_inst = None
 
                 # get registers for target
-                req = api_request('registers')
-                res = self.client.send_request(req)
+                res = self.client.perform_request('registers')
                 if res.is_error:
                     error = "Failed getting registers: {}".format(res.message)
 
@@ -297,7 +297,7 @@ class RegisterView (TerminalView):
             formatted = {}
             for fmt in formats:
                 # Apply defaults where they're missing
-                fmt = dict(list(self.config['format_defaults'].items()) + list(fmt.items()))
+                fmt = dict(list(self.config['format'].items()) + list(fmt.items()))
 
                 # Format the data for each register
                 for reg in fmt['regs']:
@@ -364,7 +364,7 @@ class RegisterView (TerminalView):
             reg = 'rflags'
         elif self.curr_arch == 'x86':
             reg = 'eflags'
-        fmt = dict(list(self.config['format_defaults'].items()) + list(list(filter(lambda x: reg in x['regs'], self.FORMAT_INFO[self.curr_arch]))[0].items()))
+        fmt = dict(list(self.config['format'].items()) + list(list(filter(lambda x: reg in x['regs'], self.FORMAT_INFO[self.curr_arch]))[0].items()))
 
         # Handle each flag bit
         val = int(val, 10)
@@ -504,9 +504,9 @@ class RegisterView (TerminalView):
 
         # Colour
         if j != None:
-            jump = self.colour(jump, self.config['format_defaults']['value_colour_mod'])
+            jump = self.colour(jump, self.config['format']['value_colour_mod'])
         else:
-            jump = self.colour(jump, self.config['format_defaults']['value_colour'])
+            jump = self.colour(jump, self.config['format']['value_colour'])
 
         return '[' + jump + ']'
 
