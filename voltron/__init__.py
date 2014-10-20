@@ -103,7 +103,7 @@ def setup_logging(logname=None):
         else:
             filename = 'voltron.log'
         for name in LOG_CONFIG['loggers']:
-            h = logging.FileHandler(filename, delay=True)
+            h = logging.FileHandler(voltron.env.path_to(filename), delay=True)
             h.setFormatter(logging.Formatter(fmt="%(asctime)s %(levelname)-7s %(filename)12s:%(lineno)-4s %(funcName)20s -- %(message)s"))
             logging.getLogger(name).addHandler(h)
 
