@@ -7,6 +7,7 @@ import pprint
 import re
 import signal
 import time
+from blessings import Terminal
 
 try:
     import pygments
@@ -137,16 +138,18 @@ class VoltronView (object):
     def render(self, msg=None):
         log.warning('Might wanna implement render() in this view eh')
 
-    def hexdump(self, src, length=16, sep='.', offset=0):
+    def hexdump(self, src, length=16, sep='.', offset=0, col=24, addr_format=ADDR_FORMAT_64, addr_colour=None):
         FILTER = ''.join([(len(repr(chr(x))) == 3) and chr(x) or sep for x in range(256)])
         lines = []
-        for c in xrange(0, len(src), length):
+        for c in range(0, len(src), length):
             chars = src[c:c+length]
             hex = ' '.join(["%02X" % ord(x) for x in chars])
-            if len(hex) > 24:
-                hex = "%s %s" % (hex[:24], hex[24:])
+            hex = ' '.join([hex[i:i+col] for i in range(0, len(hex), col)])
             printable = ''.join(["%s" % ((ord(x) <= 127 and FILTER[ord(x)]) or sep) for x in chars])
-            lines.append("%s:  %-*s  |%s|\n" % (ADDR_FORMAT_64.format(offset+c), length*3, hex, printable))
+            addr = addr_format.format(offset+c)
+            if addr_colour:
+                addr = self.colour(addr, addr_colour)
+            lines.append("%s:  %-*s  |%s|\n" % (addr, length*3, hex, printable))
         return ''.join(lines).strip()
 
     def should_reconnect(self):
