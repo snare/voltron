@@ -118,10 +118,12 @@ try:
             Called by LLDB when the module is loaded
             """
             global cmd
-            log.debug("Initialising LLDB command")
-            cmd = VoltronLLDBCommand(debugger, dict)
-            print(blessed.Terminal().bold_red("Voltron loaded."))
-            print("Run `voltron init` after you load a target.")
+            if not voltron.loaded:
+                log.debug("Initialising LLDB command")
+                cmd = VoltronLLDBCommand(debugger, dict)
+                print(blessed.Terminal().bold_red("Voltron loaded."))
+                print("Run `voltron init` after you load a target.")
+                voltron.loaded = True
 
         def lldb_invoke(debugger, command, result, dict):
             """

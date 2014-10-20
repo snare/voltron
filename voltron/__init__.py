@@ -16,6 +16,8 @@ config = None
 # reference to debugger adaptor
 debugger = None
 
+loaded = False
+
 def setup_env():
     global env, config
     env = Environment({
