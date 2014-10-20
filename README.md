@@ -29,10 +29,6 @@ A standard python setup script is included.
 
 This will install the `voltron` egg wherever that happens on your system, and an executable named `voltron` to `/usr/local/bin/`.
 
-`voltron console` requires the `rl` Python module. Install it with:
-
-    $ pip install rl
-
 Quick Start
 -----------
 
