@@ -2,6 +2,7 @@ import os
 import logging
 import logging.config
 
+import voltron
 from .main import main
 
 import plugin
@@ -97,7 +98,7 @@ def setup_logging(logname=None):
     logging.config.dictConfig(LOG_CONFIG)
 
     # enable the debug_file in all the loggers if the config says to
-    if config and 'debug_logging' in config and config['debug_logging']:
+    if config and 'general' in config and config['general']['debug_logging']:
         if logname:
             filename = 'voltron_{}.log'.format(logname)
         else:
