@@ -117,7 +117,10 @@ class Server(object):
         else:
             if client:
                 # already got an error response and we have a client, send it
-                client.send_response(str(res))
+                try:
+                    client.send_response(str(res))
+                except socket.error:
+                    log.error("Client closed before we could respond")
             else:
                 return res
 
@@ -148,7 +151,10 @@ class Server(object):
         # send the response
         if client:
             log.debug("Client was passed to dispatch_request() - sending response")
-            client.send_response(str(res))
+            try:
+                client.send_response(str(res))
+            except socket.error:
+                log.error("Client closed before we could respond")
         else:
             log.debug("Client was not passed to dispatch_request() - returning response")
             return res
