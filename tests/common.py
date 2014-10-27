@@ -68,7 +68,7 @@ stack_response = "\xff"*0x40
 wait_response = "stopped"
 command_response = "inferior`main:\n-> 0x100000d20:  pushq  %rbp\n   0x100000d21:  movq   %rsp, %rbp\n   0x100000d24:  subq   $0x40, %rsp\n   0x100000d28:  movl   $0x0, -0x4(%rbp)\n   0x100000d2f:  movl   %edi, -0x8(%rbp)\n   0x100000d32:  movq   %rsi, -0x10(%rbp)\n   0x100000d36:  movl   $0x0, -0x14(%rbp)\n   0x100000d3d:  movq   $0x0, -0x20(%rbp)\n   0x100000d45:  cmpl   $0x1, -0x8(%rbp)\n   0x100000d4c:  jle    0x100000d94               ; main + 116\n   0x100000d52:  movq   -0x10(%rbp), %rax\n   0x100000d56:  movq   0x8(%rax), %rdi\n   0x100000d5a:  leaq   0x18a(%rip), %rsi         ; \"sleep\"\n   0x100000d61:  callq  0x100000ea0               ; symbol stub for: strcmp\n   0x100000d66:  cmpl   $0x0, %eax\n   0x100000d6b:  jne    0x100000d94               ; main + 116\n   0x100000d71:  leaq   0x179(%rip), %rdi         ; \"*** Sleeping for 5 seconds\\n\"\n   0x100000d78:  movb   $0x0, %al\n   0x100000d7a:  callq  0x100000e94               ; symbol stub for: printf\n   0x100000d7f:  movl   $0x5, %edi\n   0x100000d84:  movl   %eax, -0x24(%rbp)\n   0x100000d87:  callq  0x100000e9a               ; symbol stub for: sleep\n   0x100000d8c:  movl   %eax, -0x28(%rbp)\n   0x100000d8f:  jmpq   0x100000e88               ; main + 360\n   0x100000d94:  cmpl   $0x1, -0x8(%rbp)\n   0x100000d9b:  jle    0x100000dd6               ; main + 182\n   0x100000da1:  movq   -0x10(%rbp), %rax\n   0x100000da5:  movq   0x8(%rax), %rdi\n   0x100000da9:  leaq   0x15d(%rip), %rsi         ; \"loop\"\n   0x100000db0:  callq  0x100000ea0               ; symbol stub for: strcmp\n   0x100000db5:  cmpl   $0x0, %eax\n   0x100000dba:  jne    0x100000dd6               ; main + 182"
 disassemble_response = command_response
-
+dereference_response = [[u'pointer', 140734748778168], [u'pointer', 140735677462013], [u'symbol', u'start + 0x1']]
 
 def inject_mock(adaptor):
     adaptor.version = Mock(return_value='lldb-something')
@@ -82,3 +82,4 @@ def inject_mock(adaptor):
     adaptor.wait = Mock(return_value=wait_response)
     adaptor.command = Mock(return_value=command_response)
     adaptor.disassemble = Mock(return_value=disassemble_response)
+    adaptor.dereference = Mock(return_value=dereference_response)

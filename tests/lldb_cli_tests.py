@@ -159,3 +159,12 @@ def test_disassemble():
     assert len(res.disassembly) > 0
     assert 'push' in res.disassembly
 
+def test_dereference():
+    restart_debugger()
+    time.sleep(1)
+    res = client.perform_request('registers')
+    res = client.perform_request('dereference', pointer=res.registers['rsp'])
+    assert res.status == 'success'
+    assert res.output[0][0] == 'pointer'
+    assert res.output[-1][1] == 'start + 0x1'
+

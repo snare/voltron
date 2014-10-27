@@ -3,6 +3,7 @@ from __future__ import print_function
 import logging
 import threading
 import re
+import struct
 
 from voltron.api import *
 from voltron.plugin import *
@@ -24,6 +25,11 @@ if HAVE_GDB:
             'i386:x86-64': 'x86_64', 'i386:x86-64:intel': 'x86_64',
             'arm': 'arm', 'armv2': 'arm', 'armv2a': 'arm', 'armv3': 'arm', 'armv3m': 'arm', 'armv4': 'arm',
             'armv4t': 'arm', 'armv5': 'arm', 'armv5t': 'arm', 'armv5te': 'arm'
+        }
+        sizes = {
+            'x86': 4,
+            'x86_64': 8,
+            'arm': 4
         }
 
         """
@@ -82,6 +88,8 @@ if HAVE_GDB:
 
             # get arch
             d["arch"] = self.get_arch()
+            d['byte_order'] = self.get_byte_order()
+            d['addr_size'] = self.get_addr_size()
 
             return d
 
@@ -119,21 +127,38 @@ if HAVE_GDB:
         @validate_busy
         @validate_target
         @lock_host
-        def registers(self, target_id=0, thread_id=None):
+        def registers(self, target_id=0, thread_id=None, registers=[]):
             """
             Get the register values for a given target/thread.
             """
-
             arch = self.get_arch()
-            log.debug('Getting registers for arch {}'.format(arch))
-            if arch == "x86_64":
-                regs = self.get_registers_x86_64()
-            elif arch == "x86":
-                regs = self.get_registers_x86()
-            elif arch == "arm":
-                regs = self.get_registers_arm()
+
+            # if we got 'sp' or 'pc' in registers, change it to whatever the right name is for the current arch
+            if arch in self.reg_names:
+                if 'pc' in registers:
+                    registers.remove('pc')
+                    registers.append(self.reg_names[arch]['pc'])
+                if 'sp' in registers:
+                    registers.remove('sp')
+                    registers.append(self.reg_names[arch]['sp'])
             else:
-                raise UnknownArchitectureException()
+                raise Exception("Unsupported architecture: {}".format(target['arch']))
+
+            # get registers
+            if registers != []:
+                regs = {}
+                for reg in registers:
+                    regs[reg] = self.get_register(reg)
+            else:
+                log.debug('Getting registers for arch {}'.format(arch))
+                if arch == "x86_64":
+                    regs = self.get_registers_x86_64()
+                elif arch == "x86":
+                    regs = self.get_registers_x86()
+                elif arch == "arm":
+                    regs = self.get_registers_arm()
+                else:
+                    raise UnknownArchitectureException()
 
             return regs
 
@@ -151,7 +176,7 @@ if HAVE_GDB:
             else:
                 raise UnknownArchitectureException()
 
-            return sp
+            return sp_name, sp
 
         @validate_busy
         @validate_target
@@ -167,7 +192,7 @@ if HAVE_GDB:
             else:
                 raise UnknownArchitectureException()
 
-            return pc
+            return pc_name, pc
 
         @validate_busy
         @validate_target
@@ -181,7 +206,7 @@ if HAVE_GDB:
             """
             # read memory
             log.debug('Reading 0x{:x} bytes of memory at 0x{:x}'.format(length, address))
-            memory = str(gdb.selected_inferior().memory(address, length))
+            memory = str(gdb.selected_inferior().read_memory(address, length))
             return memory
 
         @validate_busy
@@ -216,12 +241,54 @@ if HAVE_GDB:
             """
             # make sure we have an address
             if address == None:
-                address = self.program_counter(target_id=target_id)
+                pc_name, address = self.program_counter(target_id=target_id)
 
             # disassemble
             output = gdb.execute('x/{}i 0x{:x}'.format(count, address), to_string=True)
 
             return output
+
+        @validate_busy
+        @validate_target
+        @lock_host
+        def dereference(self, pointer, target_id=0):
+            """
+            Recursively dereference a pointer for display
+            """
+            fmt = ('<' if self.get_byte_order() == 'little' else '>') + {2: 'H', 4: 'L', 8: 'Q'}[self.get_addr_size()]
+
+            addr = pointer
+            chain = []
+
+            # recursively dereference
+            while True:
+                try:
+                    mem = gdb.selected_inferior().read_memory(addr, self.get_addr_size())
+                    log.debug("read mem: {}".format(mem))
+                    (ptr,) = struct.unpack(fmt, mem)
+                    if ptr in chain:
+                        break
+                    chain.append(('pointer', addr))
+                    addr = ptr
+                except gdb.MemoryError:
+                    break
+
+            # get some info for the last pointer
+            # first try to resolve a symbol context for the address
+            p, addr = chain[-1]
+            output = gdb.execute('info symbol {}'.format(addr), to_string=True)
+            if 'No symbol matches' not in output:
+                chain.append(('symbol', output))
+                log.debug("symbol context: {}".format(str(chain[-1])))
+            else:
+                log.debug("no symbol context")
+                mem = gdb.selected_inferior().read_memory(addr, 1)
+                if ord(mem[0]) < 127:
+                    output = gdb.execute('x/s 0x{:X}'.format(addr), to_string=True)
+                    chain.append(('string', '"'.join(output.split('"')[1:-1])))
+
+            log.debug("chain: {}".format(chain))
+            return chain
 
         @lock_host
         def command(self, command=None):
@@ -396,6 +463,14 @@ if HAVE_GDB:
             except:
                 arch = re.search('\(currently (.*)\)', gdb.execute('show architecture', to_string=True)).group(1)
             return self.archs[arch]
+
+        def get_addr_size(self):
+            arch = self.get_arch()
+
+            return self.sizes[arch]
+
+        def get_byte_order(self):
+            return 'little' if 'little' in gdb.execute('show endian', to_string=True) else 'big'
 
 
     class GDBAdaptorPlugin(DebuggerAdaptorPlugin):

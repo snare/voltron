@@ -98,7 +98,7 @@ def test_stack_pointer():
 def test_program_counter():
     main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
-    pc = adaptor.program_counter()
+    pc_name, pc = adaptor.program_counter()
     assert pc != 0
     process.Destroy()
 
@@ -130,5 +130,29 @@ def test_command():
     output = adaptor.command("reg read")
     assert len(output) > 0
     assert 'rax' in output
+    process.Destroy()
+
+def test_dereference_main():
+    main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
+    process = target.LaunchSimple(None, None, os.getcwd())
+    regs = adaptor.registers()
+    output = adaptor.dereference(regs['rip'])
+    assert ('symbol', 'main + 0x0') in output
+    process.Destroy()
+
+def test_dereference_rsp():
+    main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
+    process = target.LaunchSimple(None, None, os.getcwd())
+    regs = adaptor.registers()
+    output = adaptor.dereference(regs['rsp'])
+    assert ('symbol', 'start + 0x1') in output
+    process.Destroy()
+
+def test_dereference_string():
+    main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
+    process = target.LaunchSimple(None, None, os.getcwd())
+    regs = adaptor.registers()
+    output = adaptor.dereference(regs['rsp']+0x20)
+    assert 'inferior' in list(output[-1])[-1]
     process.Destroy()
 

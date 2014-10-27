@@ -135,22 +135,8 @@ class VoltronView (object):
             else:
                 raise
 
-    def render(self, msg=None):
+    def render(self, error=None):
         log.warning('Might wanna implement render() in this view eh')
-
-    def hexdump(self, src, length=16, sep='.', offset=0, col=24, addr_format=ADDR_FORMAT_64, addr_colour=None):
-        FILTER = ''.join([(len(repr(chr(x))) == 3) and chr(x) or sep for x in range(256)])
-        lines = []
-        for c in range(0, len(src), length):
-            chars = src[c:c+length]
-            hex = ' '.join(["%02X" % ord(x) for x in chars])
-            hex = ' '.join([hex[i:i+col] for i in range(0, len(hex), col)])
-            printable = ''.join(["%s" % ((ord(x) <= 127 and FILTER[ord(x)]) or sep) for x in chars])
-            addr = addr_format.format(offset+c)
-            if addr_colour:
-                addr = self.colour(addr, addr_colour)
-            lines.append("%s:  %-*s  |%s|\n" % (addr, length*3, hex, printable))
-        return ''.join(lines).strip()
 
     def should_reconnect(self):
         try:
@@ -269,7 +255,6 @@ class TerminalView (VoltronView):
             pad = 0
 
         self.body += int(pad)*'\n'
-
 
 def merge(d1, d2):
     for k1,v1 in d1.items():

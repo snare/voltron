@@ -15,24 +15,29 @@ class APIRegistersRequest(APIRequest):
         "request":      "registers",
         "data": {
             "target_id": 0,
-            "thread_id": 123456
+            "thread_id": 123456,
+            "registers": ['rsp']
         }
     }
 
     `target_id` and `thread_id` are optional. If not present, the currently
     selected target and thread will be used.
 
+    `registers` is optional. If it is not included all registers will be
+    returned.
+
     This request will return immediately.
     """
-    _fields = {'target_id': False, 'thread_id': False}
+    _fields = {'target_id': False, 'thread_id': False, 'registers': False}
 
     target_id = 0
     thread_id = None
+    registers = []
 
     @server_side
     def dispatch(self):
         try:
-            regs = voltron.debugger.registers(target_id=self.target_id, thread_id=self.thread_id)
+            regs = voltron.debugger.registers(target_id=self.target_id, thread_id=self.thread_id, registers=self.registers)
             res = APIRegistersResponse()
             res.registers = regs
         except TargetBusyException:

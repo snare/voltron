@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import struct
 import logging
 import threading
 
@@ -80,6 +81,8 @@ if HAVE_LLDB:
                 d["arch"] = t.triple.split('-')[0]
             except:
                 d["arch"] = None
+            d["byte_order"] = 'little' if t.byte_order == lldb.eByteOrderLittle else 'big'
+            d["addr_size"] = t.addr_size
 
             return d
 
@@ -138,7 +141,7 @@ if HAVE_LLDB:
         @validate_busy
         @validate_target
         @lock_host
-        def registers(self, target_id=0, thread_id=None):
+        def registers(self, target_id=0, thread_id=None, registers=[]):
             """
             Get the register values for a given target/thread.
 
@@ -147,6 +150,7 @@ if HAVE_LLDB:
             """
             # get the target
             target = self.host.GetTargetAtIndex(target_id)
+            t_info = self._target(target_id)
 
             # get the thread
             if not thread_id:
@@ -155,6 +159,17 @@ if HAVE_LLDB:
                 thread = target.process.GetThreadByID(thread_id)
             except:
                 raise NoSuchThreadException()
+
+            # if we got 'sp' or 'pc' in registers, change it to whatever the right name is for the current arch
+            if t_info['arch'] in self.reg_names:
+                if 'pc' in registers:
+                    registers.remove('pc')
+                    registers.append(self.reg_names[t_info['arch']]['pc'])
+                if 'sp' in registers:
+                    registers.remove('sp')
+                    registers.append(self.reg_names[t_info['arch']]['sp'])
+            else:
+                raise Exception("Unsupported architecture: {}".format(target['arch']))
 
             # get the registers
             regs = thread.GetFrameAtIndex(0).GetRegisters()
@@ -175,7 +190,8 @@ if HAVE_LLDB:
                         except Exception as e:
                             log.error("Exception converting register value: " + str(e))
                             val = 0
-                regs[reg.name] = val
+                if registers == [] or reg.name in registers:
+                    regs[reg.name] = val
 
             return regs
 
@@ -200,7 +216,7 @@ if HAVE_LLDB:
             else:
                 raise Exception("Unsupported architecture: {}".format(target['arch']))
 
-            return sp
+            return (sp_name, sp)
 
         @validate_busy
         @validate_target
@@ -223,7 +239,7 @@ if HAVE_LLDB:
             else:
                 raise Exception("Unsupported architecture: {}".format(target['arch']))
 
-            return pc
+            return (pc_name, pc)
 
         @validate_busy
         @validate_target
@@ -262,7 +278,7 @@ if HAVE_LLDB:
             `thread_id` is a thread ID (or None for the selected thread)
             """
             # get the stack pointer
-            sp = self.stack_pointer(target_id=target_id, thread_id=thread_id)
+            sp_name, sp = self.stack_pointer(target_id=target_id, thread_id=thread_id)
 
             # read memory
             memory = self.memory(sp, length, target_id=target_id)
@@ -282,13 +298,63 @@ if HAVE_LLDB:
             """
             # make sure we have an address
             if address == None:
-                address = self.program_counter(target_id=target_id)
+                pc_name, address = self.program_counter(target_id=target_id)
 
             # disassemble
             res = lldb.SBCommandReturnObject()
             output = self.command('disassemble -s {} -c {}'.format(address, count))
 
             return output
+
+        @validate_busy
+        @validate_target
+        @lock_host
+        def dereference(self, pointer, target_id=0):
+            """
+            Recursively dereference a pointer for display
+            """
+            t = self.host.GetTargetAtIndex(target_id)
+            error = lldb.SBError()
+
+            addr = pointer
+            chain = []
+
+            # recursively dereference
+            # import pdb;pdb.set_trace()
+            while True:
+                ptr = t.process.ReadPointerFromMemory(addr, error)
+                if error.Success():
+                    if ptr in chain:
+                        chain.append(('circular', 'circular'))
+                        break
+                    chain.append(('pointer', addr))
+                    addr = ptr
+                else:
+                    break
+
+            # get some info for the last pointer
+            # first try to resolve a symbol context for the address
+            p, addr = chain[-1]
+            sbaddr = lldb.SBAddress(addr, t)
+            ctx = t.ResolveSymbolContextForAddress(sbaddr, lldb.eSymbolContextEverything)
+            if ctx.IsValid() and ctx.GetSymbol().IsValid():
+                # found a symbol, store some info and we're done for this pointer
+                fstart = ctx.GetSymbol().GetStartAddress().GetLoadAddress(t)
+                offset = addr - fstart
+                chain.append(('symbol', '{} + 0x{:X}'.format(ctx.GetSymbol().name, offset)))
+                log.debug("symbol context: {}".format(str(chain[-1])))
+            else:
+                # no symbol context found, see if it looks like a string
+                log.debug("no symbol context")
+                s = t.process.ReadCStringFromMemory(addr, 256, error)
+                for i in range(0, len(s)):
+                    if ord(s[i] >= 128):
+                        s = s[:i]
+                        break
+                if len(s):
+                    chain.append(('string', s))
+
+            return chain
 
         @lock_host
         def command(self, command=None):

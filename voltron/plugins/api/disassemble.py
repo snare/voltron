@@ -37,7 +37,7 @@ class APIDisassembleRequest(APIRequest):
     def dispatch(self):
         try:
             if self.address == None:
-                self.address = voltron.debugger.program_counter(target_id=self.target_id)
+                pc_name, self.address = voltron.debugger.program_counter(target_id=self.target_id)
             disasm = voltron.debugger.disassemble(target_id=self.target_id, address=self.address, count=self.count)
             res = APIDisassembleResponse()
             res.disassembly = disasm

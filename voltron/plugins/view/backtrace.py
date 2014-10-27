@@ -16,7 +16,7 @@ class BacktraceView (TerminalView):
         VoltronView.add_generic_arguments(sp)
         sp.set_defaults(func=BacktraceView)
 
-    def render(self, msg=None, error=None):
+    def render(self, error=None):
         height, width = self.window_size()
 
         # Set up header and error message if applicable

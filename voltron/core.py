@@ -56,13 +56,17 @@ class Server(object):
         # terminate the server thread by writing some data to the exit pipe
         log.debug("Stopping server threads")
         if self.d_thread:
+            log.debug("Stopping domain socket thread")
             os.write(self.d_exit_in, chr(0))
             self.d_thread.join(10)
         if self.t_thread:
+            log.debug("Stopping TCP socket thread")
             os.write(self.t_exit_in, chr(0))
             self.t_thread.join(10)
         if self.h_thread:
+            log.debug("Stopping HTTP server")
             self.h_thread.stop()
+        log.debug("Finished stopping server threads")
 
     def client_summary(self):
         sums = []
@@ -211,11 +215,13 @@ class ServerThread(threading.Thread):
                         self.purge_client(fd)
 
         # clean up
+        log.debug("Cleaning up server thread")
         for client in self.clients:
             self.purge_client(client)
         os.close(self.exit_pipe)
         serv.close()
         self.cleanup_socket()
+        log.debug("Exiting server thread")
 
     def cleanup_socket(self):
         if type(self.sock) == str:
@@ -299,6 +305,7 @@ class HTTPServerThread(threading.Thread):
 
     def stop(self):
         cherrypy.engine.exit()
+        log.debug("Killed cherrypy")
 
 
 class Client(object):

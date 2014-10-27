@@ -16,8 +16,6 @@ def validate_target(func, *args, **kwargs):
         target_id = None
         if 'target_id' in kwargs and kwargs['target_id'] != None:
             target_id = kwargs['target_id']
-        elif len(args):
-            target_id = args[0]
         else:
             target_id = 0
 
@@ -43,8 +41,6 @@ def validate_busy(func, *args, **kwargs):
         target_id = None
         if 'target_id' in kwargs and kwargs['target_id'] != None:
             target_id = kwargs['target_id']
-        elif len(args):
-            target_id = args[0]
         else:
             target_id = 0
 

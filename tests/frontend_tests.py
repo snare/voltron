@@ -147,3 +147,12 @@ def test_disassemble():
     assert 'push' in res.disassembly
     target.process.Destroy()
 
+def test_dereference():
+    main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
+    process = target.LaunchSimple(None, None, os.getcwd())
+    res = client.perform_request('registers')
+    res = client.perform_request('dereference', pointer=res.registers['rsp'])
+    assert res.status == 'success'
+    assert res.output[0][0] == 'pointer'
+    assert res.output[-1][1] == 'start + 0x1'
+    target.process.Destroy()
