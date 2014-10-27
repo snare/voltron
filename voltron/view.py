@@ -307,7 +307,6 @@ class TerminalView (VoltronView):
         for line in self.body.split('\n'):
             s = AnsiString(line)
             if len(s) > width:
-                print("trimming line to {}".format(width-1))
                 line = s[:width-1] + self.colour('>', 'red')
             lines.append(line)
 
