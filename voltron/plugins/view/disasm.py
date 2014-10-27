@@ -43,6 +43,7 @@ class DisasmView (TerminalView):
                 log.error("Error disassembling: {}".format(res.message))
                 self.body = self.colour(res.message, 'red')
 
+        self.truncate_body()
         self.pad_body()
 
         # Call parent's render method

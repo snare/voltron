@@ -35,6 +35,7 @@ class BacktraceView (TerminalView):
                 self.body = self.colour(res.message, 'red')
 
         # Pad body
+        self.truncate_body()
         self.pad_body()
 
         # Call parent's render method

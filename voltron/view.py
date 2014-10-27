@@ -35,6 +35,50 @@ SHORT_ADDR_FORMAT_32 = '{0:0=8X}'
 SHORT_ADDR_FORMAT_16 = '{0:0=4X}'
 
 
+class AnsiString(object):
+    def __init__(self, string):
+        chunks = string.split('\033')
+        self.chars = []
+        chars = list(chunks[0])
+
+        if len(chunks) > 1:
+            for chunk in chunks[1:]:
+                p = chunk.find('m')
+                if p > 0:
+                    chars.append('\033'+chunk[:p+1])
+                    chars.extend(list(chunk[p+1:]))
+                else:
+                    chars.extend(list(chunk))
+
+        # roll up ansi sequences
+        ansi = []
+        for char in chars:
+            if char[0] == '\033':
+                ansi.append(char)
+            else:
+                self.chars.append(''.join(ansi) + char)
+                ansi = []
+        if len(self.chars) > 2:
+            if self.chars[-1][0] == '\033':
+                self.chars[-2] = self.chars[-2] + self.chars[-1]
+                self.chars = self.chars[:-1]
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            return ''.join(self.chars[key.start:key.stop]) + '\033[0m'
+        else:
+            return self.chars[key]
+
+    def __str__(self):
+        return ''.join(self.chars)
+
+    def __len__(self):
+        return len(self.chars)
+
+    def clean(self):
+        return re.sub('\033\[.{1,2}m', '', str(self))
+
+
 class VoltronView (object):
     """
     Parent class for all views.
@@ -255,6 +299,20 @@ class TerminalView (VoltronView):
             pad = 0
 
         self.body += int(pad)*'\n'
+
+    def truncate_body(self):
+        height, width = self.window_size()
+
+        lines = []
+        for line in self.body.split('\n'):
+            s = AnsiString(line)
+            if len(s) > width:
+                print("trimming line to {}".format(width-1))
+                line = s[:width-1] + self.colour('>', 'red')
+            lines.append(line)
+
+        self.body = '\n'.join(lines)
+
 
 def merge(d1, d2):
     for k1,v1 in d1.items():

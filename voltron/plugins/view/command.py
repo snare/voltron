@@ -36,6 +36,7 @@ class CommandView (TerminalView):
                 log.error("Error executing command: {}".format(res.message))
                 self.body = self.colour(res.message, 'red')
 
+        self.truncate_body()
         self.pad_body()
 
         # Call parent's render method

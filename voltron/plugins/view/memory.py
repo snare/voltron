@@ -33,15 +33,17 @@ class MemoryView (TerminalView):
         height, width = self.window_size()
 
         # get info about target
+        target = None
         res = self.client.perform_request('targets')
         if res.is_success and len(res.targets) > 0:
             target = res.targets[0]
 
-        if self.args.deref:
+        if target and self.args.deref:
             self.args.bytes = target['addr_size']
 
         if not self.title:
             self.title = "[memory]"
+
         if error != None:
             self.body = self.colour(error, 'red')
         else:
@@ -104,6 +106,7 @@ class MemoryView (TerminalView):
                 self.body = ""
                 self.info = "[no address]"
 
+        self.truncate_body()
         self.pad_body()
 
         super(MemoryView, self).render()
