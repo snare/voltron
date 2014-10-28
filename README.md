@@ -1,7 +1,7 @@
 Voltron
 =======
 
-Voltron is an extensible debugger UI for hackers. It allows you to attach utility views running in other terminals to your debugger, displaying helpful information such as disassembly, stack contents, register values, etc, while still giving you the same debugger CLI you're used to. You can still have your pimped out custom prompt, macros, plugins, terminal colour scheme - whatever you're used to - but you get the added bonus of a sweet customisable heads-up display.
+Voltron is an extensible debugger UI for hackers. It allows you to attach utility views running in other terminals to your debugger (LLDB or GDB), displaying helpful information such as disassembly, stack contents, register values, etc, while still giving you the same debugger CLI you're used to. You can still have your pimped out custom prompt, macros, plugins, terminal colour scheme - whatever you're used to - but you get the added bonus of a sweet customisable heads-up display.
 
 Voltron also provides a platform on which to build your own UI views, requesting and processing data from the debugger back end to suit your own requirements. To this end, Voltron provides (and uses internally) a JSON API available over UNIX domain sockets, TCP sockets and an HTTP server.
 
@@ -58,7 +58,7 @@ Quick Start
         $ voltron view bt
         $ voltron view cmd 'reg read'
 
-4. Set a breakpoint and run your inferior. Once the inferior has started, the views will be able to connect, but they won't update until the debugger hits the first breakpoint.
+4. Set a breakpoint and run your inferior. Once the inferior has started and the debugger has stopped (either because you interrupted it or because it hit a breakpoint) the views will update.
 
         (*db) b main
         (*db) run
