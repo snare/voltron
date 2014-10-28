@@ -15,7 +15,7 @@ class LLDBIntelLexer(RegexLexer):
     filenames = []
     mimetypes = []
 
-    identifier = r'[a-z$._?][\w$.?#@~]*'
+    identifier = r'[<a-z$._?][\w$.?#@~\+>]*'
     hexn = r'(?:0[xX][0-9a-f]+|$0[0-9a-f]*|[0-9]+[0-9a-f]*h)'
     octn = r'[0-7]+q'
     binn = r'[01]+b'
@@ -25,7 +25,7 @@ class LLDBIntelLexer(RegexLexer):
     declkw = r'(?:res|d)[bwdqt]|times'
     register = (r'r[0-9][0-5]?[bwd]|'
                 r'[a-d][lh]|[er]?[a-d]x|[er]?[sbi]p|[er]?[sd]i|[c-gs]s|st[0-7]|'
-                r'mm[0-7]|cr[0-4]|dr[0-367]|tr[3-7]')
+                r'mm[0-7]|cr[0-4]|dr[0-367]|tr[3-7]|.mm\d*')
     wordop = r'seg|wrt|strict'
     type = r'byte|[dq]?word|ptr'
 
@@ -67,7 +67,8 @@ class LLDBIntelLexer(RegexLexer):
         'whitespace': [
             (r'\n', Text),
             (r'[ \t]+', Text),
-            (r';.*', Comment.Single)
+            (r';.*', Comment.Single),
+            (r'#.*', Comment.Single)
         ],
         'punctuation': [
             (r'[,():\[\]]+', Punctuation),
@@ -80,5 +81,6 @@ class LLDBIntelLexer(RegexLexer):
 
 
 all_lexers = {
-    'lldb_intel': LLDBIntelLexer
+    'lldb_intel': LLDBIntelLexer,
+    'gdb_intel': LLDBIntelLexer
 }
