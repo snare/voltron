@@ -5,7 +5,7 @@ Voltron is an extensible debugger UI for hackers. It allows you to attach utilit
 
 Voltron also provides a platform on which to build your own UI views, requesting and processing data from the debugger back end to suit your own requirements. To this end, Voltron provides (and uses internally) a JSON API available over UNIX domain sockets, TCP sockets and an HTTP server.
 
-[![voltron example](http://ho.ax/voltron.png)](#example)
+![voltron example](http://i.imgur.com/dME3uMM.png)
 
 Support
 -------
