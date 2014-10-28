@@ -348,7 +348,7 @@ if HAVE_LLDB:
                 log.debug("no symbol context")
                 s = t.process.ReadCStringFromMemory(addr, 256, error)
                 for i in range(0, len(s)):
-                    if ord(s[i] >= 128):
+                    if ord(s[i]) >= 128:
                         s = s[:i]
                         break
                 if len(s):
