@@ -10,7 +10,7 @@ log = logging.getLogger('api')
 app = Flask(__name__)
 
 lexers = {
-    'lldb.intel': LLDBIntelLexer
+    'lldb_intel': LLDBIntelLexer
 }
 
 @app.route('/')
@@ -32,7 +32,7 @@ def format_disasm(response):
     formatted = None
 
     try:
-        lexer_id = '{}.{}'.format(response.host, response.flavor)
+        lexer_id = '{}_{}'.format(response.host, response.flavor)
         log.debug("lexer: {}".format(lexer_id))
         lexer = lexers[lexer_id]()
     except:

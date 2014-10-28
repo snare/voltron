@@ -79,3 +79,6 @@ class LLDBIntelLexer(RegexLexer):
     }
 
 
+all_lexers = {
+    'lldb_intel': LLDBIntelLexer
+}

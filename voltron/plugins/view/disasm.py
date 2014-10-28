@@ -1,7 +1,7 @@
 from voltron.view import *
 from voltron.plugin import *
 from voltron.api import *
-
+from voltron.lexers import *
 
 class DisasmView (TerminalView):
     view_type = 'disasm'
@@ -32,8 +32,8 @@ class DisasmView (TerminalView):
                 # Pygmentize output
                 if have_pygments:
                     try:
-                        lexer = pygments.lexers.get_lexer_by_name('gdb')
-                        disasm = pygments.highlight(disasm, lexer, pygments.formatters.Terminal256Formatter())
+                        lexer = all_lexers['{}_{}'.format(res.host, res.flavor)]()
+                        disasm = pygments.highlight(disasm, lexer, pygments.formatters.TerminalFormatter())
                     except Exception as e:
                         log.warning('Failed to highlight disasm: ' + str(e))
 
