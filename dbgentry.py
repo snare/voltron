@@ -19,8 +19,6 @@ try:
     voltron.setup_env()
     log = voltron.setup_logging('debugger')
 
-    cmd = None
-
     class VoltronCommand (object):
         """
         Parent class for common methods across all debugger hosts.
@@ -113,23 +111,21 @@ try:
                 cmd = 'target stop-hook delete {}'.format(self.hook_idx if self.hook_idx else '')
                 self.debugger.HandleCommand(cmd)
 
-        def __lldb_init_module(debugger, dict):
+        def __lldb_init_module(debugger, env_dict):
             """
             Called by LLDB when the module is loaded
             """
-            global cmd
-            if not voltron.loaded:
+            if not 'cmd' in env_dict:
                 log.debug("Initialising LLDB command")
-                cmd = VoltronLLDBCommand(debugger, dict)
+                env_dict['cmd'] = VoltronLLDBCommand(debugger, env_dict)
                 print(blessed.Terminal().bold_red("Voltron loaded."))
                 print("Run `voltron init` after you load a target.")
-                voltron.loaded = True
 
-        def lldb_invoke(debugger, command, result, dict):
+        def lldb_invoke(debugger, command, result, env_dict):
             """
             Called when the voltron command is invoked within LLDB
             """
-            cmd.invoke(debugger, command, result, dict)
+            env_dict['cmd'].invoke(debugger, command, result, env_dict)
 
 
     if in_gdb:
