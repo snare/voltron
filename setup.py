@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name = "voltron",
@@ -9,7 +9,7 @@ setup(
     license = "Buy snare a beer",
     keywords = "voltron gdb lldb",
     url = "https://github.com/snarez/voltron",
-    packages=['voltron'],
+    packages=find_packages(),
     install_requires = ['rl', 'scruffy', 'flask', 'cherrypy'],
     data_files=['dbgentry.py'],
     package_data = {'voltron': ['config/*']},
