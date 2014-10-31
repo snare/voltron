@@ -11,7 +11,7 @@ setup(
     url = "https://github.com/snarez/voltron",
     packages=['voltron'],
     install_requires = ['rl', 'scruffy', 'flask', 'cherrypy'],
-    data_files=['voltron.gdb', 'dbgentry.py'],
+    data_files=['dbgentry.py'],
     package_data = {'voltron': ['config/*']},
     install_package_data = True,
     entry_points = {
