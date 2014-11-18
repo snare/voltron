@@ -1,5 +1,6 @@
 try:
     import logging
+    blessed = None
     import blessed
 
     import voltron
@@ -181,4 +182,7 @@ try:
 
 
 except Exception, e:
-    print(blessed.Terminal().bold_red("Exception {} raised while loading Voltron: {}".format(type(e), str(e))))
+    msg = "Exception {} raised while loading Voltron: {}".format(type(e), str(e))
+    if blessed:
+        msg = blessed.Terminal().bold_red(msg)
+    print(msg)

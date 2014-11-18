@@ -10,7 +10,7 @@ setup(
     keywords = "voltron gdb lldb",
     url = "https://github.com/snarez/voltron",
     packages=find_packages(),
-    install_requires = ['rl', 'scruffy', 'flask', 'cherrypy'],
+    install_requires = ['rl', 'scruffy', 'flask', 'cherrypy', 'blessed'],
     data_files=['dbgentry.py'],
     package_data = {'voltron': ['config/*']},
     install_package_data = True,
