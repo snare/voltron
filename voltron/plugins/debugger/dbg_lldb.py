@@ -48,6 +48,18 @@ if HAVE_LLDB:
         def host(self, value):
             self._host = value
 
+        def normalize_triple(self, triple):
+            """
+            Returns a (cpu, platform, abi) triple
+
+            Returns None for any fields that can't be elided
+            """
+
+            arch, platform, abi = triple.split("-")
+            if arch == "x86_64h":
+                arch = "x86_64"
+            return (arch, platform, abi)
+
         def version(self):
             """
             Get the debugger's version.
@@ -78,7 +90,7 @@ if HAVE_LLDB:
             d["state"] = self.host.StateAsCString(t.process.GetState())
             d["file"] = t.GetExecutable().fullpath
             try:
-                d["arch"] = t.triple.split('-')[0]
+                d["arch"], _, _ = self.normalize_triple(t.triple)
             except:
                 d["arch"] = None
             d["byte_order"] = 'little' if t.byte_order == lldb.eByteOrderLittle else 'big'
