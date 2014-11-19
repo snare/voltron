@@ -2,6 +2,7 @@ from voltron.view import *
 from voltron.plugin import *
 from voltron.api import *
 
+
 # Class to actually render the view
 class RegisterView (TerminalView):
     view_type = 'register'
@@ -488,7 +489,7 @@ class RegisterView (TerminalView):
                 j = (False, '!s')
 
         # Construct message
-        if j != None:
+        if j is not None:
             taken, reason = j
             if taken:
                 jump = 'Jump ({})'.format(reason)
@@ -503,7 +504,7 @@ class RegisterView (TerminalView):
         jump = t.format(jump)
 
         # Colour
-        if j != None:
+        if j is not None:
             jump = self.colour(jump, self.config['format']['value_colour_mod'])
         else:
             jump = self.colour(jump, self.config['format']['value_colour'])
@@ -516,7 +517,7 @@ class RegisterView (TerminalView):
             if width < len(SHORT_ADDR_FORMAT_128.format(0)) + self.XMM_INDENT:
                 return val[:16] + '\n' + ' '*self.XMM_INDENT + val[16:]
             else:
-                return val[:16] +  ':' + val[16:]
+                return val[:16] + ':' + val[16:]
         else:
             return val
 
