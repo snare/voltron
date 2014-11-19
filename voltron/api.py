@@ -250,6 +250,13 @@ class APIResponse(APIMessage):
     def is_error(self):
         return self.status == 'error'
 
+    def __repr__(self):
+        return "<%s: success = %s, error = %s, body: %s>" % (
+                str(self.__class__),
+                self.is_success,
+                self.is_error,
+                {f: getattr(self, f) for f in self._top_fields + self._fields.keys()}
+        )
 
 class APISuccessResponse(APIResponse):
     """
