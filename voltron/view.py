@@ -83,6 +83,8 @@ class VoltronView (object):
     """
     Parent class for all views.
     """
+    view_type = None
+
     @classmethod
     def add_generic_arguments(cls, sp):
         sp.add_argument('--show-header', '-e', dest="header", action='store_true', help='show header', default=None)
@@ -90,6 +92,12 @@ class VoltronView (object):
         sp.add_argument('--show-footer', '-f', dest="footer", action='store_true', help='show footer', default=None)
         sp.add_argument('--hide-footer', '-F', dest="footer", action='store_false', help='hide footer')
         sp.add_argument('--name', '-n', action='store', help='named configuration to use', default=None)
+
+    @classmethod
+    def configure_subparser(cls, subparsers):
+        sp = subparsers.add_parser(cls.view_type)
+        VoltronView.add_generic_arguments(sp)
+        sp.set_defaults(func=cls)
 
     def __init__(self, args={}, loaded_config={}):
         log.debug('Loading view: ' + self.__class__.__name__)
