@@ -17,8 +17,6 @@ except ImportError:
 log = logging.getLogger('main')
 
 def main(debugger=None):
-    # Load config
-    voltron.setup_env()
     voltron.setup_logging('main')
 
     # Set up command line arg parser
@@ -55,5 +53,3 @@ def main(debugger=None):
 
 if __name__ == "__main__":
     main()
-
-
