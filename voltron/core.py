@@ -308,6 +308,9 @@ class HTTPServerThread(threading.Thread):
         log.debug("Killed cherrypy")
 
 
+class NotConnectedError(Exception): pass
+
+
 class Client(object):
     """
     Used by a client (ie. a view) to communicate with the server.
@@ -336,6 +339,9 @@ class Client(object):
         the plugin's specified response class if one exists, otherwise it will
         be an APIResponse.
         """
+        if not self.sock:
+            raise NotConnectedError()
+
         # send the request data to the server
         data = str(request)
         log.debug("Sending request: {}".format(data))
