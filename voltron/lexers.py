@@ -23,7 +23,7 @@ class LLDBIntelLexer(RegexLexer):
     floatn = decn + r'\.e?' + decn
     string = r'"(\\"|[^"\n])*"|' + r"'(\\'|[^'\n])*'|" + r"`(\\`|[^`\n])*`"
     declkw = r'(?:res|d)[bwdqt]|times'
-    register = (r'r[0-9][0-5]?[bwd]|'
+    register = (r'r[0-9]+?[bwd]{0,1}|'
                 r'[a-d][lh]|[er]?[a-d]x|[er]?[sbi]p|[er]?[sd]i|[c-gs]s|st[0-7]|'
                 r'mm[0-7]|cr[0-4]|dr[0-367]|tr[3-7]|.mm\d*')
     wordop = r'seg|wrt|strict'
