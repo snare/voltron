@@ -117,3 +117,6 @@ def setup_logging(logname=None):
 # Python 3 shim
 if not hasattr(__builtins__, "xrange"):
     xrange = range
+
+# Setup the Voltron environment
+setup_env()
