@@ -47,6 +47,13 @@ def setup():
 
     # set up voltron
     voltron.setup_env()
+    voltron.config['server'] = {
+        "listen": {
+            "domain":   True,
+            "tcp":      ["127.0.0.1", 4444],
+            "http":     ["127.0.0.1", 5555]
+        }
+    }
     pm = PluginManager()
     plugin = pm.debugger_plugin_for_host('lldb')
     adaptor = plugin.adaptor_class()
