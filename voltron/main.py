@@ -37,7 +37,8 @@ def main(debugger=None):
     # Parse args
     args = parser.parse_args()
     if args.debug:
-        log.setLevel(logging.DEBUG)
+        voltron.config['general']['debug_logging'] = True
+        voltron.setup_logging('main')
 
     # Instantiate and run the appropriate module
     inst = args.func(args, loaded_config=voltron.config)
