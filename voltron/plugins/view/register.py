@@ -271,17 +271,21 @@ class RegisterView (TerminalView):
                 arch = res.targets[0]['arch']
                 self.curr_arch = arch
 
-                # get next instruction
-                res = self.client.perform_request('disassemble', count=1)
-                try:
-                    self.curr_inst = res.disassembly.strip().split('\n')[-1].split(':')[1].strip()
-                except:
-                    self.curr_inst = None
+                # ensure the architecture is supported
+                if arch not in self.FORMAT_INFO:
+                    error = "Archiecture '{}' not supported".format(arch)
+                else:
+                    # get next instruction
+                    res = self.client.perform_request('disassemble', count=1)
+                    try:
+                        self.curr_inst = res.disassembly.strip().split('\n')[-1].split(':')[1].strip()
+                    except:
+                        self.curr_inst = None
 
-                # get registers for target
-                res = self.client.perform_request('registers')
-                if res.is_error:
-                    error = "Failed getting registers: {}".format(res.message)
+                    # get registers for target
+                    res = self.client.perform_request('registers')
+                    if res.is_error:
+                        error = "Failed getting registers: {}".format(res.message)
 
         # if everything is ok, render the view
         if not error:
