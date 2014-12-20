@@ -221,7 +221,7 @@ if HAVE_GDB:
             `thread_id` is a thread ID (or None for the selected thread)
             """
             # get the stack pointer
-            sp = self.stack_pointer(target_id=target_id, thread_id=thread_id)
+            sp_name, sp = self.stack_pointer(target_id=target_id, thread_id=thread_id)
 
             # read memory
             memory = self.memory(sp, length, target_id=target_id)
