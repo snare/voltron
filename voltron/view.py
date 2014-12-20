@@ -162,23 +162,21 @@ class VoltronView (object):
         os.system('clear')
         try:
             while True:
-                # Connect to server
                 try:
+                    # Connect to server
                     self.client.connect()
-                    self.connected = True
-                except socket.error, e:
-                    self.connected = False
 
-                if self.connected:
-                    # if this is the first iteration, or we got a valid response on the last iteration, render
+                    # If this is the first iteration (ie. we were just launched and the debugger is already stopped),
+                    # or we got a valid response on the last iteration, render
                     if res == None or hasattr(res, 'state') and res.state == 'stopped':
                         self.render()
 
                     # wait for the debugger to stop again
                     wait_req = api_request('wait')
                     res = self.client.send_request(wait_req)
-                else:
-                    # if we're not connected, try again in a second
+                except socket.error, e:
+                    # if we're not connected, render an error and try again in a second
+                    self.do_render(error='Error connecting to server: {}'.format(e.strerror))
                     time.sleep(1)
         except SocketDisconnected as e:
             if self.should_reconnect():
@@ -187,8 +185,11 @@ class VoltronView (object):
             else:
                 raise
 
-    def render(self, error=None):
+    def render(self):
         log.warning('Might wanna implement render() in this view eh')
+
+    def do_render(error=None):
+        pass
 
     def should_reconnect(self):
         try:
@@ -213,8 +214,22 @@ class TerminalView (VoltronView):
     def clear(self):
         os.system('clear')
 
-    def render(self, msg=None):
+    def render(self):
+        self.do_render()
+
+    def do_render(self, error=None):
+        # Clear the screen
         self.clear()
+
+        # If we got an error, we'll use that as the body
+        if error:
+            self.body = self.colour(error, 'red')
+
+        # Pad and truncate the body
+        self.pad_body()
+        self.truncate_body()
+
+        # Print the header, body and footer
         if self.config['header']['show']:
             print(self.format_header())
         print(self.body, end='')

@@ -3,9 +3,7 @@ from voltron.plugin import *
 from voltron.api import *
 
 
-# Class to actually render the view
 class RegisterView (TerminalView):
-    view_type = 'register'
     FORMAT_INFO = {
         'x86_64': [
             {
@@ -235,7 +233,7 @@ class RegisterView (TerminalView):
 
     @classmethod
     def configure_subparser(cls, subparsers):
-        sp = subparsers.add_parser('reg', help='register view')
+        sp = subparsers.add_parser('register', help='register view')
         VoltronView.add_generic_arguments(sp)
         sp.set_defaults(func=RegisterView)
         g = sp.add_mutually_exclusive_group()
@@ -259,7 +257,9 @@ class RegisterView (TerminalView):
                 if sec not in self.config['sections']:
                     self.config['sections'].append(sec)
 
-    def render(self, error=None):
+    def render(self):
+        error = None
+
         # get target info (ie. arch)
         res = self.client.perform_request('targets')
         if res.is_error:
@@ -354,9 +354,6 @@ class RegisterView (TerminalView):
         self.title = '[regs:{}]'.format('|'.join(self.config['sections']))
         if len(self.title) > width:
             self.title = '[regs]'
-
-        # Pad the body
-        self.pad_body()
 
         # Call parent's render method
         super(RegisterView, self).render()

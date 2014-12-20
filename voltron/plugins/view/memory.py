@@ -8,7 +8,6 @@ from voltron.api import *
 log = logging.getLogger("view")
 
 class MemoryView (TerminalView):
-    view_type = 'memory'
     printable_filter = ''.join([(len(repr(chr(x))) == 3) and chr(x) or '.' for x in range(256)])
 
     @classmethod
@@ -29,7 +28,7 @@ class MemoryView (TerminalView):
         group.add_argument('--register', '-r', action='store', help='register containing the address from which to start reading memory', default=None)
         sp.set_defaults(func=MemoryView)
 
-    def render(self, error=None):
+    def render(self):
         height, width = self.window_size()
 
         # get info about target
@@ -44,70 +43,64 @@ class MemoryView (TerminalView):
         if not self.title:
             self.title = "[memory]"
 
-        if error != None:
-            self.body = self.colour(error, 'red')
-        else:
-            # find the address we're reading memory from
-            addr = None
-            if self.args.command:
-                res = self.client.perform_request('command', command=self.args.command)
-                if res.is_success:
-                    for item in reversed(res.output.split()):
-                        log.debug("checking item: {}".format(item))
+        # find the address we're reading memory from
+        addr = None
+        if self.args.command:
+            res = self.client.perform_request('command', command=self.args.command)
+            if res.is_success:
+                for item in reversed(res.output.split()):
+                    log.debug("checking item: {}".format(item))
+                    try:
+                        addr = int(item)
+                        break
+                    except:
                         try:
-                            addr = int(item)
+                            addr = int(item, 16)
                             break
                         except:
-                            try:
-                                addr = int(item, 16)
-                                break
-                            except:
-                                pass
-            elif self.args.address:
-                addr = int(self.args.address, 16)
-            elif self.args.register:
-                res = self.client.perform_request('registers', registers=[self.args.register])
-                if res.is_success:
-                    addr = res.registers.values()[0]
+                            pass
+        elif self.args.address:
+            addr = int(self.args.address, 16)
+        elif self.args.register:
+            res = self.client.perform_request('registers', registers=[self.args.register])
+            if res.is_success:
+                addr = res.registers.values()[0]
 
-            # read memory
-            if addr != None:
-                res = self.client.perform_request('memory', address=addr, length=self.body_height()*self.args.bytes)
-                if res.is_success:
+        # read memory
+        if addr != None:
+            res = self.client.perform_request('memory', address=addr, length=self.body_height()*self.args.bytes)
+            if res.is_success:
 
-                    lines = []
-                    for c in range(0, res.bytes, self.args.bytes):
-                        chunk = res.memory[c:c+self.args.bytes]
-                        addr_str = self.colour(self.format_address(addr + c, size=target['addr_size'], pad=False), self.config['format']['addr_colour'])
-                        if self.args.deref:
-                            fmt = ('<' if target['byte_order'] == 'little' else '>') + \
-                                    {2: 'H', 4: 'L', 8: 'Q'}[target['addr_size']]
-                            pointer = list(struct.unpack(fmt, chunk))[0]
-                            memory_str = ' '.join(["%02X" % ord(x) for x in chunk])
-                            deref_res = self.client.perform_request('dereference', pointer=pointer)
-                            if deref_res.is_success:
-                                info_str = self.format_deref(deref_res.output)
-                            else:
-                                info_str = ''
+                lines = []
+                for c in range(0, res.bytes, self.args.bytes):
+                    chunk = res.memory[c:c+self.args.bytes]
+                    addr_str = self.colour(self.format_address(addr + c, size=target['addr_size'], pad=False), self.config['format']['addr_colour'])
+                    if self.args.deref:
+                        fmt = ('<' if target['byte_order'] == 'little' else '>') + \
+                                {2: 'H', 4: 'L', 8: 'Q'}[target['addr_size']]
+                        pointer = list(struct.unpack(fmt, chunk))[0]
+                        memory_str = ' '.join(["%02X" % ord(x) for x in chunk])
+                        deref_res = self.client.perform_request('dereference', pointer=pointer)
+                        if deref_res.is_success:
+                            info_str = self.format_deref(deref_res.output)
                         else:
-                            memory_str = ' '.join(["%02X" % ord(x) for x in chunk])
                             info_str = ''
-                        ascii_str = ''.join(["%s" % ((ord(x) <= 127 and self.printable_filter[ord(x)]) or '.') for x in chunk])
-                        divider = self.colour('|', self.config['format']['divider_colour'])
-                        lines.append('{}: {} {} {} {} {}'.format(addr_str, memory_str, divider, ascii_str, divider, info_str))
+                    else:
+                        memory_str = ' '.join(["%02X" % ord(x) for x in chunk])
+                        info_str = ''
+                    ascii_str = ''.join(["%s" % ((ord(x) <= 127 and self.printable_filter[ord(x)]) or '.') for x in chunk])
+                    divider = self.colour('|', self.config['format']['divider_colour'])
+                    lines.append('{}: {} {} {} {} {}'.format(addr_str, memory_str, divider, ascii_str, divider, info_str))
 
-                    self.body = '\n'.join(reversed(lines)).strip() if self.args.reverse else '\n'.join(lines)
-                    self.info = '[0x{0:0=4x}:'.format(len(res.memory)) + self.config['format']['addr_format'].format(addr) + ']'
-                else:
-                    log.error("Error reading memory: {}".format(res.message))
-                    self.body = self.colour(res.message, 'red')
-                    self.info = '[0x{0:0=4x}:'.format(0) + self.config['format']['addr_format'].format(addr) + ']'
+                self.body = '\n'.join(reversed(lines)).strip() if self.args.reverse else '\n'.join(lines)
+                self.info = '[0x{0:0=4x}:'.format(len(res.memory)) + self.config['format']['addr_format'].format(addr) + ']'
             else:
-                self.body = ""
-                self.info = "[no address]"
-
-        self.truncate_body()
-        self.pad_body()
+                log.error("Error reading memory: {}".format(res.message))
+                self.body = self.colour(res.message, 'red')
+                self.info = '[0x{0:0=4x}:'.format(0) + self.config['format']['addr_format'].format(addr) + ']'
+        else:
+            self.body = ""
+            self.info = "[no address]"
 
         super(MemoryView, self).render()
 
@@ -140,15 +133,13 @@ class MemoryViewPlugin(ViewPlugin):
 
 
 class StackView(MemoryView):
-    view_type = 'stack'
-
     @classmethod
     def configure_subparser(cls, subparsers):
         sp = subparsers.add_parser('stack', help='stack view')
         VoltronView.add_generic_arguments(sp)
         sp.set_defaults(func=StackView)
 
-    def render(self, error=None):
+    def render(self):
         self.args.reverse = True
         self.args.deref = True
         self.args.register = 'sp'
@@ -158,7 +149,7 @@ class StackView(MemoryView):
 
         self.title = '[stack]'
 
-        super(StackView, self).render(error=error)
+        super(StackView, self).render()
 
 
 class StackViewPlugin(ViewPlugin):
