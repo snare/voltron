@@ -42,12 +42,6 @@ try:
     else:
         in_vdb = False
 
-    if sum([1 for c in [in_gdb, in_lldb, in_vdb] if c]) > 1:
-        print("in gdb: %s" % in_gdb)
-        print("in lldb: %s" % in_lldb)
-        print("in vdb: %s" % in_vdb)
-        raise RuntimeError("Too many debugging environments detected!")
-
     voltron.setup_env()
     log = voltron.setup_logging('debugger')
 
