@@ -17,6 +17,37 @@ try:
     except ImportError:
         in_gdb = False
 
+    if "vtrace" in locals():
+        in_vdb = True
+
+        import os
+        import sys
+
+        def parent_directory(the_path):
+            return os.path.abspath(os.path.join(the_path, os.pardir))
+
+        def add_vdb_to_path(vtrace):
+            sys.path.append(parent_directory(parent_directory(vtrace.__file__)))
+
+        # don't pass over this line!
+        # in order for the *VDB adaptor plugin* (not this file) to import
+        #  vdb stuff, the import path must be updated.
+        # this is it.
+        #
+        # since atm vdb imports everything relatively
+        #   (typically its not installed), then we use this
+        #   hack to extract the package that's in use.
+        add_vdb_to_path(vtrace)
+        import vtrace
+    else:
+        in_vdb = False
+
+    if sum([1 for c in [in_gdb, in_lldb, in_vdb] if c]) > 1:
+        print("in gdb: %s" % in_gdb)
+        print("in lldb: %s" % in_lldb)
+        print("in vdb: %s" % in_vdb)
+        raise RuntimeError("Too many debugging environments detected!")
+
     voltron.setup_env()
     log = voltron.setup_logging('debugger')
 
@@ -178,6 +209,73 @@ try:
         if __name__ == "__main__":
             log.debug('Initialising GDB command')
             inst = VoltronGDBCommand()
+            print(blessed.Terminal().bold_red("Voltron loaded."))
+
+
+    if in_vdb:
+        class VoltronVDBCommand(VoltronCommand, vtrace.Notifier):
+            """
+            Debugger command class for VDB
+            """
+            def __init__(self, vdb, vtrace):
+                """
+                vdb is the debugger instance
+                vtrace is the vtrace module?
+                """
+                super(VoltronCommand, self).__init__()
+                self._vdb = vdb
+                self._vtrace = vtrace
+
+                self.pm = PluginManager()
+
+                self.adaptor = self.pm.debugger_plugin_for_host('vdb').adaptor_class(self._vdb, self._vtrace)
+                voltron.debugger = self.adaptor
+
+                self.server = Server()
+                self.server.start()
+
+            def invoke(self, arg, from_tty):
+                self.handle_command(arg)
+
+            def register_hooks(self):
+                self._vdb.registerNotifier(vtrace.NOTIFY_ALL, self)
+
+            def unregister_hooks(self):
+                self._vdb.deregisterNotifier(vtrace.NOTIFY_ALL, self)
+
+            def notify(self, event, trace):
+                if event == self._vtrace.NOTIFY_DETACH:
+                    self.exit_handler(event)
+                elif event == self._vtrace.NOTIFY_EXIT:
+                    self.exit_handler(event)
+                elif event == self._vtrace.NOTIFY_BREAK:
+                    self.stop_handler(event)
+                elif event == self._vtrace.NOTIFY_STEP:
+                    self.stop_handler(event)
+                elif event == self._vtrace.NOTIFY_CONTINUE:
+                    self.cont_handler(event)
+
+            def stop_handler(self, event):
+                self.adaptor.update_state()
+                log.debug('Inferior stopped')
+
+            def exit_handler(self, event):
+                log.debug('Inferior exited')
+                self.server.stop()
+                # vdb doesn't signal STOP/BREAK on exit, so we
+                #   clear an outstanding Wait requests
+                self.adaptor.update_state()
+
+            def cont_handler(self, event):
+                log.debug('Inferior continued')
+
+
+        # wb: i have no idea if this __name__ test is actually correct
+        # but __builtin__ is its value when run from vdbbin
+        if __name__ == "__builtin__":
+            log.debug('Initialising VDB command')
+            inst = VoltronVDBCommand(db, vtrace)
+            inst.register_hooks()
             print(blessed.Terminal().bold_red("Voltron loaded."))
 
 
