@@ -18,5 +18,5 @@ setup(
         'console_scripts': ['voltron = voltron:main']
     },
     zip_safe = False,
-    dependency_links = ["https://github.com/snarez/scruffy/tarball/master#egg=scruffy"]
+    dependency_links = ["https://github.com/snarez/scruffy/tarball/v0.1#egg=scruffy"]
 )
