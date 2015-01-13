@@ -32,8 +32,7 @@ class APICommandRequest(APIRequest):
         except Exception, e:
             msg = "Exception executing debugger command: {}".format(e)
             log.error(msg)
-            res = APIGenericErrorResponse()
-            res.message = msg
+            res = APIGenericErrorResponse(msg)
 
         return res
 

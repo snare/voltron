@@ -148,7 +148,7 @@ class Server(object):
             except Exception, e:
                 msg = "Exception raised while dispatching request: {}".format(e)
                 log.error(msg)
-                res = APIGenericErrorResponse(message=msg)
+                res = APIGenericErrorResponse(msg)
 
         log.debug("Response: {}".format(str(res)))
 

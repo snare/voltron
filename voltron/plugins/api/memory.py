@@ -50,8 +50,7 @@ class APIMemoryRequest(APIRequest):
         except Exception, e:
             msg = "Exception getting memory from debugger: {}".format(e)
             log.error(msg)
-            res = APIGenericErrorResponse()
-            res.error_message = msg
+            res = APIGenericErrorResponse(msg)
 
         return res
 
