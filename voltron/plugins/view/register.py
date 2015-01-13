@@ -105,6 +105,18 @@ class RegisterView (TerminalView):
                 'category':         'general',
             },
         ],
+        'powerpc': [
+            {
+                'regs':             ['pc','msr','cr','lr', 'ctr',
+                                     'r0','r1','r2','r3','r4','r5','r6', 'r7',
+                                     'r8','r9','r10','r11','r12','r13','r14', 'r15',
+                                     'r16','r17','r18','r19','r20','r21','r22', 'r23',
+                                     'r24','r25','r26','r27','r28','r29','r30', 'r31'],
+                'label_format':     '{0:>3s}:',
+                'value_format':     SHORT_ADDR_FORMAT_32,
+                'category':         'general',
+            }
+        ],
     }
     TEMPLATES = {
         'x86_64': {
@@ -199,6 +211,31 @@ class RegisterView (TerminalView):
                     "{pcl} {pc}\n{spl} {sp}\n{lrl} {lr}\n"
                     "{r0l} {r0}\n{r1l} {r1}\n{r2l} {r2}\n{r3l} {r3}\n{r4l} {r4}\n{r5l} {r5}\n{r6l} {r6}\n{r7l} {r7}\n"
                     "{r8l} {r8}\n{r9l} {r9}\n{r10l} {r10}\n{r11l} {r11}\n{r12l} {r12}\n{cpsrl}{cpsr}"
+                ),
+            }
+        },
+        'powerpc': {
+            'horizontal': {
+                'general': (
+                    "{pcl} {pc} {crl} {cr} {lrl} {lr} {msrl} {msr} {ctrl} {ctr}\n"
+                    "{r0l} {r0} {r1l} {r1} {r2l} {r2} {r3l} {r3}\n"
+                    "{r4l} {r4} {r5l} {r5} {r6l} {r6} {r7l} {r7}\n"
+                    "{r8l} {r8} {r9l} {r9} {r10l} {r10} {r11l} {r11}\n"
+                    "{r12l} {r12} {r13l} {r13} {r14l} {r14} {r15l} {r15}\n"
+                    "{r16l} {r16} {r17l} {r17} {r18l} {r18} {r19l} {r19}\n"
+                    "{r20l} {r20} {r21l} {r21} {r22l} {r22} {r23l} {r23}\n"
+                    "{r24l} {r24} {r25l} {r25} {r26l} {r26} {r27l} {r27}\n"
+                    "{r28l} {r28} {r29l} {r29} {r30l} {r30} {r31l} {r31}"
+                ),
+            },
+            'vertical': {
+                'general': (
+                    "{pcl} {pc}\n{crl} {cr}\n{lrl} {lr}\n"
+                    "{msrl} {msr}\n{ctrl} {ctr}\n"
+                    "{r0l} {r0}\n{r1l} {r1}\n{r2l} {r2}\n{r3l} {r3}\n{r4l} {r4}\n{r5l} {r5}\n{r6l} {r6}\n{r7l} {r7}\n"
+                    "{r8l} {r8}\n{r9l} {r9}\n{r10l} {r10}\n{r11l} {r11}\n{r12l} {r12}\n{r13l} {r13}\n{r14l} {r14}\n{r15l} {r15}\n"
+                    "{r16l} {r16}\n{r17l} {r17}\n{r18l} {r18}\n{r19l} {r19}\n{r20l} {r20}\n{r21l} {r21}\n{r22l} {r22}\n{r23l} {r23}\n"
+                    "{r24l} {r24}\n{r25l} {r25}\n{r26l} {r26}\n{r27l} {r27}\n{r28l} {r28}\n{r29l} {r29}\n{r30l} {r30}\n{r31l} {r31}"
                 ),
             }
         },

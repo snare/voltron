@@ -24,12 +24,14 @@ if HAVE_GDB:
             'i386': 'x86', 'i386:intel': 'x86', 'i386:x64-32': 'x86', 'i386:x64-32:intel': 'x86', 'i8086': 'x86',
             'i386:x86-64': 'x86_64', 'i386:x86-64:intel': 'x86_64',
             'arm': 'arm', 'armv2': 'arm', 'armv2a': 'arm', 'armv3': 'arm', 'armv3m': 'arm', 'armv4': 'arm',
-            'armv4t': 'arm', 'armv5': 'arm', 'armv5t': 'arm', 'armv5te': 'arm'
+            'armv4t': 'arm', 'armv5': 'arm', 'armv5t': 'arm', 'armv5te': 'arm',
+            'powerpc:common': 'powerpc'
         }
         sizes = {
             'x86': 4,
             'x86_64': 8,
-            'arm': 4
+            'arm': 4,
+            'powerpc': 4,
         }
 
         """
@@ -157,6 +159,8 @@ if HAVE_GDB:
                     regs = self.get_registers_x86()
                 elif arch == "arm":
                     regs = self.get_registers_arm()
+                elif arch == "powerpc":
+                    regs = self.get_registers_powerpc()
                 else:
                     raise UnknownArchitectureException()
 
@@ -451,6 +455,27 @@ if HAVE_GDB:
             return vals
 
         def get_register_arm(self, reg):
+            log.debug('Getting register: ' + reg)
+            return int(gdb.parse_and_eval('(long)$'+reg)) & 0xFFFFFFFF
+
+        def get_registers_powerpc(self):
+            log.debug('Getting registers')
+            # TODO This could ideally pull from a single definition for the arch
+            regs = ['pc','msr','cr','lr', 'ctr',
+                    'r0','r1','r2','r3','r4','r5','r6', 'r7',
+                    'r8','r9','r10','r11','r12','r13','r14', 'r15',
+                    'r16','r17','r18','r19','r20','r21','r22', 'r23',
+                    'r24','r25','r26','r27','r28','r29','r30', 'r31']
+            vals = {}
+            for reg in regs:
+                try:
+                    vals[reg] = int(gdb.parse_and_eval('(long)$'+reg)) & 0xFFFFFFFF
+                except:
+                    log.debug('Failed getting reg: ' + reg)
+                    vals[reg] = 'N/A'
+            return vals
+
+        def get_register_powerpc(self, reg):
             log.debug('Getting register: ' + reg)
             return int(gdb.parse_and_eval('(long)$'+reg)) & 0xFFFFFFFF
 
