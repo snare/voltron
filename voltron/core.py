@@ -321,6 +321,13 @@ class Client(object):
         """
         self.sock = None
 
+    @property
+    def is_connected(self):
+        """
+        Return a boolean indicating whether or not the client is connected.
+        """
+        return self.sock != None
+
     def connect(self):
         """
         Connect to the server

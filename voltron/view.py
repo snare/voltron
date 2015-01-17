@@ -164,7 +164,8 @@ class VoltronView (object):
             while True:
                 try:
                     # Connect to server
-                    self.client.connect()
+                    if not self.client.is_connected:
+                        self.client.connect()
 
                     # If this is the first iteration (ie. we were just launched and the debugger is already stopped),
                     # or we got a valid response on the last iteration, render
