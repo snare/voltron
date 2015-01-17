@@ -434,97 +434,98 @@ class RegisterView (TerminalView):
             values[flag] = (val & (1 << self.FLAG_BITS[flag]) > 0)
 
         # If this is a jump instruction, see if it will be taken
-        inst = self.curr_inst.split()[0]
         j = None
-        if inst in ['ja', 'jnbe']:
-            if not values['c'] and not values['z']:
-                j = (True, '!c && !z')
-            else:
-                j = (False, 'c || z')
-        elif inst in ['jae', 'jnb', 'jnc']:
-            if not values['c']:
-                j = (True, '!c')
-            else:
-                j = (False, 'c')
-        elif inst in ['jb', 'jc', 'jnae']:
-            if values['c']:
-                j = (True, 'c')
-            else:
-                j = (False, '!c')
-        elif inst in ['jbe', 'jna']:
-            if values['c'] or values['z']:
-                j = (True, 'c || z')
-            else:
-                j = (False, '!c && !z')
-        elif inst in ['jcxz', 'jecxz', 'jrcxz']:
-            if self.get_arch() == 'x64':
-                cx = regs['rcx']
-            elif self.get_arch() == 'x86':
-                cx = regs['ecx']
-            if cx == 0:
-                j = (True, cx+'==0')
-            else:
-                j = (False, cx+'!=0')
-        elif inst in ['je', 'jz']:
-            if values['z']:
-                j = (True, 'z')
-            else:
-                j = (False, '!z')
-        elif inst in ['jnle', 'jg']:
-            if not values['z'] and values['s'] == values['o']:
-                j = (True, '!z && s==o')
-            else:
-                j = (False, 'z || s!=o')
-        elif inst in ['jge', 'jnl']:
-            if values['s'] == values['o']:
-                j = (True, 's==o')
-            else:
-                j = (False, 's!=o')
-        elif inst in ['jl', 'jnge']:
-            if values['s'] == values['o']:
-                j = (False, 's==o')
-            else:
-                j = (True, 's!=o')
-        elif inst in ['jle', 'jng']:
-            if values['z'] or values['s'] == values['o']:
-                j = (True, 'z || s==o')
-            else:
-                j = (False, '!z && s!=o')
-        elif inst in ['jne', 'jnz']:
-            if not values['z']:
-                j = (True, '!z')
-            else:
-                j = (False, 'z')
-        elif inst in ['jno']:
-            if not values['o']:
-                j = (True, '!o')
-            else:
-                j = (False, 'o')
-        elif inst in ['jnp', 'jpo']:
-            if not values['p']:
-                j = (True, '!p')
-            else:
-                j = (False, 'p')
-        elif inst in ['jns']:
-            if not values['s']:
-                j = (True, '!s')
-            else:
-                j = (False, 's')
-        elif inst in ['jo']:
-            if values['o']:
-                j = (True, 'o')
-            else:
-                j = (False, '!o')
-        elif inst in ['jp', 'jpe']:
-            if values['p']:
-                j = (True, 'p')
-            else:
-                j = (False, '!p')
-        elif inst in ['js']:
-            if values['s']:
-                j = (True, 's')
-            else:
-                j = (False, '!s')
+        if self.curr_inst:
+            inst = self.curr_inst.split()[0]
+            if inst in ['ja', 'jnbe']:
+                if not values['c'] and not values['z']:
+                    j = (True, '!c && !z')
+                else:
+                    j = (False, 'c || z')
+            elif inst in ['jae', 'jnb', 'jnc']:
+                if not values['c']:
+                    j = (True, '!c')
+                else:
+                    j = (False, 'c')
+            elif inst in ['jb', 'jc', 'jnae']:
+                if values['c']:
+                    j = (True, 'c')
+                else:
+                    j = (False, '!c')
+            elif inst in ['jbe', 'jna']:
+                if values['c'] or values['z']:
+                    j = (True, 'c || z')
+                else:
+                    j = (False, '!c && !z')
+            elif inst in ['jcxz', 'jecxz', 'jrcxz']:
+                if self.get_arch() == 'x64':
+                    cx = regs['rcx']
+                elif self.get_arch() == 'x86':
+                    cx = regs['ecx']
+                if cx == 0:
+                    j = (True, cx+'==0')
+                else:
+                    j = (False, cx+'!=0')
+            elif inst in ['je', 'jz']:
+                if values['z']:
+                    j = (True, 'z')
+                else:
+                    j = (False, '!z')
+            elif inst in ['jnle', 'jg']:
+                if not values['z'] and values['s'] == values['o']:
+                    j = (True, '!z && s==o')
+                else:
+                    j = (False, 'z || s!=o')
+            elif inst in ['jge', 'jnl']:
+                if values['s'] == values['o']:
+                    j = (True, 's==o')
+                else:
+                    j = (False, 's!=o')
+            elif inst in ['jl', 'jnge']:
+                if values['s'] == values['o']:
+                    j = (False, 's==o')
+                else:
+                    j = (True, 's!=o')
+            elif inst in ['jle', 'jng']:
+                if values['z'] or values['s'] == values['o']:
+                    j = (True, 'z || s==o')
+                else:
+                    j = (False, '!z && s!=o')
+            elif inst in ['jne', 'jnz']:
+                if not values['z']:
+                    j = (True, '!z')
+                else:
+                    j = (False, 'z')
+            elif inst in ['jno']:
+                if not values['o']:
+                    j = (True, '!o')
+                else:
+                    j = (False, 'o')
+            elif inst in ['jnp', 'jpo']:
+                if not values['p']:
+                    j = (True, '!p')
+                else:
+                    j = (False, 'p')
+            elif inst in ['jns']:
+                if not values['s']:
+                    j = (True, '!s')
+                else:
+                    j = (False, 's')
+            elif inst in ['jo']:
+                if values['o']:
+                    j = (True, 'o')
+                else:
+                    j = (False, '!o')
+            elif inst in ['jp', 'jpe']:
+                if values['p']:
+                    j = (True, 'p')
+                else:
+                    j = (False, '!p')
+            elif inst in ['js']:
+                if values['s']:
+                    j = (True, 's')
+                else:
+                    j = (False, '!s')
 
         # Construct message
         if j is not None:
