@@ -195,13 +195,9 @@ if HAVE_LLDB:
                 val = 'n/a'
                 if reg.value != None:
                     try:
-                        val = int(reg.value, 16)
+                        val = reg.GetValueAsUnsigned()
                     except:
-                        try:
-                            val = int(reg.value)
-                        except Exception as e:
-                            log.error("Exception converting register value: " + str(e))
-                            val = 0
+                        reg = None
                 if registers == [] or reg.name in registers:
                     regs[reg.name] = val
 
