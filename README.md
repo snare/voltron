@@ -10,15 +10,19 @@ Voltron also provides a platform on which to build your own UI views, requesting
 Support
 -------
 
-`voltron` is built primarily for LLDB, and also supports GDB version 7 and later.
+`voltron` is built primarily for LLDB. GDB version 7 and later and VDB are both supported.
 
-The following architectures are supported:
+Some of Voltron's views should work fine with any architecture, but the following architectures are supported:
 * x86
 * x86_64
 * armv7s
-* arm64
+* arm64[1]
+* powerpc[2]
 
-arm64 support is LLDB-only at this stage.
+[1] with LLDB only
+[2] with GDB only
+
+The `register` view is the main one that requires architecture-specific support.
 
 Installation
 ------------
@@ -90,3 +94,5 @@ Thanks to Azimuth Security for letting me spend time working on this.
 Props to [richo](http://github.com/richo) for all his contributions to Voltron.
 
 [fG!](http://github.com/gdbinit)'s gdbinit was the original inspiration for this project.
+
+Thanks to [Willi](http://github.com/williballenthin) for implementing the VDB support.
