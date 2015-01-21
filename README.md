@@ -13,16 +13,14 @@ Support
 `voltron` is built primarily for LLDB. GDB version 7 and later and VDB are both supported.
 
 Some of Voltron's views should work fine with any architecture, but the following architectures are supported:
-* x86
-* x86_64
-* armv7s
-* arm64[1]
-* powerpc[2]
 
-[1] with LLDB only
-[2] with GDB only
-
-The `register` view is the main one that requires architecture-specific support.
+|         | lldb | gdb | vdb |
+|---------|------|-----|-----|
+| x86     | √    | √   | √   |
+| x86_64  | √    | √   | √   |
+| arm     | √    | √   | √   |
+| arm64   | √    | x   | x   |
+| powerpc | x    | √   | x   |
 
 Installation
 ------------
