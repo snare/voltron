@@ -367,7 +367,7 @@ if HAVE_GDB:
             vals = {}
             for reg in regs:
                 try:
-                    vals[reg] = int(gdb.parse_and_eval('(long long)$'+reg)) & 0xFFFFFFFFFFFFFFFF
+                    vals[reg] = self.get_register_x86_64(reg)
                 except:
                     log.debug('Failed getting reg: ' + reg)
                     vals[reg] = 'N/A'
@@ -398,7 +398,7 @@ if HAVE_GDB:
             vals = {}
             for reg in regs:
                 try:
-                    vals[reg] = int(gdb.parse_and_eval('(long)$'+reg)) & 0xFFFFFFFF
+                    vals[reg] = self.get_register_x86(reg)
                 except:
                     log.debug('Failed getting reg: ' + reg)
                     vals[reg] = 'N/A'
@@ -450,7 +450,7 @@ if HAVE_GDB:
             vals = {}
             for reg in regs:
                 try:
-                    vals[reg] = int(gdb.parse_and_eval('(long)$'+reg)) & 0xFFFFFFFF
+                    vals[reg] = self.get_register_arm(reg)
                 except:
                     log.debug('Failed getting reg: ' + reg)
                     vals[reg] = 'N/A'
@@ -471,7 +471,7 @@ if HAVE_GDB:
             vals = {}
             for reg in regs:
                 try:
-                    vals[reg] = int(gdb.parse_and_eval('(long)$'+reg)) & 0xFFFFFFFF
+                    vals[reg] = self.get_register_powerpc(reg)
                 except:
                     log.debug('Failed getting reg: ' + reg)
                     vals[reg] = 'N/A'
