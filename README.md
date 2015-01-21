@@ -12,7 +12,7 @@ Support
 
 `voltron` is built primarily for LLDB. GDB version 7 and later and VDB are both supported.
 
-Some of Voltron's views should work fine with any architecture, but the following architectures are supported:
+The following architectures are supported:
 
 |         | lldb | gdb | vdb |
 |---------|------|-----|-----|
