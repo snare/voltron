@@ -41,7 +41,10 @@ class APIDisassembleRequest(APIRequest):
             disasm = voltron.debugger.disassemble(target_id=self.target_id, address=self.address, count=self.count)
             res = APIDisassembleResponse()
             res.disassembly = disasm
-            res.flavor = voltron.debugger.disassembly_flavor()
+            try:
+                res.flavor = voltron.debugger.disassembly_flavor()
+            except:
+                res.flavor = 'NA'
             res.host = voltron.debugger._plugin.host
         except NoSuchTargetException:
             res = APINoSuchTargetErrorResponse()
