@@ -353,6 +353,8 @@ if HAVE_GDB:
                 reg = self.get_register_x86(reg_name)
             elif arch == "arm":
                 reg = self.get_register_arm(reg_name)
+            elif arch == "powerpc":
+                reg = self.get_register_powerpc(reg_name)
             else:
                 raise UnknownArchitectureException()
 
