@@ -48,7 +48,6 @@ def setup():
 def teardown():
     read_data()
     p.terminate(True)
-    time.sleep(3)
 
 def start_debugger(do_break=True):
     global p, client
@@ -99,8 +98,6 @@ def test_version():
 
 def test_registers():
     global registers
-    restart_debugger()
-    time.sleep(1)
     read_data()
     res = client.perform_request('registers')
     registers = res.registers
@@ -109,38 +106,21 @@ def test_registers():
     assert registers['rip'] != 0
 
 def test_memory():
-    restart_debugger()
-    time.sleep(1)
     res = client.perform_request('memory', address=registers['rip'], length=0x40)
     assert res.status == 'success'
     assert len(res.memory) > 0
 
 def test_state_stopped():
-    restart_debugger()
-    time.sleep(1)
     res = client.perform_request('state')
     assert res.is_success
     assert res.state == "stopped"
 
-# def test_state_invalid():
-#     restart_debugger()
-#     p.sendline("continue")
-#     read_data()
-#     time.sleep(1)
-#     res = client.perform_request('state')
-#     assert res.is_success
-#     assert res.state == "invalid"
-
 def test_wait_timeout():
-    restart_debugger()
-    time.sleep(1)
     res = client.perform_request('wait', timeout=2)
     assert res.is_error
     assert res.code == 0x1004
 
 def test_targets():
-    restart_debugger()
-    time.sleep(1)
     res = client.perform_request('targets')
     assert res.is_success
     assert res.targets[0]['state'] == "stopped"
@@ -149,23 +129,17 @@ def test_targets():
     assert res.targets[0]['file'].endswith('tests/inferior')
 
 def test_stack():
-    restart_debugger()
-    time.sleep(1)
     res = client.perform_request('stack', length=0x40)
     assert res.status == 'success'
     assert len(res.memory) > 0
 
 def test_command():
-    restart_debugger()
-    time.sleep(1)
     res = client.perform_request('command', command="info reg")
     assert res.status == 'success'
     assert len(res.output) > 0
     assert 'rax' in res.output
 
 def test_disassemble():
-    restart_debugger()
-    time.sleep(1)
     res = client.perform_request('disassemble', count=0x20)
     assert res.status == 'success'
     assert len(res.disassembly) > 0

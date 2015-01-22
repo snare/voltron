@@ -63,7 +63,7 @@ def setup():
 
 def teardown():
     server.stop()
-    time.sleep(2)
+    time.sleep(5)
 
 def test_state_no_target():
     req = api_request('state')
