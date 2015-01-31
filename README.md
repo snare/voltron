@@ -54,11 +54,11 @@ Quick Start
 
 3. In another terminal (I use iTerm panes) start one of the UI views
 
-        $ voltron view reg -v
+        $ voltron view register -v
         $ voltron view stack
-        $ voltron view disasm
-        $ voltron view bt
-        $ voltron view cmd 'reg read'
+        $ voltron view disassembly
+        $ voltron view backtrace
+        $ voltron view command 'reg read'
 
 4. Set a breakpoint and run your inferior. Once the inferior has started and the debugger has stopped (either because you interrupted it or because it hit a breakpoint) the views will update.
 
