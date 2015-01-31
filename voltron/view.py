@@ -19,6 +19,8 @@ except:
 
 from collections import defaultdict
 
+from scruffy import Config
+
 from .core import *
 from .colour import *
 from .plugin import *
@@ -136,23 +138,23 @@ class VoltronView (object):
         self.config = self.loaded_config['view']['all_views']
 
         # Add view-specific config
-        self.config['type'] = self.view_type
+        self.config.type = self.view_type
         name = self.view_type + '_view'
         if 'view' in self.loaded_config and name in self.loaded_config['view']:
-            merge(self.loaded_config['view'][name], self.config)
+            self.config.update(self.loaded_config['view'][name])
 
         # Add named config
         if self.args.name != None:
-            merge(self.loaded_config[self.args.name], self.config)
+            self.config.update(self.loaded_config[self.args.name])
 
         # Apply view-specific command-line args
         self.apply_cli_config()
 
     def apply_cli_config(self):
         if self.args.header != None:
-            self.config['header']['show'] = self.args.header
+            self.config.header.show = self.args.header
         if self.args.footer != None:
-            self.config['footer']['show'] = self.args.footer
+            self.config.footer.show = self.args.footer
 
     def setup(self):
         log.debug('Base view class setup')
