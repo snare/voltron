@@ -14,6 +14,15 @@ class BreakpointsView (TerminalView):
     def render(self):
         self.title = '[breakpoints]'
 
+        # get PC first so we can highlight a breakpoint we're at
+        req = api_request('registers', registers=['pc'])
+        res = self.client.send_request(req)
+        if res and res.is_success and len(res.registers) > 0:
+            pc = res.registers[res.registers.keys()[0]]
+        else:
+            pc = -1
+
+        # get breakpoints and render
         req = api_request('breakpoints')
         res = self.client.send_request(req)
         if res and res.is_success:
@@ -39,6 +48,10 @@ class BreakpointsView (TerminalView):
                 for location in bp['locations']:
                     # add location data to formatting dict and format the row
                     d.update(location)
+                    if pc == d['address']:
+                        d['hit'] = self.config.format.hit.format(t=term)
+                    else:
+                        d['hit'] = ''
                     f = self.config.format.row.format(**d)
                     fmtd.append(f)
                     row = row + 1
