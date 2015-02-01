@@ -74,7 +74,8 @@ class MemoryView (TerminalView):
                 lines = []
                 for c in range(0, res.bytes, self.args.bytes):
                     chunk = res.memory[c:c+self.args.bytes]
-                    addr_str = self.colour(self.format_address(addr + c, size=target['addr_size'], pad=False), self.config['format']['addr_colour'])
+                    addr_str = self.colour(self.format_address(addr + c, size=target['addr_size'], pad=False),
+                                            self.config.format.addr_colour)
                     if self.args.deref:
                         fmt = ('<' if target['byte_order'] == 'little' else '>') + \
                                 {2: 'H', 4: 'L', 8: 'Q'}[target['addr_size']]
@@ -89,15 +90,15 @@ class MemoryView (TerminalView):
                         memory_str = ' '.join(["%02X" % ord(x) for x in chunk])
                         info_str = ''
                     ascii_str = ''.join(["%s" % ((ord(x) <= 127 and self.printable_filter[ord(x)]) or '.') for x in chunk])
-                    divider = self.colour('|', self.config['format']['divider_colour'])
+                    divider = self.colour('|', self.config.format.divider_colour)
                     lines.append('{}: {} {} {} {} {}'.format(addr_str, memory_str, divider, ascii_str, divider, info_str))
 
                 self.body = '\n'.join(reversed(lines)).strip() if self.args.reverse else '\n'.join(lines)
-                self.info = '[0x{0:0=4x}:'.format(len(res.memory)) + self.config['format']['addr_format'].format(addr) + ']'
+                self.info = '[0x{0:0=4x}:'.format(len(res.memory)) + self.config.format.addr_format.format(addr) + ']'
             else:
                 log.error("Error reading memory: {}".format(res.message))
                 self.body = self.colour(res.message, 'red')
-                self.info = '[0x{0:0=4x}:'.format(0) + self.config['format']['addr_format'].format(addr) + ']'
+                self.info = '[0x{0:0=4x}:'.format(0) + self.config.format.addr_format.format(addr) + ']'
         else:
             self.body = ""
             self.info = "[no address]"
@@ -118,12 +119,12 @@ class MemoryView (TerminalView):
                 fmtd.append(self.format_address(item, size=size, pad=False))
             elif t == "string":
                 item = item.replace('\n', '\\n')
-                fmtd.append(self.colour('"' + item + '"', self.config['format']['string_colour']))
+                fmtd.append(self.colour('"' + item + '"', self.config.format.string_colour))
             elif t == "symbol":
-                fmtd.append(self.colour('`' + item + '`', self.config['format']['symbol_colour']))
+                fmtd.append(self.colour('`' + item + '`', self.config.format.symbol_colour))
             elif t == "circular":
-                fmtd.append(self.colour('(circular)', self.config['format']['divider_colour']))
-        return self.colour(' => ', self.config['format']['divider_colour']).join(fmtd)
+                fmtd.append(self.colour('(circular)', self.config.format.divider_colour))
+        return self.colour(' => ', self.config.format.divider_colour).join(fmtd)
 
 
 class MemoryViewPlugin(ViewPlugin):

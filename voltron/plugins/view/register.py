@@ -286,13 +286,13 @@ class RegisterView (TerminalView):
     def apply_cli_config(self):
         super(RegisterView, self).apply_cli_config()
         if self.args.orientation != None:
-            self.config['orientation'] = self.args.orientation
+            self.config.orientation = self.args.orientation
         if self.args.sections != None:
-            a = filter(lambda x: 'no_'+x not in self.args.sections and not x.startswith('no_'), self.config['sections'] + self.args.sections)
-            self.config['sections'] = []
+            a = filter(lambda x: 'no_'+x not in self.args.sections and not x.startswith('no_'), self.config.sections + self.args.sections)
+            self.config.sections = []
             for sec in a:
-                if sec not in self.config['sections']:
-                    self.config['sections'].append(sec)
+                if sec not in self.config.sections:
+                    self.config.sections.append(sec)
 
     def render(self):
         error = None
@@ -330,7 +330,7 @@ class RegisterView (TerminalView):
             self.curr_res = res
 
             # Build template
-            template = '\n'.join(map(lambda x: self.TEMPLATES[arch][self.config['orientation']][x], self.config['sections']))
+            template = '\n'.join(map(lambda x: self.TEMPLATES[arch][self.config.orientation][x], self.config.sections))
 
             # Process formatting settings
             data = defaultdict(lambda: 'n/a')
@@ -339,7 +339,7 @@ class RegisterView (TerminalView):
             formatted = {}
             for fmt in formats:
                 # Apply defaults where they're missing
-                fmt = dict(list(self.config['format'].items()) + list(fmt.items()))
+                fmt = dict(list(self.config.format.items()) + list(fmt.items()))
 
                 # Format the data for each register
                 for reg in fmt['regs']:
@@ -388,7 +388,7 @@ class RegisterView (TerminalView):
 
         # Prepare headers and footers
         height, width = self.window_size()
-        self.title = '[regs:{}]'.format('|'.join(self.config['sections']))
+        self.title = '[regs:{}]'.format('|'.join(self.config.sections))
         if len(self.title) > width:
             self.title = '[regs]'
 
@@ -403,7 +403,7 @@ class RegisterView (TerminalView):
             reg = 'rflags'
         elif self.curr_arch == 'x86':
             reg = 'eflags'
-        fmt = dict(list(self.config['format'].items()) + list(list(filter(lambda x: reg in x['regs'], self.FORMAT_INFO[self.curr_arch]))[0].items()))
+        fmt = dict(list(self.config.format.items()) + list(list(filter(lambda x: reg in x['regs'], self.FORMAT_INFO[self.curr_arch]))[0].items()))
 
         # Handle each flag bit
         val = int(val, 10)
@@ -544,14 +544,14 @@ class RegisterView (TerminalView):
 
         # Colour
         if j is not None:
-            jump = self.colour(jump, self.config['format']['value_colour_mod'])
+            jump = self.colour(jump, self.config.format.value_colour_mod)
         else:
-            jump = self.colour(jump, self.config['format']['value_colour'])
+            jump = self.colour(jump, self.config.format.value_colour)
 
         return '[' + jump + ']'
 
     def format_xmm(self, val):
-        if self.config['orientation'] == 'vertical':
+        if self.config.orientation == 'vertical':
             height, width = self.window_size()
             if width < len(SHORT_ADDR_FORMAT_128.format(0)) + self.XMM_INDENT:
                 return val[:16] + '\n' + ' '*self.XMM_INDENT + val[16:]
@@ -561,7 +561,7 @@ class RegisterView (TerminalView):
             return val
 
     def format_fpu(self, val):
-        if self.config['orientation'] == 'vertical':
+        if self.config.orientation == 'vertical':
             return val
         else:
             return val

@@ -15,16 +15,13 @@ class CommandView (TerminalView):
         sp.add_argument('command', action='store', help='command to run')
         sp.set_defaults(func=CommandView)
 
-    def setup(self):
-        self.config['cmd'] = self.args.command
-
     def render(self):
         # Set up header and error message if applicable
-        self.title = '[cmd:' + self.config['cmd'] + ']'
+        self.title = '[cmd:' + self.args.command + ']'
 
         # Get the command output
         req = api_request('command')
-        req.command = self.config['cmd']
+        req.command = self.args.command
         res = self.client.send_request(req)
         if res and res.is_success:
             # Get the command output

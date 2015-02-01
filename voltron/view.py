@@ -123,9 +123,9 @@ class VoltronView (object):
 
         # Override settings from command line args
         if self.args.header != None:
-            self.config['header']['show'] = self.args.header
+            self.config.header.show = self.args.header
         if self.args.footer != None:
-            self.config['footer']['show'] = self.args.footer
+            self.config.footer.show = self.args.footer
 
         # Initialise window
         self.init_window()
@@ -135,13 +135,13 @@ class VoltronView (object):
 
     def build_config(self):
         # Start with all_views config
-        self.config = self.loaded_config['view']['all_views']
+        self.config = self.loaded_config.view.all_views
 
         # Add view-specific config
         self.config.type = self.view_type
         name = self.view_type + '_view'
-        if 'view' in self.loaded_config and name in self.loaded_config['view']:
-            self.config.update(self.loaded_config['view'][name])
+        if 'view' in self.loaded_config and name in self.loaded_config.view:
+            self.config.update(self.loaded_config.view[name])
 
         # Add named config
         if self.args.name != None:
@@ -198,7 +198,7 @@ class VoltronView (object):
 
     def should_reconnect(self):
         try:
-            return self.loaded_config['view']['reconnect']
+            return self.loaded_config.view.reconnect
         except:
             return True
 
@@ -242,11 +242,11 @@ class TerminalView (VoltronView):
 
         # Print the header, body and footer
         try:
-            if self.config['header']['show']:
-                print(self.format_header())
+            if self.config.header.show:
+                print(self.format_header_footer(self.config.header))
             print(self.fmt_body, end='')
-            if self.config['footer']['show']:
-                print('\n' + self.format_footer(), end='')
+            if self.config.footer.show:
+                print('\n' + self.format_header_footer(self.config.footer), end='')
             sys.stdout.flush()
         except IOError, e:
             # if we get an EINTR while printing, just do it again
@@ -264,9 +264,9 @@ class TerminalView (VoltronView):
 
     def body_height(self):
         height, width = self.window_size()
-        if self.config['header']['show']:
+        if self.config.header.show:
             height -= 1
-        if self.config['footer']['show']:
+        if self.config.footer.show:
             height -= 1
         return height
 
@@ -282,45 +282,25 @@ class TerminalView (VoltronView):
         s += fmt_esc('reset')
         return s
 
-    def format_header(self):
+    def format_header_footer(self, c):
         height, width = self.window_size()
 
         # Get values for labels
-        l = getattr(self, self.config['header']['label_left']['name']) if self.config['header']['label_left']['name'] != None else ''
-        r = getattr(self, self.config['header']['label_right']['name']) if self.config['header']['label_right']['name'] != None else ''
-        p = self.config['header']['pad']
+        l = getattr(self, c.label_left.name) if c.label_left.name != None else ''
+        r = getattr(self, c.label_right.name) if c.label_right.name != None else ''
+        p = c.pad
         llen = len(l)
         rlen = len(r)
 
         # Add colour
-        l = self.colour(l, self.config['header']['label_left']['colour'], self.config['header']['label_left']['bg_colour'], self.config['header']['label_left']['attrs'])
-        r = self.colour(r, self.config['header']['label_right']['colour'], self.config['header']['label_right']['bg_colour'], self.config['header']['label_right']['attrs'])
-        p = self.colour(p, self.config['header']['colour'], self.config['header']['bg_colour'], self.config['header']['attrs'])
+        l = self.colour(l, c.label_left.colour, c.label_left.bg_colour, c.label_left.attrs)
+        r = self.colour(r, c.label_right.colour, c.label_right.bg_colour, c.label_right.attrs)
+        p = self.colour(p, c.colour, c.bg_colour, c.attrs)
 
-        # Build header
-        header = l + (width - llen - rlen)*p + r
+        # Build
+        data = l + (width - llen - rlen)*p + r
 
-        return header
-
-    def format_footer(self):
-        height, width = self.window_size()
-
-        # Get values for labels
-        l = getattr(self, self.config['footer']['label_left']['name']) if self.config['footer']['label_left']['name'] != None else ''
-        r = getattr(self, self.config['footer']['label_right']['name']) if self.config['footer']['label_right']['name'] != None else ''
-        p = self.config['footer']['pad']
-        llen = len(l)
-        rlen = len(r)
-
-        # Add colour
-        l = self.colour(l, self.config['footer']['label_left']['colour'], self.config['footer']['label_left']['bg_colour'], self.config['footer']['label_left']['attrs'])
-        r = self.colour(r, self.config['footer']['label_right']['colour'], self.config['footer']['label_right']['bg_colour'], self.config['footer']['label_right']['attrs'])
-        p = self.colour(p, self.config['footer']['colour'], self.config['footer']['bg_colour'], self.config['footer']['attrs'])
-
-        # Build header and footer
-        footer = l + (width - llen - rlen)*p + r
-
-        return footer
+        return data
 
     def pad_body(self):
         height, width = self.window_size()
