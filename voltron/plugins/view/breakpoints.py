@@ -27,14 +27,13 @@ class BreakpointsView (TerminalView):
         res = self.client.send_request(req)
         if res and res.is_success:
             fmtd = []
-            row = 0
             term = Terminal()
             for bp in res.breakpoints:
                 # prepare formatting dictionary for the breakpoint
                 d = bp.copy()
                 d['locations'] = None
                 d['t'] = term
-                d['id'] = '{:<2}'.format(d['id'])
+                d['id'] = '#{:<2}'.format(d['id'])
                 if d['one_shot']:
                     d['one_shot'] = self.config.format.one_shot.format(t=term)
                 else:
@@ -54,7 +53,7 @@ class BreakpointsView (TerminalView):
                         d['hit'] = ''
                     f = self.config.format.row.format(**d)
                     fmtd.append(f)
-                    row = row + 1
+                    d['id'] = '   '
 
             self.body = '\n'.join(fmtd)
         else:
