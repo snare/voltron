@@ -367,13 +367,29 @@ class Client(object):
         # send the request data to the server
         data = str(request)
         log.debug("Sending request: {}".format(data))
-        res = self.sock.sendall(data)
+        while True:
+            try:
+                res = self.sock.sendall(data)
+                break
+            except socket.error, e:
+                if e.errno == socket.EINTR:
+                    continue
+                else:
+                    raise
         if res != None:
             log.error("Failed to send request: {}".format(request))
             raise SocketDisconnected("socket closed")
 
         # receive response data
-        data = self.sock.recv(READ_MAX)
+        while True:
+            try:
+                data = self.sock.recv(READ_MAX)
+                break
+            except socket.error, e:
+                if e.errno == socket.EINTR:
+                    continue
+                else:
+                    raise
         if len(data) > 0:
             log.debug('Client received message: ' + data)
 
