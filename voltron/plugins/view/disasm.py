@@ -40,4 +40,5 @@ class DisasmView (TerminalView):
 class DisasmViewPlugin(ViewPlugin):
     plugin_type = 'view'
     name = 'disassembly'
+    aliases = ('d', 'dis', 'disasm')
     view_class = DisasmView

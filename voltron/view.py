@@ -7,6 +7,7 @@ import pprint
 import re
 import signal
 import time
+import argparse
 from blessings import Terminal
 
 try:
@@ -35,6 +36,39 @@ SHORT_ADDR_FORMAT_128 = '{0:0=32X}'
 SHORT_ADDR_FORMAT_64 = '{0:0=16X}'
 SHORT_ADDR_FORMAT_32 = '{0:0=8X}'
 SHORT_ADDR_FORMAT_16 = '{0:0=4X}'
+
+
+# https://gist.github.com/sampsyo/471779
+class AliasedSubParsersAction(argparse._SubParsersAction):
+
+    class _AliasedPseudoAction(argparse.Action):
+        def __init__(self, name, aliases, help):
+            dest = name
+            if aliases:
+                dest += ' (%s)' % ','.join(aliases)
+            sup = super(AliasedSubParsersAction._AliasedPseudoAction, self)
+            sup.__init__(option_strings=[], dest=dest, help=help)
+
+    def add_parser(self, name, **kwargs):
+        if 'aliases' in kwargs:
+            aliases = kwargs['aliases']
+            del kwargs['aliases']
+        else:
+            aliases = []
+
+        parser = super(AliasedSubParsersAction, self).add_parser(name, **kwargs)
+
+        # Make the aliases work.
+        for alias in aliases:
+            self._name_parser_map[alias] = parser
+        # Make the help text reflect them, first removing old help entry.
+        if 'help' in kwargs:
+            help = kwargs.pop('help')
+            self._choices_actions.pop()
+            pseudo_action = self._AliasedPseudoAction(name, aliases, help)
+            self._choices_actions.append(pseudo_action)
+
+        return parser
 
 
 class AnsiString(object):
@@ -97,7 +131,10 @@ class VoltronView (object):
 
     @classmethod
     def configure_subparser(cls, subparsers):
-        sp = subparsers.add_parser(cls.view_type)
+        if hasattr(cls._plugin, 'aliases'):
+            sp = subparsers.add_parser(cls.view_type, aliases=cls._plugin.aliases)
+        else:
+            sp = subparsers.add_parser(cls.view_type)
         VoltronView.add_generic_arguments(sp)
         sp.set_defaults(func=cls)
 

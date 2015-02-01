@@ -21,9 +21,11 @@ def main(debugger=None):
 
     # Set up command line arg parser
     parser = argparse.ArgumentParser()
+    parser.register('action', 'parsers', AliasedSubParsersAction)
     parser.add_argument('--debug', '-d', action='store_true', help='print debug logging')
     top_level_sp = parser.add_subparsers(title='subcommands', description='valid subcommands')
-    view_parser = top_level_sp.add_parser('view', help='display a view')
+    view_parser = top_level_sp.add_parser('view', help='display a view', aliases=('v'))
+    view_parser.register('action', 'parsers', AliasedSubParsersAction)
     view_sp = view_parser.add_subparsers(title='views', description='valid view types', help='additional help')
 
     # Set up a subcommand for each view class

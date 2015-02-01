@@ -30,4 +30,5 @@ class BacktraceView (TerminalView):
 class BacktraceViewPlugin(ViewPlugin):
     plugin_type = 'view'
     name = 'backtrace'
+    aliases = ('t', 'bt', 'back')
     view_class = BacktraceView

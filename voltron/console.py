@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 class Console(object):
     @classmethod
     def configure_subparser(cls, subparsers):
-        sp = subparsers.add_parser('console', help='voltron debugger console')
+        sp = subparsers.add_parser('console', help='voltron debugger console', aliases=('c'))
         sp.set_defaults(func=Console)
 
     def __init__(self, args={}, loaded_config={}):

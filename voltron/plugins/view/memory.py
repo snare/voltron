@@ -12,7 +12,7 @@ class MemoryView (TerminalView):
 
     @classmethod
     def configure_subparser(cls, subparsers):
-        sp = subparsers.add_parser('memory', help='memory view')
+        sp = subparsers.add_parser('memory', help='display a chunk of memory', aliases=('m', 'mem'))
         VoltronView.add_generic_arguments(sp)
         group = sp.add_mutually_exclusive_group(required=False)
         group.add_argument('--deref', '-d', action='store_true', help=('display the data in a column one CPU word wide '
@@ -136,7 +136,7 @@ class MemoryViewPlugin(ViewPlugin):
 class StackView(MemoryView):
     @classmethod
     def configure_subparser(cls, subparsers):
-        sp = subparsers.add_parser('stack', help='stack view')
+        sp = subparsers.add_parser('stack', help='display a chunk of stack memory', aliases=('s', 'st'))
         VoltronView.add_generic_arguments(sp)
         sp.set_defaults(func=StackView)
 

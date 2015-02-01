@@ -9,8 +9,8 @@ log = logging.getLogger('view')
 class CommandView (TerminalView):
     @classmethod
     def configure_subparser(cls, subparsers):
-        sp = subparsers.add_parser('command',
-                                   help='command view - specify a command to be run each time the debugger stops')
+        sp = subparsers.add_parser('command', aliases=('c', 'cmd'),
+                                   help='run a command each time the debugger host stops')
         VoltronView.add_generic_arguments(sp)
         sp.add_argument('command', action='store', help='command to run')
         sp.set_defaults(func=CommandView)
