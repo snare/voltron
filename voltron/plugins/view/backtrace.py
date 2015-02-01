@@ -16,7 +16,7 @@ class BacktraceView (TerminalView):
         req = api_request('command')
         req.command = "bt"
         res = self.client.send_request(req)
-        if res.is_success:
+        if res and res.is_success:
             # Get the command output
             self.body = res.output
         else:

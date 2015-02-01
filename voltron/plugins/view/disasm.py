@@ -14,7 +14,7 @@ class DisasmView (TerminalView):
         req = api_request('disassemble')
         req.count = self.body_height()
         res = self.client.send_request(req)
-        if res.is_success:
+        if res and res.is_success:
             # Get the disasm
             disasm = res.disassembly
             disasm = '\n'.join(disasm.split('\n')[:self.body_height()])

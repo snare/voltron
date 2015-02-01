@@ -131,7 +131,7 @@ class VoltronView (object):
         self.init_window()
 
         # Setup a SIGWINCH handler so we do reasonable things on resize
-        # signal.signal(signal.SIGWINCH, lambda sig, stack: self.render())
+        signal.signal(signal.SIGWINCH, self.sigwinch_handler)
 
     def build_config(self):
         # Start with all_views config
@@ -180,7 +180,9 @@ class VoltronView (object):
                 except socket.error, e:
                     # if we're not connected, render an error and try again in a second
                     self.do_render(error='Error connecting to server: {}'.format(e.strerror))
-                    time.sleep(1)
+                    # if this was an interrupted syscall exception we were probably SIGWINCHed, so retry straight away
+                    if e.errno != socket.EINTR:
+                        time.sleep(1)
         except SocketDisconnected as e:
             if self.should_reconnect():
                 log.debug("Restarting process: " + str(type(e)))
@@ -203,6 +205,9 @@ class VoltronView (object):
     def reexec(self):
         # Instead of trying to reset internal state, just exec ourselves again
         os.execv(sys.argv[0], sys.argv)
+
+    def sigwinch_handler(self, sig, stack):
+        self.render()
 
 
 class TerminalView (VoltronView):

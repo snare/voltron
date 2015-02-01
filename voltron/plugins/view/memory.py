@@ -34,7 +34,7 @@ class MemoryView (TerminalView):
         # get info about target
         target = None
         res = self.client.perform_request('targets')
-        if res.is_success and len(res.targets) > 0:
+        if res and res.is_success and len(res.targets) > 0:
             target = res.targets[0]
 
         if target and self.args.deref:
@@ -63,13 +63,13 @@ class MemoryView (TerminalView):
             addr = int(self.args.address, 16)
         elif self.args.register:
             res = self.client.perform_request('registers', registers=[self.args.register])
-            if res.is_success:
+            if res and res.is_success:
                 addr = res.registers.values()[0]
 
         # read memory
         if addr != None:
             res = self.client.perform_request('memory', address=addr, length=self.body_height()*self.args.bytes)
-            if res.is_success:
+            if res and res.is_success:
 
                 lines = []
                 for c in range(0, res.bytes, self.args.bytes):
