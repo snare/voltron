@@ -178,10 +178,10 @@ class VoltronView (object):
                     wait_req = api_request('wait')
                     res = self.client.send_request(wait_req)
                 except socket.error, e:
-                    # if we're not connected, render an error and try again in a second
-                    self.do_render(error='Error connecting to server: {}'.format(e.strerror))
                     # if this was an interrupted syscall exception we were probably SIGWINCHed, so retry straight away
                     if e.errno != socket.EINTR:
+                        # if we're not connected, render an error and try again in a second
+                        self.do_render(error='Error: {}'.format(e.strerror))
                         time.sleep(1)
         except SocketDisconnected as e:
             if self.should_reconnect():
@@ -207,7 +207,7 @@ class VoltronView (object):
         os.execv(sys.argv[0], sys.argv)
 
     def sigwinch_handler(self, sig, stack):
-        self.render()
+        pass
 
 
 class TerminalView (VoltronView):
@@ -233,17 +233,28 @@ class TerminalView (VoltronView):
         if error:
             self.body = self.colour(error, 'red')
 
+        # Refresh the formatted body
+        self.fmt_body = self.body
+
         # Pad and truncate the body
         self.pad_body()
         self.truncate_body()
 
         # Print the header, body and footer
-        if self.config['header']['show']:
-            print(self.format_header())
-        print(self.body, end='')
-        if self.config['footer']['show']:
-            print('\n' + self.format_footer(), end='')
-        sys.stdout.flush()
+        try:
+            if self.config['header']['show']:
+                print(self.format_header())
+            print(self.fmt_body, end='')
+            if self.config['footer']['show']:
+                print('\n' + self.format_footer(), end='')
+            sys.stdout.flush()
+        except IOError, e:
+            # if we get an EINTR while printing, just do it again
+            if e.errno == socket.EINTR:
+                self.do_render()
+
+    def sigwinch_handler(self, sig, stack):
+        self.do_render()
 
     def window_size(self):
         height, width = os.popen('stty size').read().split()
@@ -313,35 +324,27 @@ class TerminalView (VoltronView):
 
     def pad_body(self):
         height, width = self.window_size()
-
-        # Split body into lines
-        lines = self.body.split('\n')
-
-        # Subtract lines (including wrapped lines)
-        pad = self.body_height()
-        for line in lines:
-            line = ''.join(re.split('\033\[\d+m', line))
-            (n, rem) = divmod(len(line), width)
-            if rem > 0: n += 1
-            pad -= n
-
-        # If we have too much data for the view, too bad
+        lines = self.fmt_body.split('\n')
+        pad = self.body_height() - len(lines)
         if pad < 0:
             pad = 0
-
-        self.body += int(pad)*'\n'
+        self.fmt_body += int(pad)*'\n'
 
     def truncate_body(self):
         height, width = self.window_size()
 
+        # truncate lines horizontally
         lines = []
-        for line in self.body.split('\n'):
+        for line in self.fmt_body.split('\n'):
             s = AnsiString(line)
             if len(s) > width:
                 line = s[:width-1] + self.colour('>', 'red')
             lines.append(line)
 
-        self.body = '\n'.join(lines)
+        # truncate body vertically
+        lines = lines[:self.body_height()]
+
+        self.fmt_body = '\n'.join(lines)
 
 
 def merge(d1, d2):
