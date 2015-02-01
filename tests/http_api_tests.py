@@ -153,3 +153,15 @@ def test_host_not_supported():
     res = APIResponse(data=data)
     assert res.is_error
     assert res.code == 0x1003
+
+def test_host_not_supported():
+    data = requests.post('http://localhost:5555/api/request', data='{"type":"request","request":"host_not_supported"}').text
+    res = APIResponse(data=data)
+    assert res.is_error
+    assert res.code == 0x1003
+
+def test_breakpoints():
+    data = requests.get('http://localhost:5555/api/breakpoints').text
+    res = api_response('breakpoints', data=data)
+    assert res.is_success
+    assert res.breakpoints == breakpoints_response

@@ -60,6 +60,7 @@ def setup():
     # compile and load the test inferior
     subprocess.call("cc -o tests/inferior tests/inferior.c", shell=True)
     target = adaptor.host.CreateTargetWithFileAndArch("tests/inferior", lldb.LLDB_ARCH_DEFAULT)
+    main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
 
 def teardown():
     server.stop()
@@ -72,7 +73,6 @@ def test_state_no_target():
     assert res.code == 4101
 
 def test_state_stopped():
-    main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
     req = api_request('state')
     res = client.send_request(req)
@@ -98,7 +98,6 @@ def test_targets():
     assert t["file"].endswith("inferior")
 
 def test_registers():
-    main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
     req = api_request('registers')
     res = client.send_request(req)
@@ -108,7 +107,6 @@ def test_registers():
     target.process.Destroy()
 
 def test_memory():
-    main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
     req = api_request('registers')
     res = client.send_request(req)
@@ -119,7 +117,6 @@ def test_memory():
     target.process.Destroy()
 
 def test_stack():
-    main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
     req = api_request('stack', length=0x40)
     res = client.send_request(req)
@@ -128,7 +125,6 @@ def test_stack():
     target.process.Destroy()
 
 def test_command():
-    main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
     req = api_request('command', command="reg read")
     res = client.send_request(req)
@@ -138,7 +134,6 @@ def test_command():
     target.process.Destroy()
 
 def test_disassemble():
-    main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
     req = api_request('disassemble', count=16)
     res = client.send_request(req)
@@ -148,11 +143,22 @@ def test_disassemble():
     target.process.Destroy()
 
 def test_dereference():
-    main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
     res = client.perform_request('registers')
     res = client.perform_request('dereference', pointer=res.registers['rsp'])
     assert res.status == 'success'
     assert res.output[0][0] == 'pointer'
     assert res.output[-1][1] == 'start + 0x1'
+    target.process.Destroy()
+
+def test_breakpoints():
+    process = target.LaunchSimple(None, None, os.getcwd())
+    res = client.perform_request('breakpoints')
+    assert res.status == 'success'
+    assert len(res.breakpoints) == 1
+    assert res.breakpoints[0]['one_shot'] == False
+    assert res.breakpoints[0]['enabled']
+    assert res.breakpoints[0]['id'] == 1
+    assert res.breakpoints[0]['hit_count'] > 0
+    assert res.breakpoints[0]['locations'][0]['name'] == "inferior`main"
     target.process.Destroy()

@@ -328,7 +328,6 @@ if HAVE_LLDB:
             chain = []
 
             # recursively dereference
-            # import pdb;pdb.set_trace()
             while True:
                 ptr = t.process.ReadPointerFromMemory(addr, error)
                 if error.Success():
@@ -402,6 +401,58 @@ if HAVE_LLDB:
                 raise Exception(res.GetError().strip())
 
             return flavor
+
+
+        @validate_busy
+        @validate_target
+        @lock_host
+        def breakpoints(self, target_id=0):
+            """
+            Return a list of breakpoints.
+
+            Returns data in the following structure:
+            [
+                {
+                    "id":           1,
+                    "enabled":      True,
+                    "one_shot":     False,
+                    "hit_count":    5,
+                    "locations": [
+                        {
+                            "address":  0x100000cf0,
+                            "name":     'main'
+                        }
+                    ]
+                }
+            ]
+            """
+            breakpoints = []
+            t = self.host.GetTargetAtIndex(target_id)
+            s = lldb.SBStream()
+
+            for i in range(0, t.GetNumBreakpoints()):
+                b = t.GetBreakpointAtIndex(i)
+                locations = []
+
+                for j in range(0, b.GetNumLocations()):
+                    l = b.GetLocationAtIndex(j)
+                    s.Clear()
+                    l.GetAddress().GetDescription(s)
+                    desc = s.GetData()
+                    locations.append({
+                        'address':  l.GetLoadAddress(),
+                        'name':     desc
+                    })
+
+                breakpoints.append({
+                    'id':           b.id,
+                    'enabled':      b.enabled,
+                    'one_shot':     b.one_shot,
+                    'hit_count':    b.GetHitCount(),
+                    'locations':    locations
+                })
+
+            return breakpoints
 
 
     class LLDBAdaptorPlugin(DebuggerAdaptorPlugin):

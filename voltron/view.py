@@ -79,12 +79,16 @@ class AnsiString(object):
 
         if len(chunks) > 1:
             for chunk in chunks[1:]:
-                p = chunk.find('m')
-                if p > 0:
-                    chars.append('\033'+chunk[:p+1])
-                    chars.extend(list(chunk[p+1:]))
+                if chunk == '(B':
+                    chars.append('\033'+chunk)
                 else:
-                    chars.extend(list(chunk))
+                    p = chunk.find('m')
+                    if p > 0:
+                        chars.append('\033'+chunk[:p+1])
+                        chars.extend(list(chunk[p+1:]))
+                    else:
+                        chars.extend(list(chunk))
+
 
         # roll up ansi sequences
         ansi = []

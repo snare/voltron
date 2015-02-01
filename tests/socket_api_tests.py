@@ -298,3 +298,25 @@ def test_frontend_disassemble():
     res = client.send_request(req)
     assert res.is_success
     assert res.disassembly == disassemble_response
+
+def test_backend_breakpoints():
+    res = api_request('breakpoints').dispatch()
+    assert res.is_success
+    assert res.breakpoints == breakpoints_response
+
+def test_direct_breakpoints():
+    data = make_direct_request(json.dumps(
+        {
+            "type":         "request",
+            "request":      "breakpoints"
+        }
+    ))
+    res = api_response('breakpoints', data=data)
+    assert res.is_success
+    assert res.breakpoints == breakpoints_response
+
+def test_frontend_breakpoints():
+    req = api_request('breakpoints')
+    res = client.send_request(req)
+    assert res.is_success
+    assert res.breakpoints == breakpoints_response

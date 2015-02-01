@@ -168,3 +168,14 @@ def test_dereference():
     assert res.output[0][0] == 'pointer'
     assert res.output[-1][1] == 'start + 0x1'
 
+def test_breakpoints():
+    restart_debugger()
+    time.sleep(1)
+    res = client.perform_request('breakpoints')
+    assert res.status == 'success'
+    assert len(res.breakpoints) == 1
+    assert res.breakpoints[0]['one_shot'] == False
+    assert res.breakpoints[0]['enabled']
+    assert res.breakpoints[0]['id'] == 1
+    assert res.breakpoints[0]['hit_count'] > 0
+    assert res.breakpoints[0]['locations'][0]['name'] == "inferior`main"

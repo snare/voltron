@@ -47,6 +47,7 @@ def setup():
     # compile and load the test inferior
     subprocess.call("cc -o tests/inferior tests/inferior.c", shell=True)
     target = adaptor.host.CreateTargetWithFileAndArch("tests/inferior", lldb.LLDB_ARCH_DEFAULT)
+    main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
 
 def teardown():
     time.sleep(2)
@@ -73,14 +74,12 @@ def test_targets_not_running():
     assert 'inferior' in t["file"]
 
 def test_targets_stopped():
-    main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
     t = adaptor.targets()[0]
     assert t["state"] == "stopped"
     process.Destroy()
 
 def test_registers():
-    main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
     regs = adaptor.registers()
     assert regs != None
@@ -89,21 +88,18 @@ def test_registers():
     process.Destroy()
 
 def test_stack_pointer():
-    main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
     sp = adaptor.stack_pointer()
     assert sp != 0
     process.Destroy()
 
 def test_program_counter():
-    main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
     pc_name, pc = adaptor.program_counter()
     assert pc != 0
     process.Destroy()
 
 def test_memory():
-    main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
     regs = adaptor.registers()
     mem = adaptor.memory(address=regs['rip'], length=0x40)
@@ -111,21 +107,18 @@ def test_memory():
     process.Destroy()
 
 def test_stack():
-    main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
     stack = adaptor.stack(length=0x40)
     assert len(stack) == 0x40
     process.Destroy()
 
 def test_disassemble():
-    main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
     output = adaptor.disassemble(count=0x20)
     assert len(output) > 0
     process.Destroy()
 
 def test_command():
-    main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
     output = adaptor.command("reg read")
     assert len(output) > 0
@@ -133,7 +126,6 @@ def test_command():
     process.Destroy()
 
 def test_dereference_main():
-    main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
     regs = adaptor.registers()
     output = adaptor.dereference(regs['rip'])
@@ -141,7 +133,6 @@ def test_dereference_main():
     process.Destroy()
 
 def test_dereference_rsp():
-    main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
     regs = adaptor.registers()
     output = adaptor.dereference(regs['rsp'])
@@ -149,10 +140,19 @@ def test_dereference_rsp():
     process.Destroy()
 
 def test_dereference_string():
-    main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
     process = target.LaunchSimple(None, None, os.getcwd())
     regs = adaptor.registers()
     output = adaptor.dereference(regs['rsp']+0x20)
     assert 'inferior' in list(output[-1])[-1]
     process.Destroy()
 
+def test_breakpoints():
+    process = target.LaunchSimple(None, None, os.getcwd())
+    bps = adaptor.breakpoints()
+    assert len(bps) == 1
+    assert bps[0]['one_shot'] == False
+    assert bps[0]['enabled']
+    assert bps[0]['id'] == 1
+    assert bps[0]['hit_count'] > 0
+    assert bps[0]['locations'][0]['name'] == "inferior`main"
+    process.Destroy()
