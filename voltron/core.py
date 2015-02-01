@@ -347,8 +347,12 @@ class Client(object):
         """
         Connect to the server
         """
-        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.sock.connect(voltron.env['sock'])
+        try:
+            self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            self.sock.connect(voltron.env['sock'])
+        except Exception as e:
+            self.sock = None
+            raise
 
     def send_request(self, request):
         """
@@ -371,13 +375,15 @@ class Client(object):
             try:
                 res = self.sock.sendall(data)
                 break
-            except socket.error, e:
+            except socket.error as e:
                 if e.errno == socket.EINTR:
                     continue
                 else:
+                    self.sock = None
                     raise
         if res != None:
             log.error("Failed to send request: {}".format(request))
+            self.sock = None
             raise SocketDisconnected("socket closed")
 
         # receive response data
@@ -385,7 +391,7 @@ class Client(object):
             try:
                 data = self.sock.recv(READ_MAX)
                 break
-            except socket.error, e:
+            except socket.error as e:
                 if e.errno == socket.EINTR:
                     continue
                 else:

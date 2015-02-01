@@ -199,33 +199,27 @@ class VoltronView (object):
     def run(self):
         res = None
         os.system('clear')
-        try:
-            while True:
-                try:
-                    # Connect to server
-                    if not self.client.is_connected:
-                        self.client.connect()
+        while True:
+            try:
+                # Connect to server
+                if not self.client.is_connected:
+                    self.client.connect()
 
-                    # If this is the first iteration (ie. we were just launched and the debugger is already stopped),
-                    # or we got a valid response on the last iteration, render
-                    if res == None or hasattr(res, 'state') and res.state == 'stopped':
-                        self.render()
+                # If this is the first iteration (ie. we were just launched and the debugger is already stopped),
+                # or we got a valid response on the last iteration, render
+                if res == None or hasattr(res, 'state') and res.state == 'stopped':
+                    self.render()
 
-                    # wait for the debugger to stop again
-                    wait_req = api_request('wait')
-                    res = self.client.send_request(wait_req)
-                except socket.error, e:
-                    # if this was an interrupted syscall exception we were probably SIGWINCHed, so retry straight away
-                    if e.errno != socket.EINTR:
-                        # if we're not connected, render an error and try again in a second
-                        self.do_render(error='Error: {}'.format(e.strerror))
-                        time.sleep(1)
-        except SocketDisconnected as e:
-            if self.should_reconnect():
-                log.debug("Restarting process: " + str(type(e)))
-                self.reexec()
-            else:
-                raise
+                # wait for the debugger to stop again
+                wait_req = api_request('wait')
+                res = self.client.send_request(wait_req)
+            except socket.error, e:
+                import traceback;traceback.print_exc()
+                # if we're not connected, render an error and try again in a second
+                self.do_render(error='Error: {}'.format(e.strerror))
+                time.sleep(1)
+            except SocketDisconnected as e:
+                pass
 
     def render(self):
         log.warning('Might wanna implement render() in this view eh')
@@ -238,10 +232,6 @@ class VoltronView (object):
             return self.loaded_config.view.reconnect
         except:
             return True
-
-    def reexec(self):
-        # Instead of trying to reset internal state, just exec ourselves again
-        os.execv(sys.argv[0], sys.argv)
 
     def sigwinch_handler(self, sig, stack):
         pass
