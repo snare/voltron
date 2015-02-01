@@ -65,10 +65,10 @@ try:
                     print("Debug logging is currently " + enabled)
             elif 'init' in command:
                 self.register_hooks()
-            elif 'stopped' in command:
+            elif 'stopped' in command or 'update' in command:
                 self.adaptor.update_state()
             else:
-                print("Usage: voltron <status|debug>")
+                print("Usage: voltron <init|status|debug|update>")
 
         def status(self):
             if self.server != None:
