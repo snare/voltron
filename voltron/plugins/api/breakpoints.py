@@ -28,7 +28,7 @@ class APIBreakpointsRequest(APIRequest):
             res = APIBreakpointsResponse(breakpoints=bps)
         except NoSuchTargetException:
             res = APINoSuchTargetErrorResponse()
-        except Exception, e:
+        except Exception as e:
             msg = "Exception getting breakpoints: {}".format(e)
             log.error(msg)
             res = APIGenericErrorResponse(msg)

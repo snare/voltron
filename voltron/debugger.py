@@ -62,7 +62,7 @@ def lock_host(func, *args, **kwargs):
         try:
             res = func(self, *args, **kwargs)
             self.host_lock.release()
-        except Exception, e:
+        except Exception as e:
             self.host_lock.release()
             raise e
         return res
@@ -89,7 +89,7 @@ class DebuggerAdaptor(object):
         """
         try:
             target = self._target(target_id=target_id)
-        except Exception, e:
+        except Exception as e:
             log.error("Exception checking if target exists: {} {}".format(type(e), e))
             return False
         return target != None

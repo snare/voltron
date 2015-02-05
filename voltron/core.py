@@ -88,7 +88,7 @@ class Server(object):
             # parse incoming request with the top level APIRequest class so we can determine the request type
             try:
                 req = APIRequest(data=data)
-            except Exception, e:
+            except Exception as e:
                 req = None
                 log.error("Exception raised while parsing API request: {} {}".format(type(e), e))
 
@@ -96,7 +96,7 @@ class Server(object):
                 # instantiate the request class
                 try:
                     req = api_request(req.request, data=data)
-                except Exception, e:
+                except Exception as e:
                     log.error("Exception raised while creating API request: {} {}".format(type(e), e))
                     req = None
                 if not req:
@@ -139,14 +139,14 @@ class Server(object):
         res = None
         try:
             req.validate()
-        except MissingFieldError, e:
+        except MissingFieldError as e:
             res = APIMissingFieldErrorResponse(str(e))
 
         # dispatch the request
         if not res:
             try:
                 res = req.dispatch()
-            except Exception, e:
+            except Exception as e:
                 msg = "Exception raised while dispatching request: {}".format(e)
                 log.error(msg)
                 res = APIGenericErrorResponse(msg)
@@ -225,7 +225,7 @@ class ServerThread(threading.Thread):
                     try:
                         data = fd.recv_request()
                         self.server.handle_request(data, fd)
-                    except Exception, e:
+                    except Exception as e:
                         log.error("Exception raised while handling request: {} {}".format(type(e), str(e)))
                         self.purge_client(fd)
 

@@ -217,7 +217,7 @@ class VoltronView (object):
                 # wait for the debugger to stop again
                 wait_req = api_request('wait')
                 res = self.client.send_request(wait_req)
-            except socket.error, e:
+            except socket.error as e:
                 import traceback;traceback.print_exc()
                 # if we're not connected, render an error and try again in a second
                 self.do_render(error='Error: {}'.format(e.strerror))
@@ -279,7 +279,7 @@ class TerminalView (VoltronView):
             if self.config.footer.show:
                 print('\n' + self.format_header_footer(self.config.footer), end='')
             sys.stdout.flush()
-        except IOError, e:
+        except IOError as e:
             # if we get an EINTR while printing, just do it again
             if e.errno == socket.EINTR:
                 self.do_render()

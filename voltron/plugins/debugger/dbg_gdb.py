@@ -336,7 +336,7 @@ if HAVE_GDB:
                         state = "invalid"
                     elif "stopped" in output:
                         state = "stopped"
-                except gdb.error, e:
+                except gdb.error as e:
                     if 'Selected thread is running.' == str(e):
                         state = "running"
             else:

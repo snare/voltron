@@ -44,7 +44,7 @@ class APIRegistersRequest(APIRequest):
             res = APITargetBusyErrorResponse()
         except NoSuchTargetException:
             res = APINoSuchTargetErrorResponse()
-        except Exception, e:
+        except Exception as e:
             msg = "Exception getting registers from debugger: {}".format(e)
             log.error(msg)
             res = APIGenericErrorResponse(msg)

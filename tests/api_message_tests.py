@@ -160,7 +160,7 @@ def test_test_request_validation_succeed_with_data():
     exception = False
     try:
         msg.validate()
-    except MissingFieldError, e:
+    except MissingFieldError as e:
         exception = True
     assert not exception
     assert msg.count == 16
@@ -171,7 +171,7 @@ def test_test_request_validation_succeed_by_assign():
     exception = False
     try:
         msg.validate()
-    except MissingFieldError, e:
+    except MissingFieldError as e:
         exception = True
     assert not exception
     assert msg.count == 16
@@ -185,7 +185,7 @@ def test_test_response_validation_fail():
     exception = False
     try:
         msg.validate()
-    except MissingFieldError, e:
+    except MissingFieldError as e:
         exception = True
     assert exception
 
@@ -194,7 +194,7 @@ def test_test_response_validation_fail_with_param():
     exception = False
     try:
         msg.validate()
-    except MissingFieldError, e:
+    except MissingFieldError as e:
         exception = True
     assert exception
 
@@ -203,7 +203,7 @@ def test_test_response_validation_succeed_with_param():
     exception = False
     try:
         msg.validate()
-    except MissingFieldError, e:
+    except MissingFieldError as e:
         exception = True
     assert not exception
 
@@ -212,7 +212,7 @@ def test_test_response_validation_succeed_with_data():
     exception = False
     try:
         msg.validate()
-    except MissingFieldError, e:
+    except MissingFieldError as e:
         exception = True
     assert not exception
 
@@ -222,7 +222,7 @@ def test_test_response_validation_succeed_by_assign():
     exception = False
     try:
         msg.validate()
-    except MissingFieldError, e:
+    except MissingFieldError as e:
         print str(e)
         exception = True
     assert not exception
