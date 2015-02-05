@@ -39,6 +39,11 @@ r12 0000000000000000
 r13 0000000000000000
 r14 0000000000000000
 r15 0000000000000000
+
+Provided you stick to the adaptor API that is implemented in every *DBAdaptor
+class, custom command plugins should work across all debugger hosts.
+
+This is a quick example that will only work on an x86_64 target.
 """
 
 import blessed
