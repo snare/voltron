@@ -3,6 +3,7 @@ from __future__ import print_function
 import struct
 import logging
 import threading
+from collections import namedtuple
 
 from voltron.api import *
 from voltron.plugin import *
@@ -454,6 +455,26 @@ if HAVE_LLDB:
                 })
 
             return breakpoints
+
+        def register_command_plugin(self, name, cls):
+            """
+            Register a command plugin with the LLDB adaptor.
+            """
+            # make sure we have a commands object
+            if not voltron.commands:
+                voltron.commands = namedtuple('VoltronCommands', [])
+
+            # method invocation creator
+            def create_invocation(obj):
+                def invoke(debugger, command, result, env_dict):
+                    obj.invoke(*command.split())
+                return invoke
+
+            # store the invocation in `voltron.commands` to pass to LLDB
+            setattr(voltron.commands, name, create_invocation(cls()))
+
+            # register the invocation as a command script handler thing
+            self.host.HandleCommand("command script add -f voltron.commands.{} {}".format(name, name))
 
 
     class LLDBAdaptorPlugin(DebuggerAdaptorPlugin):

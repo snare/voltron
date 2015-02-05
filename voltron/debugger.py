@@ -143,3 +143,6 @@ class DebuggerAdaptor(object):
         """
         for listener in self.listeners:
             listener['callback']()
+
+    def register_command_plugin(self, name, cls):
+        pass

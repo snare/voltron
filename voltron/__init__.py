@@ -16,6 +16,9 @@ config = None
 # reference to debugger adaptor
 debugger = None
 
+# plugin commands
+commands = None
+
 loaded = False
 
 def setup_env():

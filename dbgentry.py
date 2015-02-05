@@ -110,6 +110,9 @@ try:
                 self.adaptor = self.pm.debugger_plugin_for_host('lldb').adaptor_class()
                 voltron.debugger = self.adaptor
 
+                # setup command plugins
+                self.pm.register_commands(self.adaptor)
+
                 # start the server
                 self.server = Server()
                 self.server.start()
@@ -146,6 +149,7 @@ try:
                 env_dict['cmd'] = VoltronLLDBCommand(debugger, env_dict)
                 print(blessed.Terminal().bold_red("Voltron loaded."))
                 print("Run `voltron init` after you load a target.")
+                env_dict['cmd'].adaptor.host.HandleCommand("script import voltron")
 
         def lldb_invoke(debugger, command, result, env_dict):
             """
