@@ -42,7 +42,6 @@ try:
     else:
         in_vdb = False
 
-    voltron.setup_env()
     log = voltron.setup_logging('debugger')
 
     class VoltronCommand (object):
@@ -104,14 +103,14 @@ try:
                 self.debugger.HandleCommand('command script add -f dbgentry.lldb_invoke voltron')
 
                 # load plugins
-                self.pm = PluginManager()
+                self.pm = voltron.plugin.pm
 
                 # set up an lldb adaptor and set it as the package-wide adaptor
                 self.adaptor = self.pm.debugger_plugin_for_host('lldb').adaptor_class()
                 voltron.debugger = self.adaptor
 
-                # setup command plugins
-                self.pm.register_commands(self.adaptor)
+                # register plugins now that we have a debugger
+                self.pm.register_plugins()
 
                 # start the server
                 self.server = Server()
@@ -173,6 +172,9 @@ try:
                 self.adaptor = self.pm.debugger_plugin_for_host('gdb').adaptor_class()
                 voltron.debugger = self.adaptor
 
+                # register plugins now that we have a debugger
+                self.pm.register_plugins()
+
                 # server is started and stopped with the inferior to avoid GDB hanging on exit
                 self.server = None
 
@@ -228,6 +230,8 @@ try:
 
                 self.adaptor = self.pm.debugger_plugin_for_host('vdb').adaptor_class(self._vdb, self._vtrace)
                 voltron.debugger = self.adaptor
+
+                self.pm.register_plugins()
 
                 self.server = Server()
                 self.server.start()

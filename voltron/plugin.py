@@ -29,7 +29,9 @@ class PluginManager(object):
 
         log.debug("Initalising PluginManager {}".format(self))
 
-        # register all plugins in the environment
+        self.register_plugins()
+
+    def register_plugins(self):
         for p in voltron.env.plugins:
             self.register_plugin(p)
 
@@ -79,6 +81,8 @@ class PluginManager(object):
         elif self.valid_command_plugin(plugin):
             log.debug("Registering command plugin: {}".format(plugin))
             self._command_plugins[plugin.name] = plugin()
+            if voltron.debugger:
+                voltron.debugger.register_command_plugin(plugin.name, plugin.command_class)
         else:
             log.debug("Ignoring invalid plugin: {}".format(plugin))
 
@@ -179,13 +183,6 @@ class PluginManager(object):
         Find a command plugin that for the given view name.
         """
         return self.command_plugins[name]
-
-    def register_commands(self, adaptor):
-        """
-        Register any unregistered command plugins with the debugger adaptor
-        """
-        for name in self.command_plugins:
-            adaptor.register_command_plugin(name, self.command_plugins[name].command_class)
 
 
 class VoltronPlugin(Plugin):
