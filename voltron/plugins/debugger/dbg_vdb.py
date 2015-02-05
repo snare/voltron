@@ -9,7 +9,7 @@ import threading
 
 from voltron.api import *
 from voltron.plugin import *
-from voltron.debugger import *
+from voltron.dbg import *
 
 try:
     import vdb
