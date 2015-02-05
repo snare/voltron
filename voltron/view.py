@@ -8,7 +8,7 @@ import re
 import signal
 import time
 import argparse
-from blessings import Terminal
+from blessed import Terminal
 
 try:
     import pygments
