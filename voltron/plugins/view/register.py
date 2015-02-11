@@ -310,7 +310,7 @@ class RegisterView (TerminalView):
 
                 # ensure the architecture is supported
                 if arch not in self.FORMAT_INFO:
-                    error = "Archiecture '{}' not supported".format(arch)
+                    error = "Architecture '{}' not supported".format(arch)
                 else:
                     # get next instruction
                     res = self.client.perform_request('disassemble', count=1)

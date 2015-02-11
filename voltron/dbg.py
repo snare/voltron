@@ -77,7 +77,7 @@ class DebuggerAdaptor(object):
         "armv7":    {"pc": "pc", "sp": "sp"},
         "armv7s":   {"pc": "pc", "sp": "sp"},
         "arm64":    {"pc": "pc", "sp": "sp"},
-        "powerpc":    {"pc": "pc", "sp": "r1"},
+        "powerpc":  {"pc": "pc", "sp": "r1"},
     }
 
     def target_exists(self, target_id=0):

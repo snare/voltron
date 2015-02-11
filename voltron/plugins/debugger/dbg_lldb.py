@@ -94,6 +94,8 @@ if HAVE_LLDB:
                 d["arch"], _, _ = self.normalize_triple(t.triple)
             except:
                 d["arch"] = None
+            if d["arch"] == 'i386':
+                d["arch"] = 'x86'
             d["byte_order"] = 'little' if t.byte_order == lldb.eByteOrderLittle else 'big'
             d["addr_size"] = t.addr_size
 
@@ -182,7 +184,7 @@ if HAVE_LLDB:
                     registers.remove('sp')
                     registers.append(self.reg_names[t_info['arch']]['sp'])
             else:
-                raise Exception("Unsupported architecture: {}".format(target['arch']))
+                raise Exception("Unsupported architecture: {}".format(t_info['arch']))
 
             # get the registers
             log.warn("thing: {}".format(registers))
