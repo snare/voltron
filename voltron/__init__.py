@@ -5,8 +5,6 @@ import logging.config
 import voltron
 from .main import main
 
-import plugin
-
 from scruffy import Environment
 
 # scruffy environment containing config, plugins, etc
@@ -65,7 +63,7 @@ def setup_env():
     config = env['config']
 
     # create shared instance of plugin manager
-    plugin.pm = plugin.PluginManager()
+    voltron.plugin.pm = voltron.plugin.PluginManager()
 
 LOGGER_DEFAULT = {
     'handlers': ['null'],
