@@ -281,7 +281,7 @@ try:
             print(blessed.Terminal().bold_red("Voltron loaded."))
 
 
-except Exception, e:
+except Exception as e:
     msg = "Exception {} raised while loading Voltron: {}".format(type(e), str(e))
     if blessed:
         msg = blessed.Terminal().bold_red(msg)
