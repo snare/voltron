@@ -1,5 +1,4 @@
 import logging
-import StringIO
 
 from blessed import Terminal
 
