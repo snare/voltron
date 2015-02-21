@@ -17,8 +17,9 @@ except ImportError:
 
 log = logging.getLogger('debugger')
 
-if HAVE_LLDB:
+MAX_DEREF = 16
 
+if HAVE_LLDB:
     class LLDBAdaptor(DebuggerAdaptor):
         """
         The interface with an instance of LLDB
@@ -332,7 +333,7 @@ if HAVE_LLDB:
             chain = []
 
             # recursively dereference
-            while True:
+            for i in range(0, MAX_DEREF):
                 ptr = t.process.ReadPointerFromMemory(addr, error)
                 if error.Success():
                     if ptr in chain:
