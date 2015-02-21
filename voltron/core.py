@@ -90,14 +90,14 @@ class Server(object):
                 req = APIRequest(data=data)
             except Exception as e:
                 req = None
-                log.error("Exception raised while parsing API request: {} {}".format(type(e), e))
+                log.exception("Exception raised while parsing API request: {} {}".format(type(e), e))
 
             if req:
                 # instantiate the request class
                 try:
                     req = api_request(req.request, data=data)
                 except Exception as e:
-                    log.error("Exception raised while creating API request: {} {}".format(type(e), e))
+                    log.exception("Exception raised while creating API request: {} {}".format(type(e), e))
                     req = None
                 if not req:
                     res = APIPluginNotFoundErrorResponse()
@@ -148,7 +148,7 @@ class Server(object):
                 res = req.dispatch()
             except Exception as e:
                 msg = "Exception raised while dispatching request: {}".format(e)
-                log.error(msg)
+                log.exception(msg)
                 res = APIGenericErrorResponse(msg)
 
         log.debug("Response: {}".format(str(res)))
@@ -226,7 +226,7 @@ class ServerThread(threading.Thread):
                         data = fd.recv_request()
                         self.server.handle_request(data, fd)
                     except Exception as e:
-                        log.error("Exception raised while handling request: {} {}".format(type(e), str(e)))
+                        log.exception("Exception raised while handling request: {} {}".format(type(e), str(e)))
                         self.purge_client(fd)
 
         # clean up
@@ -416,7 +416,7 @@ class Client(object):
                         # didn't find a plugin, just return the generic APIResponse we already generated
                         res = generic_response
             except Exception as e:
-                log.error('Exception parsing message: ' + str(e))
+                log.exception('Exception parsing message: ' + str(e))
                 log.error('Invalid message: ' + data)
         else:
             raise SocketDisconnected("socket closed")
@@ -490,7 +490,7 @@ class ServerSocket(BaseSocket):
             try:
                 return ClientSocket(sock)
             except Exception as e:
-                log.error("Exception handling accept: " + str(e))
+                log.exception("Exception handling accept: " + str(e))
 
 
 class ClientSocket(BaseSocket):

@@ -30,7 +30,7 @@ class APIBreakpointsRequest(APIRequest):
             res = APINoSuchTargetErrorResponse()
         except Exception as e:
             msg = "Exception getting breakpoints: {}".format(e)
-            log.error(msg)
+            log.exception(msg)
             res = APIGenericErrorResponse(msg)
 
         return res

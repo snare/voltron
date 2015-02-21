@@ -52,7 +52,7 @@ class APIDisassembleRequest(APIRequest):
             res = APITargetBusyErrorResponse()
         except Exception as e:
             msg = "Unhandled exception {} disassembling: {}".format(type(e), e)
-            log.error(msg)
+            log.exception(msg)
             res = APIErrorResponse(code=0, message=msg)
 
         return res

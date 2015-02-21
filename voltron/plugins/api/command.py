@@ -31,7 +31,7 @@ class APICommandRequest(APIRequest):
             res = APINoSuchTargetErrorResponse()
         except Exception as e:
             msg = "Exception executing debugger command: {}".format(e)
-            log.error(msg)
+            log.exception(msg)
             res = APIGenericErrorResponse(msg)
 
         return res

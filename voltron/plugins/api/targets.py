@@ -27,7 +27,7 @@ class APITargetsRequest(APIRequest):
             res = APINoSuchTargetErrorResponse()
         except Exception as e:
             msg = "Exception getting targets from debugger: {}".format(e)
-            log.error(msg)
+            log.exception(msg)
             res = APIGenericErrorResponse(msg)
 
         return res

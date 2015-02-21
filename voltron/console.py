@@ -6,21 +6,38 @@ import sys
 import lldb
 import rl
 import logging
+import threading
 from rl import completer, generator, completion
 
+import voltron
 from .core import *
 from .colour import *
 
 VERSION = 'voltron-0.1'
 BANNER = "{version} (based on {lldb_version})"
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('console')
+
+
+class EventListener(threading.Thread):
+    def __init__(self, debugger):
+        super(EventListener, self).__init__()
+        self.debugger = debugger
+
+    def run(self):
+        print("thing")
+        self.listener = self.debugger.GetListener()
+        event = lldb.SBEvent()
+        self.listener.WaitForEvent(10, event)
+        print(event)
+
 
 class Console(object):
     @classmethod
     def configure_subparser(cls, subparsers):
         sp = subparsers.add_parser('console', help='voltron debugger console', aliases=('c'))
         sp.set_defaults(func=Console)
+        sp.add_argument('file', help='binary to load', nargs='?')
 
     def __init__(self, args={}, loaded_config={}):
         self.args = args
@@ -35,18 +52,25 @@ class Console(object):
         self.lastbuf = None
 
         # set up plugin manager
-        self.pm = PluginManager()
+        self.pm = voltron.plugin.pm
 
-        # set up debugger
-        plugin = self.pm.debugger_plugin_for_host('lldb')
-        self.adaptor = plugin.adaptor_class()
-        self.dbg = self.adaptor.host
+        # set up an lldb adaptor and set it as the package-wide adaptor
+        self.adaptor = self.pm.debugger_plugin_for_host('lldb').adaptor_class()
+        voltron.debugger = self.adaptor
+        self.debugger = self.adaptor.host
+
+        # register plugins now that we have a debugger
+        self.pm.register_plugins()
 
         # set up lldb command interpreter
         self.ci = self.adaptor.host.GetCommandInterpreter()
 
+        # set up listener
+        self.listener = EventListener(self.debugger)
+        self.listener.start()
+
         # set up voltron server
-        self.server = Server(debugger=self.adaptor)
+        self.server = Server()
         self.server.start()
 
         # set up voltron console command
@@ -72,7 +96,7 @@ class Console(object):
             rl.readline.write_history_file(voltron.env['history'])
 
     def print_banner(self):
-        d = {'version': VERSION, 'lldb_version': self.dbg.GetVersionString()}
+        d = {'version': VERSION, 'lldb_version': self.debugger.GetVersionString()}
         print(BANNER.format(**d))
 
     def update_prompt(self):
