@@ -58,11 +58,11 @@ class Server(object):
         log.debug("Stopping server threads")
         if self.d_thread:
             log.debug("Stopping domain socket thread")
-            os.write(self.d_exit_in, chr(0))
+            os.write(self.d_exit_in, chr(0).encode('UTF-8'))
             self.d_thread.join(10)
         if self.t_thread:
             log.debug("Stopping TCP socket thread")
-            os.write(self.t_exit_in, chr(0))
+            os.write(self.t_exit_in, chr(0).encode('UTF-8'))
             self.t_thread.join(10)
         if self.h_thread:
             log.debug("Stopping HTTP server")
@@ -157,7 +157,7 @@ class Server(object):
         if client:
             log.debug("Client was passed to dispatch_request() - sending response")
             try:
-                client.send_response(str(res))
+                client.send_response(str(res).encode('UTF-8'))
             except socket.error:
                 log.error("Client closed before we could respond")
         else:
@@ -373,10 +373,10 @@ class Client(object):
         log.debug("Sending request: {}".format(data))
         while True:
             try:
-                res = self.sock.sendall(data)
+                res = self.sock.sendall(data.encode('UTF-8'))
                 break
             except socket.error as e:
-                if e.errno == socket.EINTR:
+                if e.errno == errno.EINTR:
                     continue
                 else:
                     self.sock = None
@@ -389,10 +389,10 @@ class Client(object):
         # receive response data
         while True:
             try:
-                data = self.sock.recv(READ_MAX)
+                data = self.sock.recv(READ_MAX).decode('UTF-8')
                 break
             except socket.error as e:
-                if e.errno == socket.EINTR:
+                if e.errno == errno.EINTR:
                     continue
                 else:
                     raise

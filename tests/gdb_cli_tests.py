@@ -25,7 +25,7 @@ from voltron.core import *
 from voltron.api import *
 from voltron.plugin import PluginManager, DebuggerAdaptorPlugin
 
-from common import *
+from .common import *
 
 log = logging.getLogger('tests')
 

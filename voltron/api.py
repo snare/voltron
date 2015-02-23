@@ -195,7 +195,7 @@ class APIMessage(object):
 
         Ensure all the required fields are present and not None.
         """
-        required_fields = filter(lambda x: self._fields[x], self._fields.keys())
+        required_fields = list(filter(lambda x: self._fields[x], self._fields.keys()))
         for field in (self._top_fields + required_fields):
             if not hasattr(self, field) or hasattr(self, field) and getattr(self, field) == None:
                 raise MissingFieldError(field)

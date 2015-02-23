@@ -85,3 +85,5 @@ def inject_mock(adaptor):
     adaptor.disassemble = Mock(return_value=disassemble_response)
     adaptor.dereference = Mock(return_value=dereference_response)
     adaptor.breakpoints = Mock(return_value=breakpoints_response)
+    adaptor.stack_pointer = Mock(return_value=('sp', 0))
+    adaptor.program_counter = Mock(return_value=('pc', 0))

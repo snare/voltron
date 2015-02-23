@@ -21,7 +21,7 @@ def handle_post():
 
     {"type": "request", "request": "version"}
     """
-    res = app.server.handle_request(str(request.data))
+    res = app.server.handle_request(request.data.decode('UTF-8'))
     return Response(str(res), status=200, mimetype='application/json')
 
 def handle_get():

@@ -23,8 +23,6 @@ from voltron.core import *
 from voltron.api import *
 from voltron.plugin import PluginManager, DebuggerAdaptorPlugin
 
-import lldb
-
 from common import *
 
 log = logging.getLogger('tests')

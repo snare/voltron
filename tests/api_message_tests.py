@@ -223,7 +223,7 @@ def test_test_response_validation_succeed_by_assign():
     try:
         msg.validate()
     except MissingFieldError as e:
-        print str(e)
+        print(str(e))
         exception = True
     assert not exception
 

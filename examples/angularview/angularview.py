@@ -20,7 +20,7 @@ def root():
 
 @app.route("/api/request", methods=['POST'])
 def handle_post():
-    res = app.server.handle_request(str(request.data))
+    res = app.server.handle_request(request.data.decode('UTF-8'))
     res.formatted = format_disasm(res)
     return Response(str(res), status=200, mimetype='application/json')
 

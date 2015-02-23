@@ -80,6 +80,9 @@ class DebuggerAdaptor(object):
         "powerpc":  {"pc": "pc", "sp": "r1"},
     }
 
+    def __init__(self, *args, **kwargs):
+        self.listeners = []
+
     def target_exists(self, target_id=0):
         """
         Returns True or False indicating whether or not the specified

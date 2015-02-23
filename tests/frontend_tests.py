@@ -28,137 +28,140 @@ import platform
 if platform.system() == 'Darwin':
     sys.path.append("/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Resources/Python")
 
-import lldb
+try:
+    import lldb
 
-from common import *
+    from .common import *
 
-log = logging.getLogger("tests")
+    log = logging.getLogger("tests")
 
-def setup():
-    global server, client, target, pm, adaptor, methods
+    def setup():
+        global server, client, target, pm, adaptor, methods
 
-    log.info("setting up API tests")
+        log.info("setting up API tests")
 
-    # set up voltron
-    voltron.setup_env()
-    pm = PluginManager()
-    plugin = pm.debugger_plugin_for_host('lldb')
-    adaptor = plugin.adaptor_class()
-    voltron.debugger = adaptor
+        # set up voltron
+        voltron.setup_env()
+        pm = PluginManager()
+        plugin = pm.debugger_plugin_for_host('lldb')
+        adaptor = plugin.adaptor_class()
+        voltron.debugger = adaptor
 
-    # start up a voltron server
-    server = Server()
-    # import pdb;pdb.set_trace()
-    server.start()
+        # start up a voltron server
+        server = Server()
+        # import pdb;pdb.set_trace()
+        server.start()
 
-    time.sleep(0.1)
+        time.sleep(0.1)
 
-    # set up client
-    client = Client()
-    client.connect()
+        # set up client
+        client = Client()
+        client.connect()
 
-    # compile and load the test inferior
-    subprocess.call("cc -o tests/inferior tests/inferior.c", shell=True)
-    target = adaptor.host.CreateTargetWithFileAndArch("tests/inferior", lldb.LLDB_ARCH_DEFAULT)
-    main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
+        # compile and load the test inferior
+        subprocess.call("cc -o tests/inferior tests/inferior.c", shell=True)
+        target = adaptor.host.CreateTargetWithFileAndArch("tests/inferior", lldb.LLDB_ARCH_DEFAULT)
+        main_bp = target.BreakpointCreateByName("main", target.GetExecutable().GetFilename())
 
-def teardown():
-    server.stop()
-    time.sleep(5)
+    def teardown():
+        server.stop()
+        time.sleep(5)
 
-def test_state_no_target():
-    req = api_request('state')
-    res = client.send_request(req)
-    assert res.is_error
-    assert res.code == 4101
+    def test_state_no_target():
+        req = api_request('state')
+        res = client.send_request(req)
+        assert res.is_error
+        assert res.code == 4101
 
-def test_state_stopped():
-    process = target.LaunchSimple(None, None, os.getcwd())
-    req = api_request('state')
-    res = client.send_request(req)
-    assert res.status == 'success'
-    assert res.state == "stopped"
-    target.process.Destroy()
+    def test_state_stopped():
+        process = target.LaunchSimple(None, None, os.getcwd())
+        req = api_request('state')
+        res = client.send_request(req)
+        assert res.status == 'success'
+        assert res.state == "stopped"
+        target.process.Destroy()
 
-def test_wait_timeout():
-    process = target.LaunchSimple(None, None, os.getcwd())
-    req = api_request('wait', timeout=1, state_changes=['invalid'])
-    res = client.send_request(req)
-    assert res.status == 'error'
-    assert res.code == 0x1004
-    target.process.Destroy()
+    def test_wait_timeout():
+        process = target.LaunchSimple(None, None, os.getcwd())
+        req = api_request('wait', timeout=1, state_changes=['invalid'])
+        res = client.send_request(req)
+        assert res.status == 'error'
+        assert res.code == 0x1004
+        target.process.Destroy()
 
-def test_targets():
-    req = api_request('targets')
-    res = client.send_request(req)
-    assert res.status == 'success'
-    t = res.targets[0]
-    assert t["id"] == 0
-    assert t["arch"] == "x86_64"
-    assert t["file"].endswith("inferior")
+    def test_targets():
+        req = api_request('targets')
+        res = client.send_request(req)
+        assert res.status == 'success'
+        t = res.targets[0]
+        assert t["id"] == 0
+        assert t["arch"] == "x86_64"
+        assert t["file"].endswith("inferior")
 
-def test_registers():
-    process = target.LaunchSimple(None, None, os.getcwd())
-    req = api_request('registers')
-    res = client.send_request(req)
-    assert res.status == 'success'
-    assert len(res.registers) > 0
-    assert res.registers['rip'] != 0
-    target.process.Destroy()
+    def test_registers():
+        process = target.LaunchSimple(None, None, os.getcwd())
+        req = api_request('registers')
+        res = client.send_request(req)
+        assert res.status == 'success'
+        assert len(res.registers) > 0
+        assert res.registers['rip'] != 0
+        target.process.Destroy()
 
-def test_memory():
-    process = target.LaunchSimple(None, None, os.getcwd())
-    req = api_request('registers')
-    res = client.send_request(req)
-    req = api_request('memory', address=res.registers['rip'], length=0x40)
-    res = client.send_request(req)
-    assert res.status == 'success'
-    assert len(res.memory) > 0
-    target.process.Destroy()
+    def test_memory():
+        process = target.LaunchSimple(None, None, os.getcwd())
+        req = api_request('registers')
+        res = client.send_request(req)
+        req = api_request('memory', address=res.registers['rip'], length=0x40)
+        res = client.send_request(req)
+        assert res.status == 'success'
+        assert len(res.memory) > 0
+        target.process.Destroy()
 
-def test_stack():
-    process = target.LaunchSimple(None, None, os.getcwd())
-    req = api_request('stack', length=0x40)
-    res = client.send_request(req)
-    assert res.status == 'success'
-    assert len(res.memory) > 0
-    target.process.Destroy()
+    def test_stack():
+        process = target.LaunchSimple(None, None, os.getcwd())
+        req = api_request('stack', length=0x40)
+        res = client.send_request(req)
+        assert res.status == 'success'
+        assert len(res.memory) > 0
+        target.process.Destroy()
 
-def test_command():
-    process = target.LaunchSimple(None, None, os.getcwd())
-    req = api_request('command', command="reg read")
-    res = client.send_request(req)
-    assert res.status == 'success'
-    assert len(res.output) > 0
-    assert 'rax' in res.output
-    target.process.Destroy()
+    def test_command():
+        process = target.LaunchSimple(None, None, os.getcwd())
+        req = api_request('command', command="reg read")
+        res = client.send_request(req)
+        assert res.status == 'success'
+        assert len(res.output) > 0
+        assert 'rax' in res.output
+        target.process.Destroy()
 
-def test_disassemble():
-    process = target.LaunchSimple(None, None, os.getcwd())
-    req = api_request('disassemble', count=16)
-    res = client.send_request(req)
-    assert res.status == 'success'
-    assert len(res.disassembly) > 0
-    assert 'push' in res.disassembly
-    target.process.Destroy()
+    def test_disassemble():
+        process = target.LaunchSimple(None, None, os.getcwd())
+        req = api_request('disassemble', count=16)
+        res = client.send_request(req)
+        assert res.status == 'success'
+        assert len(res.disassembly) > 0
+        assert 'push' in res.disassembly
+        target.process.Destroy()
 
-def test_dereference():
-    process = target.LaunchSimple(None, None, os.getcwd())
-    res = client.perform_request('registers')
-    res = client.perform_request('dereference', pointer=res.registers['rsp'])
-    assert res.status == 'success'
-    assert res.output[0][0] == 'pointer'
-    assert res.output[-1][1] == 'start + 0x1'
-    target.process.Destroy()
+    def test_dereference():
+        process = target.LaunchSimple(None, None, os.getcwd())
+        res = client.perform_request('registers')
+        res = client.perform_request('dereference', pointer=res.registers['rsp'])
+        assert res.status == 'success'
+        assert res.output[0][0] == 'pointer'
+        assert res.output[-1][1] == 'start + 0x1'
+        target.process.Destroy()
 
-def test_breakpoints():
-    process = target.LaunchSimple(None, None, os.getcwd())
-    res = client.perform_request('breakpoints')
-    assert res.status == 'success'
-    assert len(res.breakpoints) == 1
-    assert res.breakpoints[0]['one_shot'] == False
-    assert res.breakpoints[0]['enabled']
-    assert res.breakpoints[0]['id'] == 1
-    assert res.breakpoints[0]['hit_count'] > 0
-    assert res.breakpoints[0]['locations'][0]['name'] == "inferior`main"
-    target.process.Destroy()
+    def test_breakpoints():
+        process = target.LaunchSimple(None, None, os.getcwd())
+        res = client.perform_request('breakpoints')
+        assert res.status == 'success'
+        assert len(res.breakpoints) == 1
+        assert res.breakpoints[0]['one_shot'] == False
+        assert res.breakpoints[0]['enabled']
+        assert res.breakpoints[0]['id'] == 1
+        assert res.breakpoints[0]['hit_count'] > 0
+        assert res.breakpoints[0]['locations'][0]['name'] == "inferior`main"
+        target.process.Destroy()
+except:
+    print("No LLDB")

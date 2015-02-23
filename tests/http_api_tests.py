@@ -24,7 +24,7 @@ import platform
 if platform.system() == 'Darwin':
     sys.path.append("/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Resources/Python")
 
-from common import *
+from .common import *
 
 log = logging.getLogger('tests')
 
@@ -55,7 +55,7 @@ def setup():
         }
     }
     pm = PluginManager()
-    plugin = pm.debugger_plugin_for_host('lldb')
+    plugin = pm.debugger_plugin_for_host('mock')
     adaptor = plugin.adaptor_class()
     voltron.debugger = adaptor
 
