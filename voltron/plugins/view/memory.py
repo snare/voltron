@@ -1,5 +1,6 @@
 import logging
 import struct
+import six
 
 from voltron.view import *
 from voltron.plugin import *
@@ -64,7 +65,7 @@ class MemoryView (TerminalView):
         elif self.args.register:
             res = self.client.perform_request('registers', registers=[self.args.register])
             if res and res.is_success:
-                addr = res.registers.values()[0]
+                addr = list(res.registers.values())[0]
 
         # read memory
         if addr != None:
@@ -80,16 +81,16 @@ class MemoryView (TerminalView):
                         fmt = ('<' if target['byte_order'] == 'little' else '>') + \
                                 {2: 'H', 4: 'L', 8: 'Q'}[target['addr_size']]
                         pointer = list(struct.unpack(fmt, chunk))[0]
-                        memory_str = ' '.join(["%02X" % ord(x) for x in chunk])
+                        memory_str = ' '.join(["%02X" % x for x in six.iterbytes(chunk)])
                         deref_res = self.client.perform_request('dereference', pointer=pointer)
                         if deref_res.is_success:
                             info_str = self.format_deref(deref_res.output)
                         else:
                             info_str = ''
                     else:
-                        memory_str = ' '.join(["%02X" % ord(x) for x in chunk])
+                        memory_str = ' '.join(["%02X" % x for x in six.iterbytes(chunk)])
                         info_str = ''
-                    ascii_str = ''.join(["%s" % ((ord(x) <= 127 and self.printable_filter[ord(x)]) or '.') for x in chunk])
+                    ascii_str = ''.join(["%s" % ((x <= 127 and self.printable_filter[x]) or '.') for x in six.iterbytes(chunk)])
                     divider = self.colour('|', self.config.format.divider_colour)
                     lines.append('{}: {} {} {} {} {}'.format(addr_str, memory_str, divider, ascii_str, divider, info_str))
 

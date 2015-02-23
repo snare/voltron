@@ -362,7 +362,7 @@ class RegisterView (TerminalView):
                         if self.last_regs == None or self.last_regs != None and val != self.last_regs[reg]:
                             colour = fmt['value_colour_mod']
                         formatted_reg = val
-                        if fmt['value_format'] != None and type(formatted_reg) not in [str, unicode]:
+                        if fmt['value_format'] != None and type(formatted_reg) != str:
                             formatted_reg = fmt['value_format'].format(formatted_reg)
                         if fmt['value_func'] != None:
                             if type(fmt['value_func']) == str:

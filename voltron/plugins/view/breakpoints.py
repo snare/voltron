@@ -17,7 +17,7 @@ class BreakpointsView (TerminalView):
         req = api_request('registers', registers=['pc'])
         res = self.client.send_request(req)
         if res and res.is_success and len(res.registers) > 0:
-            pc = res.registers[res.registers.keys()[0]]
+            pc = res.registers[list(res.registers.keys())[0]]
         else:
             pc = -1
 
