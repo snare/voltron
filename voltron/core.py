@@ -1,4 +1,5 @@
 import os
+import sys
 import errno
 import logging
 import socket
@@ -18,6 +19,14 @@ from .api import *
 log = logging.getLogger("core")
 
 READ_MAX = 0xFFFF
+
+if sys.version_info.major == 2:
+    STRTYPES = (str, unicode)
+elif sys.version_info.major == 3:
+    STRTYPES = (str, bytes)
+else:
+    raise RuntimeError("Not sure what strings look like on python %d" %
+                       sys.version_info.major)
 
 class Server(object):
     """
@@ -239,7 +248,7 @@ class ServerThread(threading.Thread):
         log.debug("Exiting server thread")
 
     def cleanup_socket(self):
-        if type(self.sock) == str:
+        if isinstance(self.sock, STRTYPES):
             try:
                 os.remove(self.sock)
             except:
@@ -476,9 +485,9 @@ class ServerSocket(BaseSocket):
     Server socket for accepting new client connections.
     """
     def __init__(self, sock):
-        if type(sock) == str:
+        if isinstance(sock, STRTYPES):
             self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        elif type(sock) == tuple:
+        elif isinstance(sock, tuple):
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.bind(sock)
         self.sock.listen(1)

@@ -1,3 +1,5 @@
+from numbers import Number
+from voltron.core import STRTYPES
 from voltron.view import *
 from voltron.plugin import *
 from voltron.api import *
@@ -352,7 +354,7 @@ class RegisterView (TerminalView):
 
                     # Format the value
                     val = data[reg]
-                    if type(val) == str:
+                    if isinstance(val, STRTYPES):
                         temp = fmt['value_format'].format(0)
                         if len(val) < len(temp):
                             val += (len(temp) - len(val))*' '
@@ -362,10 +364,10 @@ class RegisterView (TerminalView):
                         if self.last_regs == None or self.last_regs != None and val != self.last_regs[reg]:
                             colour = fmt['value_colour_mod']
                         formatted_reg = val
-                        if fmt['value_format'] != None and type(formatted_reg) != str:
+                        if fmt['value_format'] != None and isinstance(formatted_reg, Number):
                             formatted_reg = fmt['value_format'].format(formatted_reg)
                         if fmt['value_func'] != None:
-                            if type(fmt['value_func']) == str:
+                            if isinstance(fmt['value_func'], STRTYPES):
                                 formatted_reg = eval(fmt['value_func'])(formatted_reg)
                             else:
                                 formatted_reg = fmt['value_func'](formatted_reg)
