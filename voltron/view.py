@@ -168,9 +168,6 @@ class VoltronView (object):
         if self.args.footer != None:
             self.config.footer.show = self.args.footer
 
-        # Initialise window
-        self.init_window()
-
         # Setup a SIGWINCH handler so we do reasonable things on resize
         signal.signal(signal.SIGWINCH, self.sigwinch_handler)
 
@@ -242,6 +239,11 @@ class VoltronView (object):
 
 
 class TerminalView (VoltronView):
+    def __init__(self, *a, **kw):
+        # Initialise window
+        self.init_window()
+        super(TerminalView, self).__init__(*a, **kw)
+
     def init_window(self):
         # Hide cursor
         os.system('tput civis')
