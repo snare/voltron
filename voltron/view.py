@@ -197,6 +197,9 @@ class VoltronView (object):
     def setup(self):
         log.debug('Base view class setup')
 
+    def cleanup(self):
+        log.debug('Base view class cleanup')
+
     def run(self):
         res = None
         os.system('clear')
