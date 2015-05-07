@@ -49,7 +49,7 @@ class Server(object):
         listen = voltron.config['server']['listen']
         if listen['domain']:
             log.debug("Starting server thread for domain socket")
-            self.d_thread = ServerThread(self, self.clients, self.d_exit_out, voltron.env['sock'])
+            self.d_thread = ServerThread(self, self.clients, self.d_exit_out, voltron.env.voltron_dir.sock.path)
             self.d_thread.start()
         if listen['tcp']:
             log.debug("Starting server thread for TCP socket")
@@ -358,7 +358,7 @@ class Client(object):
         """
         try:
             self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            self.sock.connect(voltron.env['sock'])
+            self.sock.connect(voltron.env.voltron_dir.sock.path)
         except Exception as e:
             self.sock = None
             raise

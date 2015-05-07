@@ -48,7 +48,7 @@ class Console(object):
         # set up line editor
         completer.completer = self.complete
         completer.parse_and_bind('TAB: complete')
-        rl.history.read_file(voltron.env['history'])
+        rl.history.read_file(voltron.env.voltron_dir.history.path)
         self.lastbuf = None
 
         # set up plugin manager
@@ -93,7 +93,7 @@ class Console(object):
             except EOFError:
                 break
             self.handle_command(line)
-            rl.readline.write_history_file(voltron.env['history'])
+            rl.readline.write_history_file(voltron.env.voltron_dir.history.path)
 
     def print_banner(self):
         d = {'version': VERSION, 'lldb_version': self.debugger.GetVersionString()}

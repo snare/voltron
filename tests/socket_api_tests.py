@@ -70,7 +70,7 @@ def teardown():
 
 def make_direct_request(request):
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    sock.connect(voltron.env['sock'])
+    sock.connect(voltron.env.voltron_dir.sock.path)
     sock.send(request)
     data = sock.recv(0xFFFF)
     return data

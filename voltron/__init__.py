@@ -5,7 +5,7 @@ import logging.config
 import voltron
 from .main import main
 
-from scruffy import Environment
+from scruffy import Environment, Directory, File, ConfigFile, PluginDirectory, PackageDirectory
 
 # scruffy environment containing config, plugins, etc
 env = None
@@ -21,46 +21,16 @@ loaded = False
 
 def setup_env():
     global env, config
-    env = Environment({
-        'dir':  {
-            'path': '~/.voltron',
-            'create': True,
-            'mode': 448 # 0700
-        },
-        'files': {
-            'config': {
-                'type':     'config',
-                'default':  {
-                    'path':     'config/default.cfg',
-                    'rel_to':   'pkg',
-                    'pkg':      'voltron'
-                },
-                'read':     True
-            },
-            'sock': {
-                'name':     '{basename}.sock',
-                'type':     'raw',
-                'var':      'VOLTRON_SOCKET'
-            },
-            'history': {
-                'type':     'raw',
-                'var':      'VOLTRON_HISTORY'
-            },
-            'local_plugins': {
-                'type':     'plugin_dir',
-                'name':     'plugins',
-                'create':   True
-            },
-            'internal_plugins': {
-                'type':     'plugin_dir',
-                'name':     'plugins',
-                'rel_to':   'pkg',
-                'pkg':      'voltron'
-            }
-        },
-        'basename': 'voltron'
-    })
-    config = env['config']
+    env = Environment(setup_logging=False,
+        voltron_dir=Directory('~/.voltron', create=True,
+            config=ConfigFile('config', defaults=File('config/default.cfg', parent=PackageDirectory())),
+            sock=File('sock'),
+            history=File('history'),
+            user_plugins=PluginDirectory('plugins')
+        ),
+        pkg_plugins=PluginDirectory('plugins', parent=PackageDirectory())
+    )
+    config = env.config
 
     # create shared instance of plugin manager
     voltron.plugin.pm = voltron.plugin.PluginManager()
@@ -107,7 +77,7 @@ def setup_logging(logname=None):
         else:
             filename = 'voltron.log'
         for name in LOG_CONFIG['loggers']:
-            h = logging.FileHandler(voltron.env.path_to(filename), delay=True)
+            h = logging.FileHandler(voltron.env.voltron_dir.path_to(filename), delay=True)
             h.setFormatter(logging.Formatter(fmt="%(asctime)s %(levelname)-7s %(filename)12s:%(lineno)-4s %(funcName)20s -- %(message)s"))
             logging.getLogger(name).addHandler(h)
 
