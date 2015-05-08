@@ -23,10 +23,12 @@ def main(debugger=None):
     parser = argparse.ArgumentParser()
     parser.register('action', 'parsers', AliasedSubParsersAction)
     parser.add_argument('--debug', '-d', action='store_true', help='print debug logging')
-    top_level_sp = parser.add_subparsers(title='subcommands', description='valid subcommands')
+    top_level_sp = parser.add_subparsers(title='subcommands', description='valid subcommands', dest='subcommand')
+    top_level_sp.required = True
     view_parser = top_level_sp.add_parser('view', help='display a view', aliases=('v'))
     view_parser.register('action', 'parsers', AliasedSubParsersAction)
-    view_sp = view_parser.add_subparsers(title='views', description='valid view types', help='additional help')
+    view_sp = view_parser.add_subparsers(title='views', description='valid view types', help='additional help', dest='view')
+    view_sp.required = True
 
     # Set up a subcommand for each view class
     pm = PluginManager()
