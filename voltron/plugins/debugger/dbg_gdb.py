@@ -342,6 +342,7 @@ if HAVE_GDB:
             """
             breakpoints = []
 
+            # hahahahaha GDB sucks so much
             for b in gdb.breakpoints():
                 try:
                     if b.location.startswith('*'):
