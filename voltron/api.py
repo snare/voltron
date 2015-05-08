@@ -173,7 +173,7 @@ class APIMessage(object):
             if hasattr(self, field):
                 # base64 encode the field for transmission if necessary
                 if field in self._encode_fields:
-                    d['data'][field] = str(base64.b64encode(bytes(getattr(self, field))))
+                    d['data'][field] = base64.b64encode(bytes(getattr(self, field))).decode('UTF-8')
                 else:
                     d['data'][field] = getattr(self, field)
 
