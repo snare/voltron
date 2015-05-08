@@ -433,12 +433,18 @@ if HAVE_GDB:
                 vals['rflags'] = 'N/A'
 
             # Get SSE registers
-            sse = self.get_registers_sse(16)
-            vals = dict(list(vals.items()) + list(sse.items()))
+            try:
+                sse = self.get_registers_sse(16)
+                vals = dict(list(vals.items()) + list(sse.items()))
+            except gdb.error:
+                log.exception("Failed to get SSE registers")
 
             # Get FPU registers
-            fpu = self.get_registers_fpu()
-            vals = dict(list(vals.items()) + list(fpu.items()))
+            try:
+                fpu = self.get_registers_fpu()
+                vals = dict(list(vals.items()) + list(fpu.items()))
+            except gdb.error:
+                log.exception("Failed to get FPU registers")
 
             return vals
 
@@ -481,7 +487,7 @@ if HAVE_GDB:
             # the old way of doing this randomly crashed gdb or threw a python exception
             regs = {}
             for line in gdb.execute('info all-registers', to_string=True).split('\n'):
-                m = re.match('^(xmm\d+)\s.*uint128 = (0x[0-9a-f]+)\}', line)
+                m = re.match('^([xyz]mm\d+)\s.*uint128 = (0x[0-9a-f]+)\}', line)
                 if m:
                     regs[m.group(1)] = int(m.group(2), 16)
             return regs
