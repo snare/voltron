@@ -53,6 +53,3 @@ def main(debugger=None):
     except KeyboardInterrupt:
         suppress_exit_log = True
     inst.cleanup()
-
-if __name__ == "__main__":
-    main()
