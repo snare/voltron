@@ -1,7 +1,11 @@
 from voltron.view import *
 from voltron.plugin import *
 from voltron.api import *
-from voltron.lexers import *
+try:
+    from voltron.lexers import *
+    have_pygments = True
+except ImportError:
+    have_pygments = False
 
 class DisasmView (TerminalView):
     def render(self):

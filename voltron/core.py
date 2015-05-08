@@ -512,7 +512,7 @@ class ClientSocket(BaseSocket):
 
     def recv_request(self):
         # read request from socket
-        data = self.sock.recv(READ_MAX).strip()
+        data = self.sock.recv(READ_MAX).decode('UTF-8').strip()
 
         log.debug("Received request client -> server: {}".format(data))
 

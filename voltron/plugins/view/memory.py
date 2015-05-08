@@ -80,13 +80,13 @@ class MemoryView (TerminalView):
                     if self.args.deref:
                         fmt = ('<' if target['byte_order'] == 'little' else '>') + \
                                 {2: 'H', 4: 'L', 8: 'Q'}[target['addr_size']]
-                        pointer = list(struct.unpack(fmt, chunk))[0]
-                        memory_str = ' '.join(["%02X" % x for x in six.iterbytes(chunk)])
-                        deref_res = self.client.perform_request('dereference', pointer=pointer)
-                        if deref_res.is_success:
-                            info_str = self.format_deref(deref_res.output)
-                        else:
-                            info_str = ''
+                        info_str = ''
+                        if len(chunk) == target['addr_size']:
+                            pointer = list(struct.unpack(fmt, chunk))[0]
+                            memory_str = ' '.join(["%02X" % x for x in six.iterbytes(chunk)])
+                            deref_res = self.client.perform_request('dereference', pointer=pointer)
+                            if deref_res.is_success:
+                                info_str = self.format_deref(deref_res.output)
                     else:
                         memory_str = ' '.join(["%02X" % x for x in six.iterbytes(chunk)])
                         info_str = ''

@@ -80,9 +80,9 @@ if HAVE_GDB:
             d["state"] = self._state()
 
             # get inferior file (doesn't seem to be available through the API)
-            lines = filter(lambda x: x != '', gdb.execute('info inferiors', to_string=True).split('\n'))
+            lines = list(filter(lambda x: x != '', gdb.execute('info inferiors', to_string=True).split('\n')))
             if len(lines) > 1:
-                info = filter(lambda x: '*' in x[0], map(lambda x: x.split(), lines[1:]))
+                info = list(filter(lambda x: '*' in x[0], map(lambda x: x.split(), lines[1:])))
                 d["file"] = info[0][-1]
             else:
                 log.debug("No inferiors in `info inferiors`")
@@ -210,7 +210,7 @@ if HAVE_GDB:
             """
             # read memory
             log.debug('Reading 0x{:x} bytes of memory at 0x{:x}'.format(length, address))
-            memory = str(gdb.selected_inferior().read_memory(address, length))
+            memory = bytes(gdb.selected_inferior().read_memory(address, length))
             return memory
 
         @validate_busy
@@ -279,17 +279,18 @@ if HAVE_GDB:
 
             # get some info for the last pointer
             # first try to resolve a symbol context for the address
-            p, addr = chain[-1]
-            output = gdb.execute('info symbol {}'.format(addr), to_string=True)
-            if 'No symbol matches' not in output:
-                chain.append(('symbol', output))
-                log.debug("symbol context: {}".format(str(chain[-1])))
-            else:
-                log.debug("no symbol context")
-                mem = gdb.selected_inferior().read_memory(addr, 1)
-                if ord(mem[0]) < 127:
-                    output = gdb.execute('x/s 0x{:X}'.format(addr), to_string=True)
-                    chain.append(('string', '"'.join(output.split('"')[1:-1])))
+            if len(chain):
+                p, addr = chain[-1]
+                output = gdb.execute('info symbol {}'.format(addr), to_string=True)
+                if 'No symbol matches' not in output:
+                    chain.append(('symbol', output))
+                    log.debug("symbol context: {}".format(str(chain[-1])))
+                else:
+                    log.debug("no symbol context")
+                    mem = gdb.selected_inferior().read_memory(addr, 1)
+                    if ord(mem[0]) < 127:
+                        output = gdb.execute('x/s 0x{:X}'.format(addr), to_string=True)
+                        chain.append(('string', '"'.join(output.split('"')[1:-1])))
 
             log.debug("chain: {}".format(chain))
             return chain
@@ -503,3 +504,4 @@ if HAVE_GDB:
     class GDBAdaptorPlugin(DebuggerAdaptorPlugin):
         host = 'gdb'
         adaptor_class = GDBAdaptor
+
