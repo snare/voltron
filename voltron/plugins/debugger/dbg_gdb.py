@@ -275,6 +275,7 @@ if HAVE_GDB:
                     chain.append(('pointer', addr))
                     addr = ptr
                 except gdb.MemoryError:
+                    log.exception("Dereferencing pointer 0x{:X}".format(addr))
                     break
 
             # get some info for the last pointer
