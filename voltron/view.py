@@ -136,9 +136,9 @@ class VoltronView (object):
     @classmethod
     def configure_subparser(cls, subparsers):
         if hasattr(cls._plugin, 'aliases'):
-            sp = subparsers.add_parser(cls.view_type, aliases=cls._plugin.aliases)
+            sp = subparsers.add_parser(cls.view_type, aliases=cls._plugin.aliases, help='{} view'.format(cls.view_type))
         else:
-            sp = subparsers.add_parser(cls.view_type)
+            sp = subparsers.add_parser(cls.view_type, help='{} view'.format(cls.view_type))
         VoltronView.add_generic_arguments(sp)
         sp.set_defaults(func=cls)
 
