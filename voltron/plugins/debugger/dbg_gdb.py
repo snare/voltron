@@ -319,6 +319,57 @@ if HAVE_GDB:
             flavor = re.search('flavor is "(.*)"', gdb.execute("show disassembly-flavor", to_string=True)).group(1)
             return flavor
 
+        @lock_host
+        def breakpoints(self, target_id=0):
+            """
+            Return a list of breakpoints.
+
+            Returns data in the following structure:
+            [
+                {
+                    "id":           1,
+                    "enabled":      True,
+                    "one_shot":     False,
+                    "hit_count":    5,
+                    "locations": [
+                        {
+                            "address":  0x100000cf0,
+                            "name":     'main'
+                        }
+                    ]
+                }
+            ]
+            """
+            breakpoints = []
+
+            for b in gdb.breakpoints():
+                try:
+                    if b.location.startswith('*'):
+                        addr = int(b.location[1:], 16)
+                    else:
+                        output = gdb.execute('info addr {}'.format(b.location), to_string=True)
+                        m = re.match('.*is at ([^ ]*) .*', output)
+                        if not m:
+                            m = re.match('.*at address ([^ ]*)\..*', output)
+                        if m:
+                            addr = int(m.group(1), 16)
+                        else:
+                            addr = 0
+                except:
+                    addr = 0
+
+                breakpoints.append({
+                    'id':           b.number,
+                    'enabled':      b.enabled,
+                    'one_shot':     b.temporary,
+                    'hit_count':    b.hit_count,
+                    'locations':    [{
+                        "address":  addr,
+                        "name":     b.location
+                    }]
+                })
+
+            return breakpoints
 
         #
         # Private functions
