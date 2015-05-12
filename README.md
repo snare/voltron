@@ -16,11 +16,11 @@ The following architectures are supported:
 
 |         | lldb | gdb | vdb |
 |---------|------|-----|-----|
-| x86     | √    | √   | √   |
-| x86_64  | √    | √   | √   |
-| arm     | √    | √   | √   |
-| arm64   | √    | x   | x   |
-| powerpc | x    | √   | x   |
+| x86     | ✓    | ✓   | ✓   |
+| x86_64  | ✓    | ✓   | ✓   |
+| arm     | ✓    | ✓   | ✓   |
+| arm64   | ✓    | x   | x   |
+| powerpc | x    | ✓   | x   |
 
 Installation
 ------------
