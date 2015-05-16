@@ -183,12 +183,12 @@ try:
 
             def register_hooks(self):
                 gdb.events.stop.connect(self.stop_handler)
-                gdb.events.exited.connect(self.exit_handler)
+                gdb.events.exited.connect(self.stop_and_exit_handler)
                 gdb.events.cont.connect(self.cont_handler)
 
             def unregister_hooks(self):
                 gdb.events.stop.disconnect(self.stop_handler)
-                gdb.events.exited.disconnect(self.exit_handler)
+                gdb.events.exited.disconnect(self.stop_and_exit_handler)
                 gdb.events.cont.disconnect(self.cont_handler)
 
             def stop_handler(self, event):
@@ -198,6 +198,11 @@ try:
             def exit_handler(self, event):
                 log.debug('Inferior exited')
                 self.server.stop()
+                
+            def stop_and_exit_handler(self, event):
+                log.debug('Infreior stopped and exited in one handle')
+                self.stop_handler(event)
+                self.exit_handler(event)
 
             def cont_handler(self, event):
                 log.debug('Inferior continued')
