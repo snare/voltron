@@ -208,6 +208,7 @@ try:
                 log.debug('Inferior continued')
                 if self.server == None:
                     self.server = Server()
+                if self.server.is_running == False
                     self.server.start()
 
 
