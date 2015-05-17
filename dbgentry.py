@@ -206,7 +206,7 @@ try:
 
             def cont_handler(self, event):
                 log.debug('Inferior continued')
-                if self.server == None:
+                if self.server == None or self.server.is_running == False:
                     self.server = Server()
                     self.server.start()
 

@@ -45,6 +45,8 @@ class Server(object):
         self.d_exit_out, self.d_exit_in = os.pipe()
         self.t_exit_out, self.t_exit_in = os.pipe()
 
+        self.is_running = False
+
     def start(self):
         listen = voltron.config['server']['listen']
         if listen['domain']:
@@ -61,6 +63,7 @@ class Server(object):
             voltron.http.app.server = self
             self.h_thread = HTTPServerThread(self, self.clients, host, port)
             self.h_thread.start()
+        self.is_running = True
 
     def stop(self):
         # terminate the server thread by writing some data to the exit pipe
@@ -76,6 +79,7 @@ class Server(object):
         if self.h_thread:
             log.debug("Stopping HTTP server")
             self.h_thread.stop()
+        self.is_running = False
         log.debug("Finished stopping server threads")
 
     def client_summary(self):
