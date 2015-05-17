@@ -200,7 +200,7 @@ try:
                 self.server.stop()
                 
             def stop_and_exit_handler(self, event):
-                log.debug('Infreior stopped and exited in one handle')
+                log.debug('Inferior stopped and exited')
                 self.stop_handler(event)
                 self.exit_handler(event)
 
