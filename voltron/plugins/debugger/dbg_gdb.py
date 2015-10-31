@@ -471,12 +471,18 @@ if HAVE_GDB:
                 vals['eflags'] = 'N/A'
 
             # Get SSE registers
-            sse = self.get_registers_sse(8)
-            vals = dict(list(vals.items()) + list(sse.items()))
+            try:
+                sse = self.get_registers_sse(8)
+                vals = dict(list(vals.items()) + list(sse.items()))
+            except gdb.error:
+                log.exception("Failed to get SSE registers")
 
             # Get FPU registers
-            fpu = self.get_registers_fpu()
-            vals = dict(list(vals.items()) + list(fpu.items()))
+            try:
+                fpu = self.get_registers_fpu()
+                vals = dict(list(vals.items()) + list(fpu.items()))
+            except gdb.error:
+                log.exception("Failed to get SSE registers")
 
             return vals
 
