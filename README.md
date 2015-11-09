@@ -34,7 +34,7 @@ This will install the `voltron` egg wherever that happens on your system, and an
 Quick Start
 -----------
 
-1. Configure your debugger to load Voltron when it starts by sourcing the `dbgentry.py` entry point script. The full path will be inside the `voltron` egg. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron-0.1-py2.7.egg/dbgentry.py*.
+1. Configure your debugger to load Voltron when it starts by sourcing the `dbgentry.py` entry point script. The full path will be inside the `voltron` package. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron/dbgentry.py*. You can of course move it.
 
     For LLDB:
 
