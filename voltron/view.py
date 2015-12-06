@@ -159,7 +159,7 @@ class VoltronView (object):
 
     def __init__(self, args={}, loaded_config={}):
         log.debug('Loading view: ' + self.__class__.__name__)
-        self.client = Client(*voltron.config.server.listen.http)
+        self.client = Client(url=voltron.config.view.api_url)
         self.pm = None
         self.args = args
         self.loaded_config = loaded_config

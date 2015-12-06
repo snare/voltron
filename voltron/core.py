@@ -8,10 +8,14 @@ import threading
 import logging
 import logging.config
 import json
-import cherrypy
 import requests
 import requests_unixsocket
 import threading
+import os.path
+
+from six.moves.socketserver import UnixStreamServer, ThreadingMixIn
+from six.moves.BaseHTTPServer import HTTPServer
+from werkzeug.serving import WSGIRequestHandler, BaseWSGIServer, ThreadedWSGIServer
 
 from flask import Flask, request, Response
 
@@ -40,23 +44,50 @@ class Server(object):
     handling requests forwarded from that thread.
     """
     def __init__(self):
-        self.thread = None
+        self.threads = []
+        self.listeners = []
         self.is_running = False
         self.queue = []
 
     def start(self):
-        listen = voltron.config['server']['listen']
-        if voltron.config['server']['listen']['http']:
-            log.debug("Starting server thread for HTTP server")
-            (host, port) = tuple(listen['http'])
-            self.thread = HTTPServerThread(self, host, port)
-            self.thread.start()
+        """
+        Start the server.
+        """
+        app = VoltronFlaskApp('voltron',
+                              template_folder='web/templates',
+                              static_folder='web/static',
+                              server=self)
+
+        def run_listener(name, cls, arg):
+            log.debug("Starting listener for {} socket on {}".format(name, str(arg)))
+            s = cls(*arg)
+            t = threading.Thread(target=s.serve_forever)
+            t.start()
+            self.threads.append(t)
+            self.listeners.append(s)
+
+        if voltron.config.server.listen.tcp:
+            run_listener('tcp', ThreadedWSGIServer, list(voltron.config.server.listen.tcp) + [app])
+
+        if voltron.config.server.listen.domain:
+            path = os.path.expanduser(str(voltron.config.server.listen.domain))
+            try:
+                os.unlink(path)
+            except:
+                pass
+            run_listener('domain', ThreadedUnixWSGIServer, [path, app])
+
         self.is_running = True
 
     def stop(self):
-        if self.thread:
-            log.debug("Stopping HTTP server")
-            self.thread.stop()
+        """
+        Stop the server.
+        """
+        log.debug("Stopping listeners")
+        for s in self.listeners:
+            s.shutdown()
+        for t in self.threads:
+            t.join()
         self.is_running = False
 
     def handle_request(self, data):
@@ -145,6 +176,38 @@ class Server(object):
         return res
 
 
+class UnixWSGIServer(UnixStreamServer, BaseWSGIServer):
+    """
+    A subclass of BaseWSGIServer that does sane things with Unix domain sockets.
+    """
+    def __init__(self, sockfile=None, app=None):
+        self.address_family = socket.AF_UNIX
+        UnixStreamServer.__init__(self, sockfile, UnixWSGIRequestHandler)
+        self.app = app
+        self.passthrough_errors = None
+        self.shutdown_signal = False
+        self.ssl_context = None
+
+
+class UnixWSGIRequestHandler(WSGIRequestHandler):
+    """
+    A WSGIRequestHandler that does sane things with Unix domain sockets.
+    """
+    def make_environ(self, *args, **kwargs):
+        self.client_address = ('127.0.0.1', 0)
+        return super(UnixWSGIRequestHandler, self).make_environ(*args, **kwargs)
+
+
+class ThreadedUnixWSGIServer(ThreadingMixIn, UnixWSGIServer):
+    """
+    Threaded HTTP server that works over Unix domain sockets.
+
+    Note: this intentionally does not inherit from HTTPServer. Go look at the
+    source and you'll see why.
+    """
+    multithread = True
+
+
 class VoltronFlaskApp(Flask):
     """
     A Voltron Flask app.
@@ -155,107 +218,19 @@ class VoltronFlaskApp(Flask):
             del kwargs['server']
         super(VoltronFlaskApp, self).__init__(*args, **kwargs)
 
-
-class HTTPServerThread(threading.Thread):
-    """
-    Background thread to run the HTTP server.
-    """
-    def __init__(self, server, host="127.0.0.1", port=5555):
-        threading.Thread.__init__(self)
-        self.server = server
-        self.host = host
-        self.port = port
-
-    def run(self):
-        # configure the cherrypy server
-        cherrypy.config.update({
-            'log.screen': False,
-            'server.socket_port': self.port,
-            'server.socket_host': str(self.host)
-        })
-
-        # mount the main static dir
-        cherrypy.tree.mount(None, '/static', {'/' : {
-            'tools.staticdir.dir': os.path.join(os.path.dirname(__file__), 'web/static'),
-            'tools.staticdir.on': True,
-            'tools.staticdir.index': 'index.html'
-        }})
-
-        # create the main flask app
-        app = VoltronFlaskApp('voltron', template_folder='web/templates', server=self.server)
-
         def handle_post():
-            """
-            Requests  are proxied straight through to the server's handle_request()
-            method. The entire request body is treated as a JSON request and passed
-            through unmodified.
-
-            e.g.
-            POST /api/request HTTP/1.1
-
-            {"type": "request", "request": "version"}
-            """
-            res = app.server.handle_request(request.data.decode('UTF-8'))
+            res = self.server.handle_request(request.data.decode('UTF-8'))
             return Response(str(res), status=200, mimetype='application/json')
 
         def handle_get():
-            """
-            Handle an incoming HTTP API request via the GET method.
-
-            Query string parameters from the request are passed through as kwargs to
-            the api_request() function, which will create an API request of the
-            specified type with those args, then the resultant request is dispatched
-            and the result returned.
-
-            e.g. GET /api/execute_command?command=version HTTP/1.1
-
-            Routes to this method are registered by register_http_api()
-            """
-            res = app.server.handle_request(api_request(request.path.split('/')[-1], **request.args.to_dict()))
+            res = self.server.handle_request(str(api_request(request.path.split('/')[-1], **request.args.to_dict())))
             return Response(str(res), status=200, mimetype='application/json')
 
-        # set up request routing, etc and graft it onto the cherry tree
-        handle_post.methods = ['POST']
-        app.add_url_rule('/api/request', 'request', handle_post)
+        handle_post.methods = ["POST"]
+        self.add_url_rule('/api/request', 'request', handle_post)
+
         for plugin in voltron.plugin.pm.api_plugins:
-            app.add_url_rule('/api/{}'.format(plugin), plugin, handle_get)
-        cherrypy.tree.graft(app, '/')
-
-        # mount web plugins
-        plugins = voltron.plugin.pm.web_plugins
-        for name in plugins:
-            plugin_root = '/view/{}'.format(name)
-            static_path = '/view/{}/static'.format(name)
-
-            # mount app
-            if plugins[name].app:
-                # if there's an app object, mount it at the root
-                log.debug("Mounting app for web plugin '{}' on {}".format(name, plugin_root))
-                plugins[name].app.server = self.server
-                cherrypy.tree.graft(plugins[name].app, plugin_root)
-            else:
-                # if there's no plugin app, mount the static dir at the plugin's root instead
-                # neater for static-only apps (ie. javascript-based)
-                static_path = plugin_root
-
-            # mount static directory
-            directory = os.path.join(plugins[name]._dir, 'static')
-            if os.path.isdir(directory):
-                log.debug("Mounting static directory for web plugin '{}' on {}: {}".format(name, static_path, directory))
-                cherrypy.tree.mount(None, static_path, {'/' : {
-                    'tools.staticdir.dir': directory,
-                    'tools.staticdir.on': True,
-                    'tools.staticdir.index': 'index.html'
-                }})
-
-
-        # make with the serving
-        cherrypy.engine.start()
-        cherrypy.engine.block()
-
-    def stop(self):
-        cherrypy.engine.exit()
-        log.debug("Killed cherrypy")
+            self.add_url_rule('/api/{}'.format(plugin), plugin, handle_get)
 
 
 class ClientThread(threading.Thread):
@@ -276,15 +251,18 @@ class Client(object):
     """
     Used by a client (ie. a view) to communicate with the server.
     """
-    def __init__(self, host='127.0.0.1', port=5555, sockfile=None):
+    def __init__(self, host='127.0.0.1', port=5555, sockfile=None, url=None):
         """
         Initialise a new client
         """
         self.session = requests_unixsocket.Session()
-        if sockfile:
+        if url:
+            self.url = url
+        elif sockfile:
             self.url = 'http+unix://{}/api/request'.format(sockfile.replace('/', '%2F'))
         else:
             self.url = 'http://{}:{}/api/request'.format(host, port)
+        self.url = self.url.replace('~', os.path.expanduser('~').replace('/', '%2f'))
 
     def send_request(self, request):
         """
@@ -345,10 +323,6 @@ class Client(object):
         for t in threads:
             t.join()
         return [t.response for t in threads]
-        # reqs = [gevent.spawn(self.send_request, req) for req in args]
-        # print "joining"
-        # gevent.joinall(reqs)
-        # return [req.value for req in reqs]
 
     def create_request(self, request_type, *args, **kwargs):
         """

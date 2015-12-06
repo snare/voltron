@@ -50,7 +50,6 @@ def setup():
     voltron.config['server'] = {
         "listen": {
             "domain":   True,
-            "tcp":      ["127.0.0.1", 4444],
             "http":     ["127.0.0.1", 5555]
         }
     }

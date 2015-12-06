@@ -24,7 +24,7 @@ def setup_env():
     env = Environment(setup_logging=False,
         voltron_dir=Directory('~/.voltron', create=True,
             config=ConfigFile('config', defaults=File('config/default.cfg', parent=PackageDirectory()), apply_env=True),
-            sock=File('{config:server.listen.sockfile}'),
+            sock=File('{config:server.listen.domain}'),
             history=File('history'),
             user_plugins=PluginDirectory('plugins')
         ),
