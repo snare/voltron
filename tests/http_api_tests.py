@@ -130,12 +130,6 @@ def test_version():
     assert res.api_version == 1.0
     assert res.host_version == 'lldb-something'
 
-def test_wait():
-    data = requests.get('http://localhost:5555/api/wait?timeout=2').text
-    res = APIResponse(data=data)
-    assert res.is_error
-    assert res.code == 0x1004
-
 def test_bad_json():
     data = requests.post('http://localhost:5555/api/request', data='xxx').text
     res = APIResponse(data=data)
@@ -147,18 +141,6 @@ def test_bad_request():
     res = APIResponse(data=data)
     assert res.is_error
     assert res.code == 0x1002
-
-def test_host_not_supported():
-    data = requests.post('http://localhost:5555/api/request', data='{"type":"request","request":"host_not_supported"}').text
-    res = APIResponse(data=data)
-    assert res.is_error
-    assert res.code == 0x1003
-
-def test_host_not_supported():
-    data = requests.post('http://localhost:5555/api/request', data='{"type":"request","request":"host_not_supported"}').text
-    res = APIResponse(data=data)
-    assert res.is_error
-    assert res.code == 0x1003
 
 def test_breakpoints():
     data = requests.get('http://localhost:5555/api/breakpoints').text

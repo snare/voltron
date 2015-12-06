@@ -16,8 +16,6 @@ class APIStateRequest(APIRequest):
             "target_id": 0
         }
     }
-
-    This request will return immediately.
     """
     _fields = {'target_id': False}
 

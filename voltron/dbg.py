@@ -1,6 +1,14 @@
 from voltron.api import *
 from voltron.plugin import *
 
+
+class InvalidPointerError(Exception):
+    """
+    Raised when attempting to dereference an invalid pointer.
+    """
+    pass
+
+
 def validate_target(func, *args, **kwargs):
     """
     A decorator that ensures that the specified target_id exists and
@@ -149,3 +157,14 @@ class DebuggerAdaptor(object):
 
     def register_command_plugin(self, name, cls):
         pass
+
+    def capabilities(self):
+        """
+        Return a list of the debugger's capabilities.
+
+        Thus far only the 'async' capability is supported. This indicates
+        that the debugger host can be queried from a background thread,
+        and that views can use non-blocking API requests without queueing
+        requests to be dispatched next time the debugger stops.
+        """
+        return []

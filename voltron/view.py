@@ -122,8 +122,23 @@ class AnsiString(object):
 class VoltronView (object):
     """
     Parent class for all views.
+
+    Views may or may not support blocking mode. LLDB can be queried from a background thread, which means requests can
+    (if it makes sense) be fulfilled as soon as they're received. GDB cannot be queried from a background thread, so
+    requests have to be queued and dispatched by the main thread when the debugger stops. This means that GDB requires
+    blocking mode.
+
+    In blocking mode, the view's `render` method must make a single call to Client's send_request/send_request method,
+    with the request(s) flagged as blocking (block=True). If a view (or, more likely, a more complex client) has
+    multiple calls to send_request/send_requests, then it cannot support blocking mode and should be flagged as such
+    by including `supports_blocking = False` (see below, views are flagged as supporting blocking by default).
+
+    All of the included Voltron views support blocking mode, but this distinction has been made so that views can be
+    written for LLDB only without making compromises to support GDB.
     """
     view_type = None
+    block = False
+    supports_blocking = True
 
     @classmethod
     def add_generic_arguments(cls, sp):
@@ -144,10 +159,11 @@ class VoltronView (object):
 
     def __init__(self, args={}, loaded_config={}):
         log.debug('Loading view: ' + self.__class__.__name__)
-        self.client = Client()
+        self.client = Client(*voltron.config.server.listen.http)
         self.pm = None
         self.args = args
         self.loaded_config = loaded_config
+        self.server_version = None
 
         # Commonly set by render method for header and footer formatting
         self.title = ''
@@ -203,27 +219,38 @@ class VoltronView (object):
     def run(self):
         res = None
         os.system('clear')
+
         while True:
             try:
-                # Connect to server
-                if not self.client.is_connected:
-                    self.client.connect()
+                # get the server version
+                if not self.server_version:
+                    self.server_version = self.client.perform_request('version')
 
-                # If this is the first iteration (ie. we were just launched and the debugger is already stopped),
-                # or we got a valid response on the last iteration, render
-                if res == None or hasattr(res, 'state') and res.state == 'stopped':
-                    self.render()
+                    # if the server supports async mode, use it, as some views may only work in async mode
+                    if self.server_version.capabilities and 'async' in  self.server_version.capabilities:
+                        self.block = False
+                    elif self.supports_blocking:
+                        self.block = True
+                    else:
+                        raise BlockingNotSupportedError("Debugger requires blocking mode")
 
-                # wait for the debugger to stop again
-                wait_req = api_request('wait')
-                res = self.client.send_request(wait_req)
-            except socket.error as e:
+                # render the view. if this view is running in asynchronous mode, the view should return immediately.
+                self.render()
+
+                # if the view is not blocking (server supports async || view doesn't support sync), block until the
+                # debugger stops again
+                if not self.block:
+                    done = False
+                    while not done:
+                        res = self.client.perform_request('version', block=True)
+                        if res.is_success:
+                            done = True
+            except requests.ConnectionError as e:
                 import traceback;traceback.print_exc()
                 # if we're not connected, render an error and try again in a second
-                self.do_render(error='Error: {}'.format(e.strerror))
+                self.do_render(error='Error: {}'.format(e.message))
+                self.server_version = None
                 time.sleep(1)
-            except SocketDisconnected as e:
-                pass
 
     def render(self):
         log.warning('Might wanna implement render() in this view eh')

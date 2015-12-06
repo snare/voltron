@@ -22,7 +22,7 @@ class BreakpointsView (TerminalView):
             pc = -1
 
         # get breakpoints and render
-        req = api_request('breakpoints')
+        req = api_request('breakpoints', block=self.block)
         res = self.client.send_request(req)
         if res and res.is_success:
             fmtd = []

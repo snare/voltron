@@ -13,9 +13,7 @@ class BacktraceView (TerminalView):
 
         # Set up header and error message if applicable
         self.title = '[backtrace]'
-        req = api_request('command')
-        req.command = "bt"
-        res = self.client.send_request(req)
+        res = self.client.perform_request('command', block=self.block, command='bt')
         if res and res.is_success:
             # Get the command output
             self.body = res.output

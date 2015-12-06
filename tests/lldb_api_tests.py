@@ -156,6 +156,10 @@ try:
         assert bps[0]['id'] == 1
         assert bps[0]['hit_count'] > 0
         assert bps[0]['locations'][0]['name'] == "inferior`main"
-        process.Destroy()    
+        process.Destroy()
+
+    def test_capabilities():
+        assert adaptor.capabilities() == ['async']
+
 except:
     print("No LLDB")

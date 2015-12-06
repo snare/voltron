@@ -18,7 +18,7 @@ from .plugin import APIPlugin
 
 log = logging.getLogger('api')
 
-version = 1.0
+version = 1.1
 
 
 class InvalidRequestTypeException(Exception):
@@ -27,8 +27,19 @@ class InvalidRequestTypeException(Exception):
     """
     pass
 
-class InvalidDebuggerHostException(Exception):pass
-class InvalidViewNameException(Exception): pass
+
+class InvalidDebuggerHostException(Exception):
+    """
+    Exception raised when the debugger host is invalid.
+    """
+    pass
+
+
+class InvalidViewNameException(Exception):
+    """
+    Exception raised when an invalid view name is specified.
+    """
+    pass
 
 
 class InvalidMessageException(Exception):
@@ -36,6 +47,7 @@ class InvalidMessageException(Exception):
     Exception raised when an invalid API message is received.
     """
     pass
+
 
 class ServerSideOnlyException(Exception):
     """
@@ -45,6 +57,7 @@ class ServerSideOnlyException(Exception):
     See @server_side decorator.
     """
     pass
+
 
 class ClientSideOnlyException(Exception):
     """
@@ -61,11 +74,13 @@ class DebuggerNotPresentException(Exception):
     """
     pass
 
+
 class NoSuchTargetException(Exception):
     """
     Raised when an APIRequest specifies an invalid target.
     """
     pass
+
 
 class TargetBusyException(Exception):
     """
@@ -74,17 +89,35 @@ class TargetBusyException(Exception):
     """
     pass
 
+
 class MissingFieldError(Exception):
     """
     Raised when an APIMessage is validated and has a required field missing.
     """
     pass
 
+
 class NoSuchThreadException(Exception):
+    """
+    Raised when the specified thread ID or index does not exist.
+    """
     pass
 
+
 class UnknownArchitectureException(Exception):
+    """
+    Raised when the debugger host is running in an unknown architecture.
+    """
     pass
+
+
+class BlockingNotSupportedError(Exception):
+    """
+    Raised when a view that does not support blocking connects to a debugger
+    host that does not support async mode.
+    """
+    pass
+
 
 def server_side(func):
     """
@@ -200,6 +233,7 @@ class APIMessage(object):
             if not hasattr(self, field) or hasattr(self, field) and getattr(self, field) == None:
                 raise MissingFieldError(field)
 
+
 class APIRequest(APIMessage):
     """
     An API request object. Contains functions and accessors common to all API
@@ -210,11 +244,17 @@ class APIRequest(APIMessage):
     method. On the client side they are instantiated by whatever class is doing
     the requesting (probably a view class).
     """
-    _top_fields = ['type', 'request']
+    _top_fields = ['type', 'request', 'block', 'timeout']
     _fields = {}
 
     type = 'request'
     request = None
+    block = False
+    timeout = 10
+
+    response = None
+    wait_event = None
+    timed_out = False
 
     @server_side
     def dispatch(self):
@@ -224,6 +264,28 @@ class APIRequest(APIMessage):
         exception.
         """
         raise NotImplementedError("Subclass APIRequest")
+
+    @server_side
+    def wait(self):
+        """
+        Wait for the request to be dispatched.
+        """
+        self.wait_event = threading.Event()
+        timeout = int(self.timeout) if self.timeout != None else None
+        self.timed_out = not self.wait_event.wait(timeout)
+
+    def signal(self):
+        """
+        Signal that the request has been dispatched and can return.
+        """
+        self.wait_event.set()
+
+
+class APIBlockingRequest(APIRequest):
+    """
+    An API request that blocks by default.
+    """
+    block = True
 
 
 class APIResponse(APIMessage):
@@ -257,6 +319,7 @@ class APIResponse(APIMessage):
                 self.is_error,
                 {f: getattr(self, f) for f in self._top_fields + self._fields.keys()}
         )
+
 
 class APISuccessResponse(APIResponse):
     """
@@ -322,3 +385,8 @@ class APITargetBusyErrorResponse(APIErrorResponse):
 class APIMissingFieldErrorResponse(APIGenericErrorResponse):
     code = 0x1007
     message = "Missing field"
+
+
+class APIEmptyResponseErrorResponse(APIGenericErrorResponse):
+    code = 0x1008
+    message = "Empty response"

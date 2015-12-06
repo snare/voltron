@@ -301,14 +301,16 @@ class RegisterView (TerminalView):
         error = None
 
         # get target info (ie. arch)
-        res = self.client.perform_request('targets')
-        if res.is_error:
-            error = "Failed getting targets: {}".format(res.message)
+        t_res, d_res, r_res = self.client.send_requests(api_request('targets', block=self.block),
+                                                        api_request('disassemble', count=1, block=self.block),
+                                                        api_request('registers', block=self.block))
+        if t_res.is_error:
+            error = "Failed getting targets: {}".format(t_res.message)
         else:
-            if len(res.targets) == 0:
-                error = "No targets in debugger"
+            if len(t_res.targets) == 0:
+                error = "No such target"
             else:
-                arch = res.targets[0]['arch']
+                arch = t_res.targets[0]['arch']
                 self.curr_arch = arch
 
                 # ensure the architecture is supported
@@ -316,28 +318,23 @@ class RegisterView (TerminalView):
                     error = "Architecture '{}' not supported".format(arch)
                 else:
                     # get next instruction
-                    res = self.client.perform_request('disassemble', count=1)
                     try:
-                        self.curr_inst = res.disassembly.strip().split('\n')[-1].split(':')[1].strip()
+                        self.curr_inst = d_res.disassembly.strip().split('\n')[-1].split(':')[1].strip()
                     except:
                         self.curr_inst = None
 
                     # get registers for target
-                    res = self.client.perform_request('registers')
-                    if res.is_error:
-                        error = "Failed getting registers: {}".format(res.message)
+                    if r_res.is_error:
+                        error = r_res.message
 
         # if everything is ok, render the view
         if not error:
-            # Store current response
-            self.curr_res = res
-
             # Build template
             template = '\n'.join(map(lambda x: self.TEMPLATES[arch][self.config.orientation][x], self.config.sections))
 
             # Process formatting settings
             data = defaultdict(lambda: 'n/a')
-            data.update(res.registers)
+            data.update(r_res.registers)
             formats = self.FORMAT_INFO[arch]
             formatted = {}
             for fmt in formats:
@@ -541,9 +538,7 @@ class RegisterView (TerminalView):
             jump = ''
 
         # Pad out
-        height, width = self.window_size()
-        t = '{:^%d}' % (width - 2)
-        jump = t.format(jump)
+        jump = '{:^19}'.format(jump)
 
         # Colour
         if j is not None:

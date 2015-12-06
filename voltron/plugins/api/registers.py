@@ -25,8 +25,6 @@ class APIRegistersRequest(APIRequest):
 
     `registers` is optional. If it is not included all registers will be
     returned.
-
-    This request will return immediately.
     """
     _fields = {'target_id': False, 'thread_id': False, 'registers': False}
 

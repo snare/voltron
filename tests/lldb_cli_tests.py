@@ -63,7 +63,6 @@ def start_debugger(do_break=True):
     p.sendline("run loop")
     read_data()
     client = Client()
-    client.connect()
 
 def stop_debugger():
     p.terminate(True)
@@ -116,13 +115,6 @@ def test_state_stopped():
     res = client.perform_request('state')
     assert res.is_success
     assert res.state == "stopped"
-
-def test_wait_timeout():
-    restart_debugger()
-    time.sleep(1)
-    res = client.perform_request('wait', timeout=2)
-    assert res.is_error
-    assert res.code == 0x1004
 
 def test_targets():
     restart_debugger()
@@ -177,3 +169,34 @@ def test_breakpoints():
     assert res.breakpoints[0]['id'] == 1
     assert res.breakpoints[0]['hit_count'] > 0
     assert res.breakpoints[0]['locations'][0]['name'] == "inferior`main"
+
+def test_multi():
+    global r1, r2
+    restart_debugger(True)
+    time.sleep(1)
+    r1, r2 = None, None
+    def send_req():
+        global r1, r2
+        r1, r2 = client.send_requests(api_request('targets', block=True), api_request('registers', block=True))
+        print "sent requests"
+    t = threading.Thread(target=send_req)
+    t.start()
+    time.sleep(5)
+    p.sendline("stepi")
+    time.sleep(5)
+    t.join()
+    print r1
+    print r2
+    assert r1.is_success
+    assert r1.targets[0]['state'] == "stopped"
+    assert r1.targets[0]['arch'] == "x86_64"
+    assert r1.targets[0]['id'] == 0
+    assert r1.targets[0]['file'].endswith('tests/inferior')
+    assert r2.status == 'success'
+    assert len(r2.registers) > 0
+    assert r2.registers['rip'] != 0
+
+def test_capabilities():
+    restart_debugger(True)
+    res = client.perform_request('version')
+    assert res.capabilities == ['async']

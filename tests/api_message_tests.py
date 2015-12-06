@@ -178,7 +178,8 @@ def test_test_request_validation_succeed_by_assign():
 
 def test_test_request_string():
     msg = APITestRequest(count=16)
-    assert json.loads(str(msg)) == {"request": "test", "type": "request", "data": {"count": 16, "target_id": 0, "address": None}}
+    assert json.loads(str(msg)) == {"request": "test", "type": "request", "block": False, "timeout": 10,
+                                    "data": {"count": 16, "target_id": 0, "address": None}}
 
 def test_test_response_validation_fail():
     msg = APITestResponse()

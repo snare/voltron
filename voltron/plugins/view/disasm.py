@@ -15,7 +15,7 @@ class DisasmView (TerminalView):
         self.title = '[code]'
 
         # Request data
-        req = api_request('disassemble')
+        req = api_request('disassemble', block=self.block)
         req.count = self.body_height()
         res = self.client.send_request(req)
         if res and res.is_success:

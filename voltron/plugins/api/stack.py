@@ -24,8 +24,6 @@ class APIStackRequest(APIRequest):
     selected target and thread will be used.
 
     `length` is the number of bytes to read.
-
-    This request will return immediately.
     """
     _fields = {'target_id': False, 'thread_id': False, 'length': True}
 

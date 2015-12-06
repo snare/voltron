@@ -19,6 +19,7 @@ class APIVersionRequest(APIRequest):
         res = APIVersionResponse()
         res.api_version = voltron.api.version
         res.host_version = voltron.debugger.version()
+        res.capabilities = voltron.debugger.capabilities()
         return res
 
 
@@ -31,14 +32,21 @@ class APIVersionResponse(APISuccessResponse):
         "status":       "success",
         "data": {
             "api_version":  1.0,
-            "host_version": 'lldb-something'
+            "host_version": 'lldb-something',
+            "capabilities": ["async"]
         }
     }
     """
-    _fields = {'api_version': True, 'host_version': True}
+    _fields = {
+        'api_version': True,
+        'host_version': True,
+        'capabilities': False
+    }
 
     api_version = None
     host_version = None
+    capabilities = None
+
 
 class APIVersionPlugin(APIPlugin):
     request = 'version'

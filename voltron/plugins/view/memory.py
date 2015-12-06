@@ -11,6 +11,8 @@ log = logging.getLogger("view")
 class MemoryView (TerminalView):
     printable_filter = ''.join([(len(repr(chr(x))) == 3) and chr(x) or '.' for x in range(256)])
 
+    async = True
+
     @classmethod
     def configure_subparser(cls, subparsers):
         sp = subparsers.add_parser('memory', help='display a chunk of memory', aliases=('m', 'mem'))
@@ -31,51 +33,36 @@ class MemoryView (TerminalView):
 
     def render(self):
         height, width = self.window_size()
-
-        # get info about target
         target = None
-        res = self.client.perform_request('targets')
-        if res and res.is_success and len(res.targets) > 0:
-            target = res.targets[0]
 
-        if target and self.args.deref:
-            self.args.bytes = target['addr_size']
+        # check args
+        if self.args.register:
+            args = {'register': self.args.register}
+        elif self.args.command:
+            args = {'command': self.args.command}
+        else:
+            args = {'address': self.args.address}
+        if self.args.deref:
+            args['words'] = height
+        else:
+            args['length'] = height*self.args.bytes
 
-        if not self.title:
-            self.title = "[memory]"
+        # get memory and target info
+        m_res, t_res = self.client.send_requests(
+            api_request('memory', block=self.block, deref=True, **args),
+            api_request('targets', block=self.block))
 
-        # find the address we're reading memory from
-        addr = None
-        if self.args.command:
-            res = self.client.perform_request('command', command=self.args.command)
-            if res.is_success:
-                for item in reversed(res.output.split()):
-                    log.debug("checking item: {}".format(item))
-                    try:
-                        addr = int(item)
-                        break
-                    except:
-                        try:
-                            addr = int(item, 16)
-                            break
-                        except:
-                            pass
-        elif self.args.address:
-            addr = int(self.args.address, 16)
-        elif self.args.register:
-            res = self.client.perform_request('registers', registers=[self.args.register])
-            if res and res.is_success:
-                addr = list(res.registers.values())[0]
+        if t_res and t_res.is_success and len(t_res.targets) > 0:
+            target = t_res.targets[0]
 
-        # read memory
-        if addr != None:
-            res = self.client.perform_request('memory', address=addr, length=self.body_height()*self.args.bytes)
-            if res and res.is_success:
+            if self.args.deref:
+                self.args.bytes = target['addr_size']
 
+            if m_res and m_res.is_success:
                 lines = []
-                for c in range(0, res.bytes, self.args.bytes):
-                    chunk = res.memory[c:c+self.args.bytes]
-                    addr_str = self.colour(self.format_address(addr + c, size=target['addr_size'], pad=False),
+                for c in range(0, m_res.bytes, self.args.bytes):
+                    chunk = m_res.memory[c:c+self.args.bytes]
+                    addr_str = self.colour(self.format_address(m_res.address + c, size=target['addr_size'], pad=False),
                                             self.config.format.addr_colour)
                     if self.args.deref:
                         fmt = ('<' if target['byte_order'] == 'little' else '>') + \
@@ -84,9 +71,7 @@ class MemoryView (TerminalView):
                         if len(chunk) == target['addr_size']:
                             pointer = list(struct.unpack(fmt, chunk))[0]
                             memory_str = ' '.join(["%02X" % x for x in six.iterbytes(chunk)])
-                            deref_res = self.client.perform_request('dereference', pointer=pointer)
-                            if deref_res.is_success:
-                                info_str = self.format_deref(deref_res.output)
+                            info_str = self.format_deref(m_res.deref.pop(0))
                     else:
                         memory_str = ' '.join(["%02X" % x for x in six.iterbytes(chunk)])
                         info_str = ''
@@ -95,14 +80,16 @@ class MemoryView (TerminalView):
                     lines.append('{}: {} {} {} {} {}'.format(addr_str, memory_str, divider, ascii_str, divider, info_str))
 
                 self.body = '\n'.join(reversed(lines)).strip() if self.args.reverse else '\n'.join(lines)
-                self.info = '[0x{0:0=4x}:'.format(len(res.memory)) + self.config.format.addr_format.format(addr) + ']'
+                self.info = '[0x{0:0=4x}:'.format(len(m_res.memory)) + self.config.format.addr_format.format(m_res.address) + ']'
             else:
-                log.error("Error reading memory: {}".format(res.message))
-                self.body = self.colour(res.message, 'red')
-                self.info = '[0x{0:0=4x}:'.format(0) + self.config.format.addr_format.format(addr) + ']'
+                log.error("Error reading memory: {}".format(m_res.message))
+                self.body = self.colour(m_res.message, 'red')
+                self.info = ''
         else:
-            self.body = ""
-            self.info = "[no address]"
+            self.body = self.colour("Failed to get targets", 'red')
+
+        if not self.title:
+            self.title = "[memory]"
 
         super(MemoryView, self).render()
 

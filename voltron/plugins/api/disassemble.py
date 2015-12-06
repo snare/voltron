@@ -24,8 +24,6 @@ class APIDisassembleRequest(APIRequest):
     `address` is the address at which to start disassembling. Defaults to
     instruction pointer if not specified.
     `count` is the number of instructions to disassemble.
-
-    This request will return immediately.
     """
     _fields = {'target_id': False, 'address': False, 'count': True}
 

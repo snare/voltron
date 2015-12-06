@@ -9,7 +9,7 @@ app = Flask('voltron', template_folder='web/templates')
 log = logging.getLogger('api')
 
 
-@app.route("/api/request", methods=['POST'])
+@app.route("/request", methods=['POST'])
 def handle_post():
     """
     Requests  are proxied straight through to the server's handle_request()
@@ -47,8 +47,4 @@ def register_http_api():
     e.g. Registers '/api/version' to call handle_get()
     """
     for plugin in voltron.plugin.pm.api_plugins:
-        app.add_url_rule('/api/{}'.format(plugin), plugin, handle_get)
-
-@app.route("/")
-def root():
-    return make_response(render_template('index.html', views=voltron.plugin.pm.web_plugins.keys()))
+        app.add_url_rule('/{}'.format(plugin), plugin, handle_get)

@@ -66,6 +66,7 @@ try:
                 self.register_hooks()
             elif 'stopped' in command or 'update' in command:
                 self.adaptor.update_state()
+                self.server.dispatch_queue()
             else:
                 print("Usage: voltron <init|status|debug|update>")
 
@@ -193,12 +194,13 @@ try:
 
             def stop_handler(self, event):
                 self.adaptor.update_state()
+                self.server.dispatch_queue()
                 log.debug('Inferior stopped')
 
             def exit_handler(self, event):
                 log.debug('Inferior exited')
                 self.server.stop()
-                
+
             def stop_and_exit_handler(self, event):
                 log.debug('Inferior stopped and exited')
                 self.stop_handler(event)

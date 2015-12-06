@@ -23,8 +23,8 @@ def setup_env():
     global env, config
     env = Environment(setup_logging=False,
         voltron_dir=Directory('~/.voltron', create=True,
-            config=ConfigFile('config', defaults=File('config/default.cfg', parent=PackageDirectory())),
-            sock=File('sock'),
+            config=ConfigFile('config', defaults=File('config/default.cfg', parent=PackageDirectory()), apply_env=True),
+            sock=File('{config:server.listen.sockfile}'),
             history=File('history'),
             user_plugins=PluginDirectory('plugins')
         ),

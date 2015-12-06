@@ -56,7 +56,6 @@ try:
 
         # set up client
         client = Client()
-        client.connect()
 
         # compile and load the test inferior
         subprocess.call("cc -o tests/inferior tests/inferior.c", shell=True)
@@ -81,14 +80,6 @@ try:
         assert res.state == "stopped"
         target.process.Destroy()
 
-    def test_wait_timeout():
-        process = target.LaunchSimple(None, None, os.getcwd())
-        req = api_request('wait', timeout=1, state_changes=['invalid'])
-        res = client.send_request(req)
-        assert res.status == 'error'
-        assert res.code == 0x1004
-        target.process.Destroy()
-
     def test_targets():
         req = api_request('targets')
         res = client.send_request(req)
@@ -109,12 +100,14 @@ try:
 
     def test_memory():
         process = target.LaunchSimple(None, None, os.getcwd())
-        req = api_request('registers')
-        res = client.send_request(req)
-        req = api_request('memory', address=res.registers['rip'], length=0x40)
-        res = client.send_request(req)
+        res = client.perform_request('registers')
+        rsp = res.registers['rsp']
+        res = client.perform_request('memory', address=rsp, length=0x40)
         assert res.status == 'success'
         assert len(res.memory) > 0
+        res = client.perform_request('memory', address=rsp, length=0x40, deref=True)
+        assert res.status == 'success'
+        assert len(res.deref) > 0
         target.process.Destroy()
 
     def test_stack():
@@ -163,5 +156,18 @@ try:
         assert res.breakpoints[0]['hit_count'] > 0
         assert res.breakpoints[0]['locations'][0]['name'] == "inferior`main"
         target.process.Destroy()
+
+    def test_multi_request():
+        process = target.LaunchSimple(None, None, os.getcwd())
+        reg_res, dis_res = client.send_requests(api_request('registers'),
+                                                api_request('disassemble', count=16))
+        assert reg_res.status == 'success'
+        assert len(reg_res.registers) > 0
+        assert reg_res.registers['rip'] != 0
+        assert dis_res.status == 'success'
+        assert len(dis_res.disassembly) > 0
+        assert 'push' in dis_res.disassembly
+        target.process.Destroy()
+
 except:
     print("No LLDB")

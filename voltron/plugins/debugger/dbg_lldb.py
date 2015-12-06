@@ -344,6 +344,9 @@ if HAVE_LLDB:
                 else:
                     break
 
+            if len(chain) == 0:
+                raise InvalidPointerError("0x{:X} is not a valid pointer".format(pointer))
+
             # get some info for the last pointer
             # first try to resolve a symbol context for the address
             p, addr = chain[-1]
@@ -407,7 +410,6 @@ if HAVE_LLDB:
 
             return flavor
 
-
         @validate_busy
         @validate_target
         @lock_host
@@ -458,6 +460,17 @@ if HAVE_LLDB:
                 })
 
             return breakpoints
+
+        def capabilities(self):
+            """
+            Return a list of the debugger's capabilities.
+
+            Thus far only the 'async' capability is supported. This indicates
+            that the debugger host can be queried from a background thread,
+            and that views can use non-blocking API requests without queueing
+            requests to be dispatched next time the debugger stops.
+            """
+            return ["async"]
 
         def register_command_plugin(self, name, cls):
             """
