@@ -8,6 +8,7 @@ import re
 import signal
 import time
 import argparse
+import traceback
 from blessed import Terminal
 
 try:
@@ -88,7 +89,6 @@ class AnsiString(object):
                         chars.extend(list(chunk[p+1:]))
                     else:
                         chars.extend(list(chunk))
-
 
         # roll up ansi sequences
         ansi = []
@@ -246,9 +246,17 @@ class VoltronView (object):
                         if res.is_success:
                             done = True
             except requests.ConnectionError as e:
-                import traceback;traceback.print_exc()
+                # what the hell, requests? a message is a message, not a fucking nested error object
+                try:
+                    msg = e.message.args[1].strerror
+                except:
+                    try:
+                        msg = e.message.args[0]
+                    except:
+                        msg = str(e)
+                traceback.print_exc()
                 # if we're not connected, render an error and try again in a second
-                self.do_render(error='Error: {}'.format(e.message))
+                self.do_render(error='Error: {}'.format(msg))
                 self.server_version = None
                 time.sleep(1)
 
