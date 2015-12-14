@@ -8,8 +8,10 @@ import threading
 import logging
 import logging.config
 import json
-import requests
-import requests_unixsocket
+try:
+    import requests_unixsocket as requests
+except:
+    import requests
 import threading
 import os.path
 
@@ -67,7 +69,7 @@ class Server(object):
             self.listeners.append(s)
 
         if voltron.config.server.listen.tcp:
-            run_listener('tcp', ThreadedWSGIServer, list(voltron.config.server.listen.tcp) + [app])
+            run_listener('tcp', ThreadedVoltronWSGIServer, list(voltron.config.server.listen.tcp) + [app])
 
         if voltron.config.server.listen.domain:
             path = os.path.expanduser(str(voltron.config.server.listen.domain))
@@ -86,8 +88,11 @@ class Server(object):
         log.debug("Stopping listeners")
         for s in self.listeners:
             s.shutdown()
+            s.socket.close()
         for t in self.threads:
             t.join()
+        self.listeners = []
+        self.threads = []
         self.is_running = False
 
     def handle_request(self, data):
@@ -176,7 +181,27 @@ class Server(object):
         return res
 
 
-class UnixWSGIServer(UnixStreamServer, BaseWSGIServer):
+class VoltronWSGIServer(BaseWSGIServer):
+    """
+    Custom version of the werkzeug WSGI server.
+
+    This just needs to exist so we can swallow errors when clients disconnect.
+    """
+    def finish_request(self, *args):
+        try:
+            super(VoltronWSGIServer, self).finish_request(*args)
+        except socket.error as e:
+            log.error("Error in finish_request: {}".format(e))
+
+
+class ThreadedVoltronWSGIServer(ThreadingMixIn, VoltronWSGIServer):
+    """
+    Threaded WSGI server to replace werkzeug's
+    """
+    pass
+
+
+class UnixWSGIServer(UnixStreamServer, VoltronWSGIServer):
     """
     A subclass of BaseWSGIServer that does sane things with Unix domain sockets.
     """
@@ -240,11 +265,15 @@ class ClientThread(threading.Thread):
     def __init__(self, client, request, *args, **kwargs):
         self.request = request
         self.response = None
+        self.exception = None
         self.client = client
         super(ClientThread, self).__init__(*args, **kwargs)
 
     def run(self):
-        self.response = self.client.send_request(self.request)
+        try:
+            self.response = self.client.send_request(self.request)
+        except Exception as e:
+            self.exception = e
 
 
 class Client(object):
@@ -255,7 +284,7 @@ class Client(object):
         """
         Initialise a new client
         """
-        self.session = requests_unixsocket.Session()
+        self.session = requests.Session()
         if url:
             self.url = url
         elif sockfile:
@@ -322,6 +351,9 @@ class Client(object):
             t.start()
         for t in threads:
             t.join()
+        exceptions = [t.exception for t in threads if t.exception]
+        if len(exceptions):
+            raise exceptions[0]
         return [t.response for t in threads]
 
     def create_request(self, request_type, *args, **kwargs):
