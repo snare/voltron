@@ -9,6 +9,7 @@ import signal
 import time
 import argparse
 import traceback
+from requests import ConnectionError
 from blessed import Terminal
 
 try:
@@ -245,7 +246,7 @@ class VoltronView (object):
                         res = self.client.perform_request('version', block=True)
                         if res.is_success:
                             done = True
-            except requests.ConnectionError as e:
+            except ConnectionError as e:
                 # what the hell, requests? a message is a message, not a fucking nested error object
                 try:
                     msg = e.message.args[1].strerror
