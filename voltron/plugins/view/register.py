@@ -304,28 +304,25 @@ class RegisterView (TerminalView):
         t_res, d_res, r_res = self.client.send_requests(api_request('targets', block=self.block),
                                                         api_request('disassemble', count=1, block=self.block),
                                                         api_request('registers', block=self.block))
-        if t_res.is_error:
-            error = "Failed getting targets: {}".format(t_res.message)
+        if t_res and t_res.is_error or t_res is None or t_res and len(t_res.targets) == 0:
+            error = "No such target"
         else:
-            if len(t_res.targets) == 0:
-                error = "No such target"
+            arch = t_res.targets[0]['arch']
+            self.curr_arch = arch
+
+            # ensure the architecture is supported
+            if arch not in self.FORMAT_INFO:
+                error = "Architecture '{}' not supported".format(arch)
             else:
-                arch = t_res.targets[0]['arch']
-                self.curr_arch = arch
+                # get next instruction
+                try:
+                    self.curr_inst = d_res.disassembly.strip().split('\n')[-1].split(':')[1].strip()
+                except:
+                    self.curr_inst = None
 
-                # ensure the architecture is supported
-                if arch not in self.FORMAT_INFO:
-                    error = "Architecture '{}' not supported".format(arch)
-                else:
-                    # get next instruction
-                    try:
-                        self.curr_inst = d_res.disassembly.strip().split('\n')[-1].split(':')[1].strip()
-                    except:
-                        self.curr_inst = None
-
-                    # get registers for target
-                    if r_res.is_error:
-                        error = r_res.message
+                # get registers for target
+                if r_res.is_error:
+                    error = r_res.message
 
         # if everything is ok, render the view
         if not error:
