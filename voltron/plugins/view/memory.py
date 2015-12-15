@@ -52,6 +52,10 @@ class MemoryView (TerminalView):
             api_request('memory', block=self.block, deref=True, **args),
             api_request('targets', block=self.block))
 
+        # don't render if it timed out, probably haven't stepped the debugger again
+        if t_res.timed_out:
+            return
+
         if t_res and t_res.is_success and len(t_res.targets) > 0:
             target = t_res.targets[0]
 

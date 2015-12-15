@@ -24,6 +24,11 @@ class BreakpointsView (TerminalView):
         # get breakpoints and render
         req = api_request('breakpoints', block=self.block)
         res = self.client.send_request(req)
+
+        # don't render if it timed out, probably haven't stepped the debugger again
+        if res.timed_out:
+            return
+
         if res and res.is_success:
             fmtd = []
             term = Terminal()

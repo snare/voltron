@@ -336,6 +336,10 @@ class APIErrorResponse(APIResponse):
 
     status = 'error'
 
+    @property
+    def timed_out(self):
+        return self.code == APITimedOutErrorResponse.code
+
 
 class APIGenericErrorResponse(APIErrorResponse):
     code = 0x1000

@@ -228,7 +228,7 @@ class VoltronView (object):
                     self.server_version = self.client.perform_request('version')
 
                     # if the server supports async mode, use it, as some views may only work in async mode
-                    if self.server_version.capabilities and 'async' in  self.server_version.capabilities:
+                    if self.server_version.capabilities and 'async' in self.server_version.capabilities:
                         self.block = False
                     elif self.supports_blocking:
                         self.block = True

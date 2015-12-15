@@ -304,6 +304,11 @@ class RegisterView (TerminalView):
         t_res, d_res, r_res = self.client.send_requests(api_request('targets', block=self.block),
                                                         api_request('disassemble', count=1, block=self.block),
                                                         api_request('registers', block=self.block))
+
+        # don't render if it timed out, probably haven't stepped the debugger again
+        if t_res.timed_out:
+            return
+
         if t_res and t_res.is_error or t_res is None or t_res and len(t_res.targets) == 0:
             error = "No such target"
         else:

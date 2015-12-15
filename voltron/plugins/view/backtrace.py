@@ -14,6 +14,11 @@ class BacktraceView (TerminalView):
         # Set up header and error message if applicable
         self.title = '[backtrace]'
         res = self.client.perform_request('command', block=self.block, command='bt')
+
+        # don't render if it timed out, probably haven't stepped the debugger again
+        if res.timed_out:
+            return
+
         if res and res.is_success:
             # Get the command output
             self.body = res.output
