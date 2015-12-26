@@ -64,7 +64,6 @@ def start_debugger(do_break=True):
     time.sleep(2)
 
     client = Client()
-    client.connect()
 
 def stop_debugger():
     # p.sendline("kill")
@@ -93,7 +92,7 @@ def test_bad_request():
 def test_version():
     req = client.create_request('version')
     res = client.send_request(req)
-    assert res.api_version == 1.0
+    assert res.api_version == 1.1
     assert 'gdb' in res.host_version
 
 def test_registers():
@@ -114,11 +113,6 @@ def test_state_stopped():
     res = client.perform_request('state')
     assert res.is_success
     assert res.state == "stopped"
-
-def test_wait_timeout():
-    res = client.perform_request('wait', timeout=2)
-    assert res.is_error
-    assert res.code == 0x1004
 
 def test_targets():
     res = client.perform_request('targets')

@@ -88,7 +88,7 @@ def test_bad_request():
 def test_version():
     req = client.create_request('version')
     res = client.send_request(req)
-    assert res.api_version == 1.0
+    assert res.api_version == 1.1
     assert 'lldb' in res.host_version
 
 def test_registers():

@@ -11,7 +11,6 @@ import sys
 import json
 import time
 import subprocess
-import requests
 
 from nose.tools import *
 
@@ -25,6 +24,9 @@ if platform.system() == 'Darwin':
     sys.path.append("/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Resources/Python")
 
 from .common import *
+
+import requests
+
 
 log = logging.getLogger('tests')
 
@@ -49,8 +51,7 @@ def setup():
     voltron.setup_env()
     voltron.config['server'] = {
         "listen": {
-            "domain":   True,
-            "http":     ["127.0.0.1", 5555]
+            "tcp":     ["127.0.0.1", 5555]
         }
     }
     pm = PluginManager()
@@ -126,7 +127,7 @@ def test_version():
     data = requests.get('http://localhost:5555/api/version').text
     res = api_response('version', data=data)
     assert res.is_success
-    assert res.api_version == 1.0
+    assert res.api_version == 1.1
     assert res.host_version == 'lldb-something'
 
 def test_bad_json():
