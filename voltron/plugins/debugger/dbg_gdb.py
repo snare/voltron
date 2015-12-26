@@ -268,7 +268,7 @@ if HAVE_GDB:
             while True:
                 try:
                     mem = gdb.selected_inferior().read_memory(addr, self.get_addr_size())
-                    log.debug("read mem: {}".format(mem))
+                    # log.debug("read mem: {}".format(mem))
                     (ptr,) = struct.unpack(fmt, mem)
                     if ptr in chain:
                         break
