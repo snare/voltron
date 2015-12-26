@@ -30,6 +30,7 @@ import requests
 
 log = logging.getLogger('tests')
 
+
 class APIHostNotSupportedRequest(APIRequest):
     @server_side
     def dispatch(self):
@@ -68,9 +69,11 @@ def setup():
 
     time.sleep(2)
 
+
 def teardown():
     server.stop()
     time.sleep(2)
+
 
 def test_disassemble():
     data = requests.get('http://localhost:5555/api/disassemble?count=16').text
@@ -78,17 +81,20 @@ def test_disassemble():
     assert res.is_success
     assert res.disassembly == disassemble_response
 
+
 def test_command():
     data = requests.get('http://localhost:5555/api/command?command=reg%20read').text
     res = APIResponse(data=data)
     assert res.is_success
     assert res.output == command_response
 
+
 def test_targets():
     data = requests.get('http://localhost:5555/api/targets').text
     res = api_response('targets', data=data)
     assert res.is_success
     assert res.targets == targets_response
+
 
 def test_memory():
     data = requests.get('http://localhost:5555/api/registers').text
@@ -99,11 +105,13 @@ def test_memory():
     assert res.is_success
     assert res.memory == memory_response
 
+
 def test_registers():
     data = requests.get('http://localhost:5555/api/registers').text
     res = api_response('registers', data=data)
     assert res.is_success
     assert res.registers == registers_response
+
 
 def test_stack_length_missing():
     data = requests.get('http://localhost:5555/api/stack').text
@@ -111,17 +119,20 @@ def test_stack_length_missing():
     assert res.is_error
     assert res.message == 'length'
 
+
 def test_stack():
     data = requests.get('http://localhost:5555/api/stack?length=64').text
     res = api_response('stack', data=data)
     assert res.is_success
     assert res.memory == stack_response
 
+
 def test_state():
     data = requests.get('http://localhost:5555/api/state').text
     res = api_response('state', data=data)
     assert res.is_success
     assert res.state == state_response
+
 
 def test_version():
     data = requests.get('http://localhost:5555/api/version').text
@@ -130,17 +141,20 @@ def test_version():
     assert res.api_version == 1.1
     assert res.host_version == 'lldb-something'
 
+
 def test_bad_json():
     data = requests.post('http://localhost:5555/api/request', data='xxx').text
     res = APIResponse(data=data)
     assert res.is_error
     assert res.code == 0x1001
 
+
 def test_bad_request():
     data = requests.post('http://localhost:5555/api/request', data='{"type":"request","request":"no_such_request"}').text
     res = APIResponse(data=data)
     assert res.is_error
     assert res.code == 0x1002
+
 
 def test_breakpoints():
     data = requests.get('http://localhost:5555/api/breakpoints').text

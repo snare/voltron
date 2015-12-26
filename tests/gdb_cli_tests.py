@@ -32,6 +32,7 @@ log = logging.getLogger('tests')
 p = None
 client = None
 
+
 def setup():
     global p, client, pm
 
@@ -45,9 +46,11 @@ def setup():
     # start debugger
     start_debugger()
 
+
 def teardown():
     read_data()
     p.terminate(True)
+
 
 def start_debugger(do_break=True):
     global p, client
@@ -65,10 +68,12 @@ def start_debugger(do_break=True):
 
     client = Client()
 
+
 def stop_debugger():
     # p.sendline("kill")
     read_data()
     p.terminate(True)
+
 
 def read_data():
     try:
@@ -78,9 +83,11 @@ def read_data():
     except:
         pass
 
+
 def restart_debugger(do_break=True):
     stop_debugger()
     start_debugger(do_break)
+
 
 def test_bad_request():
     req = client.create_request('version')
@@ -89,11 +96,13 @@ def test_bad_request():
     assert res.is_error
     assert res.code == 0x1002
 
+
 def test_version():
     req = client.create_request('version')
     res = client.send_request(req)
     assert res.api_version == 1.1
     assert 'gdb' in res.host_version
+
 
 def test_registers():
     global registers
@@ -104,15 +113,18 @@ def test_registers():
     assert len(registers) > 0
     assert registers['rip'] != 0
 
+
 def test_memory():
     res = client.perform_request('memory', address=registers['rip'], length=0x40)
     assert res.status == 'success'
     assert len(res.memory) > 0
 
+
 def test_state_stopped():
     res = client.perform_request('state')
     assert res.is_success
     assert res.state == "stopped"
+
 
 def test_targets():
     res = client.perform_request('targets')
@@ -122,10 +134,12 @@ def test_targets():
     assert res.targets[0]['id'] == 0
     assert res.targets[0]['file'].endswith('tests/inferior')
 
+
 def test_stack():
     res = client.perform_request('stack', length=0x40)
     assert res.status == 'success'
     assert len(res.memory) > 0
+
 
 def test_command():
     res = client.perform_request('command', command="info reg")
@@ -133,9 +147,9 @@ def test_command():
     assert len(res.output) > 0
     assert 'rax' in res.output
 
+
 def test_disassemble():
     res = client.perform_request('disassemble', count=0x20)
     assert res.status == 'success'
     assert len(res.disassembly) > 0
     assert 'DWORD' in res.disassembly
-

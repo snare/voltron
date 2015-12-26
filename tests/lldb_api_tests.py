@@ -83,7 +83,7 @@ try:
     def test_registers():
         process = target.LaunchSimple(None, None, os.getcwd())
         regs = adaptor.registers()
-        assert regs != None
+        assert regs is not None
         assert len(regs) > 0
         assert regs['rip'] != 0
         process.Destroy()
@@ -143,7 +143,7 @@ try:
     def test_dereference_string():
         process = target.LaunchSimple(None, None, os.getcwd())
         regs = adaptor.registers()
-        output = adaptor.dereference(regs['rsp']+0x20)
+        output = adaptor.dereference(regs['rsp'] + 0x20)
         assert 'inferior' in list(output[-1])[-1]
         process.Destroy()
 
