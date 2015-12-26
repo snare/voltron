@@ -71,7 +71,7 @@ try:
                 print("Usage: voltron <init|status|debug|update>")
 
         def status(self):
-            if self.server != None:
+            if self.server is not None:
                 summs = self.server.client_summary()
                 print("The following listeners are active:")
                 listen = voltron.config['server']['listen']
@@ -86,7 +86,6 @@ try:
                     print("  " + summary)
             else:
                 print("Server is not running (no inferior)")
-
 
     if in_lldb:
         class VoltronLLDBCommand (VoltronCommand):
@@ -125,7 +124,7 @@ try:
             def register_hooks(self):
                 try:
                     output = self.adaptor.command("target stop-hook list")
-                    if not 'voltron' in output:
+                    if 'voltron' not in output:
                         output = self.adaptor.command('target stop-hook add -o \'voltron stopped\'')
                         try:
                             # hahaha this sucks
@@ -144,7 +143,7 @@ try:
             """
             Called by LLDB when the module is loaded
             """
-            if not 'cmd' in env_dict:
+            if 'cmd' not in env_dict:
                 log.debug("Initialising LLDB command")
                 env_dict['cmd'] = VoltronLLDBCommand(debugger, env_dict)
                 print(blessed.Terminal().bold_red("Voltron loaded."))
@@ -156,7 +155,6 @@ try:
             Called when the voltron command is invoked within LLDB
             """
             env_dict['cmd'].invoke(debugger, command, result, env_dict)
-
 
     if in_gdb:
         class VoltronGDBCommand (VoltronCommand, gdb.Command):
@@ -212,12 +210,10 @@ try:
                     self.server = Server()
                     self.server.start()
 
-
         if __name__ == "__main__":
             log.debug('Initialising GDB command')
             inst = VoltronGDBCommand()
             print(blessed.Terminal().bold_red("Voltron loaded."))
-
 
     if in_vdb:
         class VoltronVDBCommand(VoltronCommand, vtrace.Notifier):
@@ -277,7 +273,6 @@ try:
 
             def cont_handler(self, event):
                 log.debug('Inferior continued')
-
 
         # wb: i have no idea if this __name__ test is actually correct
         # but __builtin__ is its value when run from vdbbin

@@ -15,6 +15,7 @@ except:
 import threading
 import os.path
 
+import six
 from six.moves.socketserver import UnixStreamServer, ThreadingMixIn
 from six.moves.BaseHTTPServer import HTTPServer
 from werkzeug.serving import WSGIRequestHandler, BaseWSGIServer, ThreadedWSGIServer
@@ -111,6 +112,7 @@ class Server(object):
             if req:
                 # instantiate the request class
                 try:
+                    log.debug("data = {}".format(data))
                     req = api_request(req.request, data=data)
                 except Exception as e:
                     log.exception("Exception raised while creating API request: {} {}".format(type(e), e))
@@ -137,6 +139,10 @@ class Server(object):
                     res = APITimedOutErrorResponse()
                 else:
                     res = req.response
+
+                # Remove the request from the queue
+                if req in self.queue:
+                    self.queue.remove(req)
             else:
                 # non-blocking, dispatch request straight away
                 res = self.dispatch_request(req)
@@ -149,10 +155,10 @@ class Server(object):
 
         Called by the debugger when it stops.
         """
+        log.debug("Dispatching requests: {}".format(self.queue))
         for req in self.queue:
             req.response = self.dispatch_request(req)
             req.signal()
-        self.queue = []
 
     def dispatch_request(self, req):
         """
@@ -308,7 +314,7 @@ class Client(object):
         res = APIEmptyResponseErrorResponse()
 
         # perform the request
-        response = self.session.post(self.url, data=str(request).encode('UTF-8'))
+        response = self.session.post(self.url, data=str(request))
         data = response.text
         if response.status_code != 200:
             res = APIGenericErrorResponse(response.text)

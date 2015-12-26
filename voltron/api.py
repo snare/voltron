@@ -8,6 +8,7 @@ import logging.config
 import json
 import inspect
 import base64
+import six
 
 from collections import defaultdict
 
@@ -67,6 +68,7 @@ class ClientSideOnlyException(Exception):
     See @client_side decorator.
     """
     pass
+
 
 class DebuggerNotPresentException(Exception):
     """
@@ -157,6 +159,22 @@ def client_side(func):
     return inner
 
 
+def cast_b(val):
+    if type(val) == six.binary_type:
+        return val
+    elif type(val) == six.text_type:
+        return val.encode('latin1')
+    return six.binary_type(val)
+
+
+def cast_s(val):
+    if type(val) == six.text_type:
+        return val
+    elif type(val) == six.binary_type:
+        return val.decode('latin1')
+    return six.text_type(val)
+
+
 class APIMessage(object):
     """
     Top-level API message class.
@@ -170,21 +188,7 @@ class APIMessage(object):
     def __init__(self, data=None, *args, **kwargs):
         # process any data that was passed in
         if data:
-            try:
-                d = json.loads(data)
-            except ValueError:
-                raise InvalidMessageException()
-            for key in d:
-                if key == 'data':
-                    for dkey in d['data']:
-                        # base64 decode the field if necessary
-                        if dkey in self._encode_fields:
-                            setattr(self, str(dkey), base64.b64decode(d['data'][dkey]))
-                        else:
-                            setattr(self, str(dkey), d['data'][dkey])
-
-                else:
-                    setattr(self, str(key), d[key])
+            self.from_json(data)
 
         # any other kwargs are treated as field values
         for field in kwargs:
@@ -192,7 +196,13 @@ class APIMessage(object):
 
     def __str__(self):
         """
-        Return a string containing the API message properties in JSON format.
+        Return a string (JSON) representation of the API message properties.
+        """
+        return self.to_json()
+
+    def to_dict(self):
+        """
+        Return a transmission-safe dictionary representation of the API message properties.
         """
         d = {}
         # set values of top-level fields
@@ -206,11 +216,44 @@ class APIMessage(object):
             if hasattr(self, field):
                 # base64 encode the field for transmission if necessary
                 if field in self._encode_fields:
-                    d['data'][field] = base64.b64encode(bytes(getattr(self, field))).decode('UTF-8')
+                    val = getattr(self, field)
+                    if val:
+                        val = cast_s(base64.b64encode(cast_b(val)))
+                    d['data'][field] = val
                 else:
                     d['data'][field] = getattr(self, field)
 
-        return json.dumps(d)
+        return d
+
+    def from_dict(self, d):
+        """
+        Initialise an API message from a transmission-safe dictionary.
+        """
+        for key in d:
+            if key == 'data':
+                for dkey in d['data']:
+                    if dkey in self._encode_fields:
+                        setattr(self, str(dkey), base64.b64decode(d['data'][dkey]))
+                    else:
+                        setattr(self, str(dkey), d['data'][dkey])
+            else:
+                setattr(self, str(key), d[key])
+
+    def to_json(self):
+        """
+        Return a JSON representation of the API message properties.
+        """
+        return json.dumps(self.to_dict())
+
+    def from_json(self, data):
+        """
+        Initialise an API message from a JSON representation.
+        """
+        try:
+            d = json.loads(data)
+        except ValueError:
+            raise InvalidMessageException()
+        self.from_dict(d)
 
     def __getattr__(self, name):
         """
@@ -271,7 +314,7 @@ class APIRequest(APIMessage):
         Wait for the request to be dispatched.
         """
         self.wait_event = threading.Event()
-        timeout = int(self.timeout) if self.timeout != None else None
+        timeout = int(self.timeout) if self.timeout else None
         self.timed_out = not self.wait_event.wait(timeout)
 
     def signal(self):
@@ -317,7 +360,7 @@ class APIResponse(APIMessage):
                 str(self.__class__),
                 self.is_success,
                 self.is_error,
-                {f: getattr(self, f) for f in self._top_fields + self._fields.keys()}
+                {f: getattr(self, f) for f in self._top_fields + list(self._fields.keys())}
         )
 
 

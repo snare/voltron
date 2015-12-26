@@ -4,6 +4,7 @@ import logging
 import threading
 import re
 import struct
+import six
 
 from voltron.api import *
 from voltron.plugin import *
@@ -284,14 +285,14 @@ if HAVE_GDB:
                 p, addr = chain[-1]
                 output = gdb.execute('info symbol {}'.format(addr), to_string=True)
                 if 'No symbol matches' not in output:
-                    chain.append(('symbol', output))
+                    chain.append(('symbol', output.strip()))
                     log.debug("symbol context: {}".format(str(chain[-1])))
                 else:
                     log.debug("no symbol context")
                     mem = gdb.selected_inferior().read_memory(addr, 1)
                     if ord(mem[0]) < 127:
                         output = gdb.execute('x/s 0x{:X}'.format(addr), to_string=True)
-                        chain.append(('string', '"'.join(output.split('"')[1:-1])))
+                        chain.append(('string', '"'.join(output.split('"')[1:-1]).strip()))
 
             log.debug("chain: {}".format(chain))
             return chain

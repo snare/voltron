@@ -1,6 +1,7 @@
 import voltron
 import logging
 import base64
+import six
 
 from voltron.api import *
 
@@ -51,10 +52,11 @@ class APIMemoryRequest(APIRequest):
     @server_side
     def dispatch(self):
         try:
+            target = voltron.debugger.target(self.target_id)
+
             # if 'words' was specified, get the addr_size and calculate the length to read
             if self.words:
-                addr_size = voltron.debugger.target(self.target_id)['addr_size']
-                self.length = self.words * addr_size
+                self.length = self.words * target['addr_size']
 
             # calculate the address at which to begin reading
             if self.address:
@@ -83,10 +85,12 @@ class APIMemoryRequest(APIRequest):
             # deref pointers
             deref = None
             if self.deref:
-                target = voltron.debugger.target(self.target_id)
                 fmt = ('<' if target['byte_order'] == 'little' else '>') + {2: 'H', 4: 'L', 8: 'Q'}[target['addr_size']]
                 deref = []
-                for chunk in [''.join(x) for x in zip(*[iter(memory)]*target['addr_size'])]:
+                for chunk in zip(*[six.iterbytes(memory)]*target['addr_size']):
+                    log.debug(chunk)
+                    log.debug(fmt)
+                    chunk = ''.join([six.unichr(x) for x in chunk]).encode('latin1')
                     try:
                         deref.append(voltron.debugger.dereference(pointer=list(struct.unpack(fmt, chunk))[0]))
                     except:
@@ -94,7 +98,7 @@ class APIMemoryRequest(APIRequest):
 
             res = APIMemoryResponse()
             res.address = addr
-            res.memory = memory
+            res.memory = six.u(memory)
             res.bytes = len(memory)
             res.deref = deref
         except TargetBusyException:

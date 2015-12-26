@@ -188,7 +188,6 @@ if HAVE_LLDB:
                 raise Exception("Unsupported architecture: {}".format(t_info['arch']))
 
             # get the registers
-            log.warn("thing: {}".format(registers))
             regs = thread.GetFrameAtIndex(0).GetRegisters()
 
             # extract the actual register values
