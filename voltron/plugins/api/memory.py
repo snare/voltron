@@ -88,8 +88,6 @@ class APIMemoryRequest(APIRequest):
                 fmt = ('<' if target['byte_order'] == 'little' else '>') + {2: 'H', 4: 'L', 8: 'Q'}[target['addr_size']]
                 deref = []
                 for chunk in zip(*[six.iterbytes(memory)]*target['addr_size']):
-                    log.debug(chunk)
-                    log.debug(fmt)
                     chunk = ''.join([six.unichr(x) for x in chunk]).encode('latin1')
                     try:
                         deref.append(voltron.debugger.dereference(pointer=list(struct.unpack(fmt, chunk))[0]))
