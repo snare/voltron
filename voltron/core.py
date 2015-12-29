@@ -130,9 +130,7 @@ class Server(object):
                 self.queue.append(req)
 
                 # When this returns the request will have been processed by the dispatch_queue method on the main
-                # thread (or timed out). We have to do it this way because GDB sucks. dispatch_queue will remove
-                # dispatched requests from the queue, but each client connection's thread will have a reference to
-                # the relevant request here waiting.
+                # thread (or timed out). We have to do it this way because GDB sucks.
                 req.wait()
 
                 if req.timed_out:
