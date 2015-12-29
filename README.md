@@ -1,16 +1,32 @@
 Voltron
 =======
 
-Voltron is an extensible debugger UI for hackers. It allows you to attach utility views running in other terminals to your debugger (LLDB or GDB), displaying helpful information such as disassembly, stack contents, register values, etc, while still giving you the same debugger CLI you're used to. You can still have your pimped out custom prompt, macros, plugins, terminal colour scheme - whatever you're used to - but you get the added bonus of a sweet customisable heads-up display.
+Voltron is an extensible debugger interface written in Python. It allows you to attach utility views to your debugger (LLDB, GDB or VDB) that can retrieve and display data from the debugger host. By running these views in other terminal windows or panes, you can build a customised debugger user interface to suit your needs.
 
-Voltron also provides a platform on which to build your own UI views, requesting and processing data from the debugger back end to suit your own requirements. To this end, Voltron provides (and uses internally) a JSON API available over UNIX domain sockets, TCP sockets and an HTTP server.
+Built-in biews are provided for:
 
-![voltron example](http://i.imgur.com/niDtVjN.png)
+- Registers
+- Disassembly
+- Stack
+- Memory
+- Breakpoints
+- Backtrace
+
+Voltron is built on a JSON/HTTP API which is available over TCP and UNIX domain sockets, and can be used to build custom UI views.
+
+It looks something like this with LLDB:
+
+![voltron example LLDB](http://i.imgur.com/p3XcagJ.png)
+
+And this with GDB:
+
+![voltron example GDB](http://i.imgur.com/JHq1zgG.png)
+
 
 Support
 -------
 
-`voltron` is built primarily for LLDB. GDB version 7 and later and VDB are both supported.
+`voltron` is built primarily for LLDB. GDB and VDB are also supported to some extent.
 
 The following architectures are supported:
 
@@ -29,12 +45,12 @@ A standard python setup script is included.
 
     # python setup.py install
 
-This will install the `voltron` egg wherever that happens on your system, and an executable named `voltron` to `/usr/local/bin/`.
+This will install the `voltron` package and the entry point executable wherever that happens on your system.
 
 Quick Start
 -----------
 
-1. Configure your debugger to load Voltron when it starts by sourcing the `dbgentry.py` entry point script. The full path will be inside the `voltron` egg. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron-0.1-py2.7.egg/dbgentry.py*.
+1. Configure your debugger to load Voltron when it starts by sourcing the `dbgentry.py` entry point script. The full path will be inside the `voltron` package. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron/dbgentry.py*.
 
     For LLDB:
 
@@ -54,7 +70,7 @@ Quick Start
 
 3. In another terminal (I use iTerm panes) start one of the UI views
 
-        $ voltron view register -v
+        $ voltron view register
         $ voltron view stack
         $ voltron view disassembly
         $ voltron view backtrace
