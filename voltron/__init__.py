@@ -3,7 +3,6 @@ import logging
 import logging.config
 
 import voltron
-from .main import main
 
 from scruffy import Environment, Directory, File, ConfigFile, PluginDirectory, PackageDirectory
 
@@ -19,16 +18,21 @@ commands = None
 
 loaded = False
 
-def setup_env():
+def setup_env(api_only=False):
     global env, config
+    plugin_directory = 'plugins'
+
+    if api_only:
+        plugin_directory = os.path.join(plugin_directory, 'api')
+
     env = Environment(setup_logging=False,
         voltron_dir=Directory('~/.voltron', create=True,
             config=ConfigFile('config', defaults=File('config/default.cfg', parent=PackageDirectory()), apply_env=True),
             sock=File('{config:server.listen.domain}'),
             history=File('history'),
-            user_plugins=PluginDirectory('plugins')
+            user_plugins=PluginDirectory(plugin_directory)
         ),
-        pkg_plugins=PluginDirectory('plugins', parent=PackageDirectory())
+        pkg_plugins=PluginDirectory(plugin_directory, parent=PackageDirectory())
     )
     config = env.config
 
@@ -89,5 +93,5 @@ def setup_logging(logname=None):
 if not hasattr(__builtins__, "xrange"):
     xrange = range
 
-# Setup the Voltron environment
-setup_env()
+# Setup the Voltron environment to load only API plugins.
+setup_env(api_only=True)

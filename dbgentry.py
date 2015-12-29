@@ -3,7 +3,7 @@ try:
     blessed = None
     import blessed
 
-    import voltron
+    import voltron.full
     from voltron.core import Server
     from voltron.plugin import PluginManager
     try:
