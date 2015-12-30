@@ -23,6 +23,7 @@ def main(debugger=None):
     parser = argparse.ArgumentParser()
     parser.register('action', 'parsers', AliasedSubParsersAction)
     parser.add_argument('--debug', '-d', action='store_true', help='print debug logging')
+    parser.add_argument('-o', action='append', help='override config variable')
     top_level_sp = parser.add_subparsers(title='subcommands', description='valid subcommands', dest='subcommand')
     top_level_sp.required = True
     view_parser = top_level_sp.add_parser('view', help='display a view', aliases=('v'))
@@ -43,6 +44,7 @@ def main(debugger=None):
     if args.debug:
         voltron.config['general']['debug_logging'] = True
         voltron.setup_logging('main')
+    voltron.config.update(options=dict((tuple(x.split('=')) for x in args.o)))
 
     # Instantiate and run the appropriate module
     inst = args.func(args, loaded_config=voltron.config)
