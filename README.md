@@ -60,8 +60,11 @@ Quick Start
 
         source /path/to/voltron/dbgentry.py
         voltron init
+        set disassembly-flavor intel
 
     This part can go in your `.lldbinit` or `.gdbinit` so it's automatically executed when the debugger starts.
+
+    Intel is the only disassembly flavour currently supported for syntax highlighting.
 
 2. Start your debugger. On LLDB you need to call `voltron init` after you load the inferior, as a target must be loaded before Voltron's hooks can be installed. This means `voltron init` cannot be called from `.lldbinit` the way it can from `.gdbinit`. Hopefully this will be remedied with a more versatile hooking mechanism in a future version of LLDB (this has been discussed with the developers).
 
