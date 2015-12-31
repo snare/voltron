@@ -23,7 +23,7 @@ def main(debugger=None):
     parser = argparse.ArgumentParser()
     parser.register('action', 'parsers', AliasedSubParsersAction)
     parser.add_argument('--debug', '-d', action='store_true', help='print debug logging')
-    parser.add_argument('-o', action='append', help='override config variable')
+    parser.add_argument('-o', action='append', help='override config variable', default=[])
     top_level_sp = parser.add_subparsers(title='subcommands', description='valid subcommands', dest='subcommand')
     top_level_sp.required = True
     view_parser = top_level_sp.add_parser('view', help='display a view', aliases=('v'))
