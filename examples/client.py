@@ -43,12 +43,11 @@ from voltron.core import Client
 def main():
     # Create a client and connect to the server
     client = Client()
-    client.connect()
 
     # Main event loop
     while True:
         # Wait for the debugger to stop again
-        res = client.perform_request('wait')
+        res = client.perform_request('version', block=True)
         if res.is_success:
             # If nothing went wrong, get the instruction pointer and print it
             res = client.perform_request('registers', registers=['rip'])
