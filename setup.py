@@ -9,7 +9,7 @@ setup(
     license="Buy snare a beer",
     keywords="voltron gdb lldb",
     url="https://github.com/snarez/voltron",
-    packages=['voltron'],
+    packages=find_packages(exclude=['tests', 'examples']),
     install_requires=['scruffington', 'flask', 'blessed', 'pygments', 'requests_unixsocket'],
     data_files=['dbgentry.py'],
     package_data={'voltron': ['config/*']},
