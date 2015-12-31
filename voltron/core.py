@@ -19,8 +19,9 @@ import six
 from six.moves.socketserver import UnixStreamServer, ThreadingMixIn
 from six.moves.BaseHTTPServer import HTTPServer
 from werkzeug.serving import WSGIRequestHandler, BaseWSGIServer, ThreadedWSGIServer
+from werkzeug.wsgi import SharedDataMiddleware
 
-from flask import Flask, request, Response
+from flask import Flask, request, Response, render_template, make_response
 
 import voltron
 from .api import *
@@ -56,10 +57,16 @@ class Server(object):
         """
         Start the server.
         """
-        app = VoltronFlaskApp('voltron',
-                              template_folder='web/templates',
-                              static_folder='web/static',
-                              server=self)
+        self.app = VoltronFlaskApp('voltron',
+                                   template_folder='web/templates',
+                                   static_folder='web/static',
+                                   server=self)
+
+        plugins = voltron.plugin.pm.web_plugins
+        self.app = SharedDataMiddleware(
+            self.app,
+            {'/view/{}'.format(n): os.path.join(p._dir, 'static') for (n, p) in plugins.iteritems()}
+        )
 
         def run_listener(name, cls, arg):
             log.debug("Starting listener for {} socket on {}".format(name, str(arg)))
@@ -70,7 +77,7 @@ class Server(object):
             self.listeners.append(s)
 
         if voltron.config.server.listen.tcp:
-            run_listener('tcp', ThreadedVoltronWSGIServer, list(voltron.config.server.listen.tcp) + [app])
+            run_listener('tcp', ThreadedVoltronWSGIServer, list(voltron.config.server.listen.tcp) + [self.app])
 
         if voltron.config.server.listen.domain:
             path = os.path.expanduser(str(voltron.config.server.listen.domain))
@@ -78,7 +85,7 @@ class Server(object):
                 os.unlink(path)
             except:
                 pass
-            run_listener('domain', ThreadedUnixWSGIServer, [path, app])
+            run_listener('domain', ThreadedUnixWSGIServer, [path, self.app])
 
         self.is_running = True
 
@@ -247,19 +254,40 @@ class VoltronFlaskApp(Flask):
             del kwargs['server']
         super(VoltronFlaskApp, self).__init__(*args, **kwargs)
 
-        def handle_post():
+        def index():
+            return make_response(render_template('index.html', views=voltron.plugin.pm.web_plugins.keys()))
+
+        def plugin():
+            return make_response(render_template('index.html', views=voltron.plugin.pm.web_plugins.keys()))
+
+        def api_post():
             res = self.server.handle_request(request.data.decode('UTF-8'))
             return Response(str(res), status=200, mimetype='application/json')
 
-        def handle_get():
+        def api_get():
             res = self.server.handle_request(str(api_request(request.path.split('/')[-1], **request.args.to_dict())))
             return Response(str(res), status=200, mimetype='application/json')
 
-        handle_post.methods = ["POST"]
-        self.add_url_rule('/api/request', 'request', handle_post)
+        # Show main page at index
+        self.add_url_rule('/', 'index', index)
 
+        # Handle API POST requests at /api/request
+        api_post.methods = ["POST"]
+        self.add_url_rule('/api/request', 'request', api_post)
+
+        # Handle API GET requests at /api/<request_name> e.g. /api/version
         for plugin in voltron.plugin.pm.api_plugins:
-            self.add_url_rule('/api/{}'.format(plugin), plugin, handle_get)
+            self.add_url_rule('/api/{}'.format(plugin), plugin, api_get)
+
+    def middleware(self):
+        """
+        Return a Werkzeug SharedDataMiddleware instance comprising the app
+        and any web plugins.
+        """
+        return SharedDataMiddleware(
+            self,
+            [{'/view/{}/static'.format(n): os.path.join(p._dir, 'static')} for n, p in voltron.plugin.pm.web_plugins]
+        )
 
 
 class ClientThread(threading.Thread):
