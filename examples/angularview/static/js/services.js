@@ -15,12 +15,17 @@ factory('voltronAPIservice', function($http)
         });
     }
 
-    voltronAPI.disassemble = function(address, count) {
+    voltronAPI.disassemble_format = function(data) {
+        res = voltronAPI.request(createRequest('disassemble', {address: address, count: count}))
         return $http({
             method: 'POST',
-            url: '../api/request',
-            data: createRequest('disassemble', {address: address, count: count})
+            url: '/api/request',
+            data: createRequest('format_disasm', {disassembly: res.data.disassembly})
         });
+    }
+
+    voltronAPI.disassemble = function(address, count) {
+        return voltronAPI.request(createRequest('disassemble', {address: address, count: count}))
     }
 
     voltronAPI.command = function(command) {
@@ -49,14 +54,6 @@ factory('voltronAPIservice', function($http)
 
     voltronAPI.version = function() {
         return voltronAPI.request(createRequest('version', {}))
-    }
-
-    voltronAPI.wait = function(timeout) {
-        // return voltronAPI.request(createRequest('wait', {timeout: timeout}))
-        return $http({
-            method: 'GET',
-            url: '/api/wait?timeout='+timeout
-        });
     }
 
     return voltronAPI;
