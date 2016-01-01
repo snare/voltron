@@ -101,7 +101,9 @@ See the [issue tracker](https://github.com/snare/voltron/issues) on github.
 License
 -------
 
-This software is released under the "Buy snare a beer" license. If you use this and don't hate it, buy me a beer at a conference some time. This license also extends to other contributors - [richo](http://github.com/richo) definitely deserves a few beers for his contributions.
+See the LICENSE file.
+
+If you use this and don't hate it, buy me a beer at a conference some time. This license also extends to other contributors - [richo](http://github.com/richo) definitely deserves a few beers for his contributions.
 
 Credits
 -------

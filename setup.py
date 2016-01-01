@@ -6,7 +6,7 @@ setup(
     author="snare",
     author_email="snare@ho.ax",
     description=("A debugger UI"),
-    license="Buy snare a beer",
+    license="MIT",
     keywords="voltron debugger ui gdb lldb vdb",
     url="https://github.com/snare/voltron",
     packages=find_packages(exclude=['tests', 'examples']),
