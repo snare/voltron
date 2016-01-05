@@ -16,21 +16,24 @@ import threading
 import os.path
 
 import six
-from six.moves.socketserver import UnixStreamServer, ThreadingMixIn
-from six.moves.BaseHTTPServer import HTTPServer
+if six.PY2:
+    from SocketServer import UnixStreamServer, ThreadingMixIn
+    from BaseHTTPServer import HTTPServer
+else:
+    from six.moves.socketserver import UnixStreamServer, ThreadingMixIn
+    from six.moves.BaseHTTPServer import HTTPServer
+
 from werkzeug.serving import WSGIRequestHandler, BaseWSGIServer, ThreadedWSGIServer
-from werkzeug.wsgi import SharedDataMiddleware
+from werkzeug.wsgi import SharedDataMiddleware, DispatcherMiddleware
 
 from flask import Flask, request, Response, render_template, make_response
 
 import voltron
 from .api import *
 from .plugin import *
-from .api import *
+from .web.ui import app as ui_app
 
 log = logging.getLogger("core")
-
-READ_MAX = 0xFFFF
 
 if sys.version_info.major == 2:
     STRTYPES = (str, unicode)
@@ -57,15 +60,16 @@ class Server(object):
         """
         Start the server.
         """
-        self.app = VoltronFlaskApp('voltron',
-                                   template_folder='web/templates',
-                                   static_folder='web/static',
-                                   server=self)
-
         plugins = voltron.plugin.pm.web_plugins
-        self.app = SharedDataMiddleware(
-            self.app,
-            {'/view/{}'.format(n): os.path.join(p._dir, 'static') for (n, p) in plugins.iteritems()}
+        self.app = DispatcherMiddleware(
+            VoltronFlaskApp('voltron', template_folder='web/templates', static_folder='web/static', server=self),
+            {
+                "/view": SharedDataMiddleware(
+                    None,
+                    {'/{}'.format(n): os.path.join(p._dir, 'static') for (n, p) in plugins.iteritems()}
+                ),
+                "/ui": ui_app
+            }
         )
 
         def run_listener(name, cls, arg):
@@ -278,16 +282,6 @@ class VoltronFlaskApp(Flask):
         # Handle API GET requests at /api/<request_name> e.g. /api/version
         for plugin in voltron.plugin.pm.api_plugins:
             self.add_url_rule('/api/{}'.format(plugin), plugin, api_get)
-
-    def middleware(self):
-        """
-        Return a Werkzeug SharedDataMiddleware instance comprising the app
-        and any web plugins.
-        """
-        return SharedDataMiddleware(
-            self,
-            [{'/view/{}/static'.format(n): os.path.join(p._dir, 'static')} for n, p in voltron.plugin.pm.web_plugins]
-        )
 
 
 class ClientThread(threading.Thread):
