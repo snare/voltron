@@ -66,7 +66,7 @@ class Server(object):
             {
                 "/view": SharedDataMiddleware(
                     None,
-                    {'/{}'.format(n): os.path.join(p._dir, 'static') for (n, p) in plugins.iteritems()}
+                    {'/{}'.format(n): os.path.join(p._dir, 'static') for (n, p) in six.iteritems(plugins)}
                 ),
                 "/ui": ui_app
             }
