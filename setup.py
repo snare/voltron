@@ -10,7 +10,15 @@ setup(
     keywords="voltron debugger ui gdb lldb vdb",
     url="https://github.com/snare/voltron",
     packages=find_packages(exclude=['tests', 'examples']),
-    install_requires=['scruffington', 'flask', 'blessed', 'pygments', 'requests', 'requests_unixsocket'],
+    install_requires=[
+        'scruffington',
+        'flask',
+        'flask_restful',
+        'blessed',
+        'pygments',
+        'requests',
+        'requests_unixsocket'
+    ],
     data_files=['dbgentry.py'],
     package_data={'voltron': ['config/*']},
     install_package_data=True,
