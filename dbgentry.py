@@ -115,6 +115,7 @@ try:
                 # start the server
                 self.server = Server()
                 self.server.start()
+                voltron.server = self.server
 
                 self.hook_idx = None
 
