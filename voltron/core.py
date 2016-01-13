@@ -261,9 +261,6 @@ class VoltronFlaskApp(Flask):
         def index():
             return make_response(render_template('index.html', views=voltron.plugin.pm.web_plugins.keys()))
 
-        def plugin():
-            return make_response(render_template('index.html', views=voltron.plugin.pm.web_plugins.keys()))
-
         def api_post():
             res = self.server.handle_request(request.data.decode('UTF-8'))
             return Response(str(res), status=200, mimetype='application/json')
