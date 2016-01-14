@@ -3,6 +3,7 @@ from __future__ import print_function
 import struct
 import logging
 import threading
+import codecs
 from collections import namedtuple
 
 from voltron.api import *
@@ -197,11 +198,18 @@ if HAVE_LLDB:
             regs = {}
             for reg in objs:
                 val = 'n/a'
-                if reg.value != None:
+                if reg.value is not None:
                     try:
                         val = reg.GetValueAsUnsigned()
                     except:
                         reg = None
+                elif reg.num_children > 0:
+                    children = []
+                    for i in xrange(reg.GetNumChildren()):
+                        children.append(int(reg.GetChildAtIndex(i, lldb.eNoDynamicValues, True).value, 16))
+                    if t_info['byte_order'] == 'big':
+                        children = list(reversed(children))
+                    val = int(codecs.encode(struct.pack('{}B'.format(len(children)), *children), 'hex'), 16)
                 if registers == [] or reg.name in registers:
                     regs[reg.name] = val
 
