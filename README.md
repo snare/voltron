@@ -88,6 +88,14 @@ Quick Start
 
         (lldb) voltron stopped
 
+FAQ
+---
+
+Q. Installing on Linux is broken with an error about `blessed`
+
+A. That's not a question, but the answer is [here](https://github.com/snare/voltron/wiki/Voltron-on-Ubuntu-14.04-with-GDB).
+
+
 Documentation
 -------------
 
