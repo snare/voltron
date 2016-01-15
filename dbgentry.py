@@ -288,4 +288,13 @@ except Exception as e:
     msg = "Exception {} raised while loading Voltron: {}".format(type(e), str(e))
     if blessed:
         msg = blessed.Terminal().bold_red(msg)
+    try:
+        import platform
+        if platform.system() == 'Linux':
+            print("--------------------------------------------------------------------------")
+            print("Install Voltron using `pip3` on Ubuntu. See the wiki for more information.")
+            print("--------------------------------------------------------------------------")
+    except:
+        pass
+
     print(msg)
