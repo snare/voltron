@@ -96,6 +96,11 @@ Q. Installing on Linux is broken with an error about `blessed`
 A. That's not a question, but the answer is [here](https://github.com/snare/voltron/wiki/Voltron-on-Ubuntu-14.04-with-GDB).
 
 
+Q. Why do the views show "Connection refused" before the inferior has been started (on GDB)?
+
+A. There is no clean way to hook GDB's exit, only the inferior's exit, so the Voltron server is started and stopped along with the inferior.
+
+
 Documentation
 -------------
 
