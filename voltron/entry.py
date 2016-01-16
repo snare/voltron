@@ -100,7 +100,7 @@ try:
                 self.ci = self.debugger.GetCommandInterpreter()
 
                 # install the voltron command handler
-                self.debugger.HandleCommand('command script add -f dbgentry.lldb_invoke voltron')
+                self.debugger.HandleCommand('command script add -f entry.lldb_invoke voltron')
 
                 # load plugins
                 self.pm = voltron.plugin.pm
@@ -115,7 +115,6 @@ try:
                 # start the server
                 self.server = Server()
                 self.server.start()
-                voltron.server = self.server
 
                 self.hook_idx = None
 
@@ -125,7 +124,7 @@ try:
             def register_hooks(self):
                 try:
                     output = self.adaptor.command("target stop-hook list")
-                    if 'voltron' not in output:
+                    if not 'voltron' in output:
                         output = self.adaptor.command('target stop-hook add -o \'voltron stopped\'')
                         try:
                             # hahaha this sucks
@@ -207,13 +206,13 @@ try:
 
             def cont_handler(self, event):
                 log.debug('Inferior continued')
-                if self.server == None or self.server.is_running == False:
+                if not self.server:
                     self.server = Server()
                     self.server.start()
 
         if __name__ == "__main__":
             log.debug('Initialising GDB command')
-            inst = VoltronGDBCommand()
+            voltron.cmd = VoltronGDBCommand()
             print(blessed.Terminal().bold_red("Voltron loaded."))
 
     if in_vdb:
@@ -283,18 +282,8 @@ try:
             inst.register_hooks()
             print(blessed.Terminal().bold_red("Voltron loaded."))
 
-
 except Exception as e:
     msg = "Exception {} raised while loading Voltron: {}".format(type(e), str(e))
     if blessed:
         msg = blessed.Terminal().bold_red(msg)
-    try:
-        import platform
-        if platform.system() == 'Linux':
-            print("--------------------------------------------------------------------------")
-            print("Install Voltron using `pip3` on Ubuntu. See the wiki for more information.")
-            print("--------------------------------------------------------------------------")
-    except:
-        pass
-
     print(msg)

@@ -19,7 +19,6 @@ setup(
         'requests',
         'requests_unixsocket'
     ],
-    data_files=['dbgentry.py'],
     package_data={'voltron': ['config/*']},
     install_package_data=True,
     entry_points={

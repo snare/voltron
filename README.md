@@ -50,15 +50,15 @@ This will install the `voltron` package and the entry point executable wherever 
 Quick Start
 -----------
 
-1. Configure your debugger to load Voltron when it starts by sourcing the `dbgentry.py` entry point script. The full path will be inside the `voltron` package. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron/dbgentry.py*.
+1. Configure your debugger to load Voltron when it starts by sourcing the `entry.py` entry point script. The full path will be inside the `voltron` package. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron/entry.py*.
 
     For LLDB:
 
-        command script import /path/to/voltron/dbgentry.py
+        command script import /path/to/voltron/entry.py
 
     For GDB:
 
-        source /path/to/voltron/dbgentry.py
+        source /path/to/voltron/entry.py
         voltron init
         set disassembly-flavor intel
 
