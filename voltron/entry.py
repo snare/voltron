@@ -124,7 +124,7 @@ try:
             def register_hooks(self):
                 try:
                     output = self.adaptor.command("target stop-hook list")
-                    if not 'voltron' in output:
+                    if 'voltron' not in output:
                         output = self.adaptor.command('target stop-hook add -o \'voltron stopped\'')
                         try:
                             # hahaha this sucks
@@ -146,6 +146,7 @@ try:
             if 'cmd' not in env_dict:
                 log.debug("Initialising LLDB command")
                 env_dict['cmd'] = VoltronLLDBCommand(debugger, env_dict)
+                voltron.cmd = env_dict['cmd']
                 print(blessed.Terminal().bold_red("Voltron loaded."))
                 print("Run `voltron init` after you load a target.")
                 env_dict['cmd'].adaptor.host.HandleCommand("script import voltron")
@@ -176,19 +177,22 @@ try:
 
                 # server is started and stopped with the inferior to avoid GDB hanging on exit
                 self.server = None
+                self.registered = False
 
             def invoke(self, arg, from_tty):
                 self.handle_command(arg)
 
             def register_hooks(self):
-                gdb.events.stop.connect(self.stop_handler)
-                gdb.events.exited.connect(self.stop_and_exit_handler)
-                gdb.events.cont.connect(self.cont_handler)
+                if not self.registered:
+                    gdb.events.stop.connect(self.stop_handler)
+                    gdb.events.exited.connect(self.stop_and_exit_handler)
+                    gdb.events.cont.connect(self.cont_handler)
 
             def unregister_hooks(self):
-                gdb.events.stop.disconnect(self.stop_handler)
-                gdb.events.exited.disconnect(self.stop_and_exit_handler)
-                gdb.events.cont.disconnect(self.cont_handler)
+                if self.registered:
+                    gdb.events.stop.disconnect(self.stop_handler)
+                    gdb.events.exited.disconnect(self.stop_and_exit_handler)
+                    gdb.events.cont.disconnect(self.cont_handler)
 
             def stop_handler(self, event):
                 self.adaptor.update_state()
