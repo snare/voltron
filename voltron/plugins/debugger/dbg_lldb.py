@@ -204,12 +204,15 @@ if HAVE_LLDB:
                     except:
                         reg = None
                 elif reg.num_children > 0:
-                    children = []
-                    for i in xrange(reg.GetNumChildren()):
-                        children.append(int(reg.GetChildAtIndex(i, lldb.eNoDynamicValues, True).value, 16))
-                    if t_info['byte_order'] == 'big':
-                        children = list(reversed(children))
-                    val = int(codecs.encode(struct.pack('{}B'.format(len(children)), *children), 'hex'), 16)
+                    try:
+                        children = []
+                        for i in xrange(reg.GetNumChildren()):
+                            children.append(int(reg.GetChildAtIndex(i, lldb.eNoDynamicValues, True).value, 16))
+                        if t_info['byte_order'] == 'big':
+                            children = list(reversed(children))
+                        val = int(codecs.encode(struct.pack('{}B'.format(len(children)), *children), 'hex'), 16)
+                    except:
+                        pass
                 if registers == [] or reg.name in registers:
                     regs[reg.name] = val
 
