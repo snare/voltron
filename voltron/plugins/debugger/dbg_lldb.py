@@ -58,7 +58,8 @@ if HAVE_LLDB:
             Returns None for any fields that can't be elided
             """
 
-            arch, platform, abi = triple.split("-")
+            s = triple.split("-")
+            arch, platform, abi = s[0], s[1], '-'.join(s[2:])
             if arch == "x86_64h":
                 arch = "x86_64"
             return (arch, platform, abi)
