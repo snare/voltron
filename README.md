@@ -91,14 +91,19 @@ Quick Start
 FAQ
 ---
 
-Q. Installing on Linux is broken with an error about `blessed`
+**Q.** Installing on Linux is broken with an error about `blessed`
 
-A. That's not a question, but the answer is [here](https://github.com/snare/voltron/wiki/Voltron-on-Ubuntu-14.04-with-GDB).
+**A.** That's not a question, but the answer is [here](https://github.com/snare/voltron/wiki/Voltron-on-Ubuntu-14.04-with-GDB).
 
 
-Q. Why do the views show "Connection refused" before the inferior has been started (on GDB)?
+**Q.** Why do the views show "Connection refused" before the inferior has been started (on GDB)?
 
-A. There is no clean way to hook GDB's exit, only the inferior's exit, so the Voltron server is started and stopped along with the inferior.
+**A.** There is no clean way to hook GDB's exit, only the inferior's exit, so the Voltron server is started and stopped along with the inferior.
+
+
+**Q.** Why are the views black with no data when connected to GDB?
+
+**A.** Due to a limitation in the GDB API, the views are only updated when the debugger is stopped (e.g. by hitting a breakpoint). Step in the debugger and the views will be updated.
 
 
 Documentation
