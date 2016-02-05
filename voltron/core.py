@@ -167,6 +167,7 @@ class Server(object):
         log.debug("Dispatching requests: {}".format(self.queue))
         for req in self.queue:
             req.response = self.dispatch_request(req)
+        for req in self.queue:
             req.signal()
 
     def dispatch_request(self, req):
