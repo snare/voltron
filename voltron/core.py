@@ -101,6 +101,7 @@ class Server(object):
         for s in self.listeners:
             s.shutdown()
             s.socket.close()
+        self.cancel_queue()
         for t in self.threads:
             t.join()
         self.listeners = []
@@ -157,6 +158,16 @@ class Server(object):
                 res = self.dispatch_request(req)
 
         return res
+
+    def cancel_queue(self):
+        """
+        Cancel all requests in the queue so we can exit.
+        """
+        log.debug("Canceling requests: {}".format(self.queue))
+        for req in self.queue:
+            req.response = APIServerExitedErrorResponse()
+        for req in self.queue:
+            req.signal()
 
     def dispatch_queue(self):
         """

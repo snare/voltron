@@ -437,3 +437,8 @@ class APIMissingFieldErrorResponse(APIGenericErrorResponse):
 class APIEmptyResponseErrorResponse(APIGenericErrorResponse):
     code = 0x1008
     message = "Empty response"
+
+
+class APIServerExitedErrorResponse(APIGenericErrorResponse):
+    code = 0x1009
+    message = "Server exited"
