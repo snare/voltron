@@ -81,6 +81,7 @@ class DebuggerAdaptor(object):
     reg_names = {
         "x86":      {"pc": "eip", "sp": "esp"},
         "x86_64":   {"pc": "rip", "sp": "rsp"},
+        "arm":      {"pc": "pc", "sp": "sp"},
         "armv6":    {"pc": "pc", "sp": "sp"},
         "armv7":    {"pc": "pc", "sp": "sp"},
         "armv7s":   {"pc": "pc", "sp": "sp"},
