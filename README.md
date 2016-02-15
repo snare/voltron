@@ -88,24 +88,6 @@ Quick Start
 
         (lldb) voltron stopped
 
-FAQ
----
-
-**Q.** Loading Voltron in GDB on Linux fails with an error about `blessed` or something.
-
-**A.** That's not a question, but the answer is [here](https://github.com/snare/voltron/wiki/Voltron-on-Ubuntu-14.04-with-GDB).
-
-
-**Q.** Why do the views show "Connection refused" before the inferior has been started (on GDB)?
-
-**A.** There is no clean way to hook GDB's exit, only the inferior's exit, so the Voltron server is started and stopped along with the inferior.
-
-
-**Q.** Why are the views not updating when connected to GDB?
-
-**A.** Due to a limitation in the GDB API, the views are only updated when the debugger is stopped (e.g. by hitting a breakpoint). Step in the debugger and the views will be updated.
-
-
 Documentation
 -------------
 
@@ -113,6 +95,16 @@ See the [wiki](https://github.com/snare/voltron/wiki) on github.
 
 Bugs
 ----
+
+### Known issues with GDB
+
+Loading Voltron in GDB on Linux fails with an error about `blessed`. GDB on some distros is built with Python 3, but the system's Python is version 2. See [this page on the wiki](https://github.com/snare/voltron/wiki/Voltron-on-Ubuntu-14.04-with-GDB). for a fix.
+
+Views show "Connection refused" before the inferior has been started. There is no clean way to hook GDB's exit, only the inferior's exit, so the Voltron server is started and stopped along with the inferior.
+
+Due to a limitation in the GDB API, the views are only updated when the debugger is stopped (e.g. by hitting a breakpoint).
+
+If the stack view is causing GDB to hang then it must be launched **after** the debugger has been launched, the inferior started, and the debugger stopped (e.g. a breakpoint hit). This is due to a GDB bug that has not yet been resolved.
 
 See the [issue tracker](https://github.com/snare/voltron/issues) on github.
 
