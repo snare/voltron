@@ -26,7 +26,7 @@ else:
 from werkzeug.serving import WSGIRequestHandler, BaseWSGIServer, ThreadedWSGIServer
 from werkzeug.wsgi import SharedDataMiddleware, DispatcherMiddleware
 
-from flask import Flask, request, Response, render_template, make_response
+from flask import Flask, request, Response, render_template, make_response, redirect
 
 import voltron
 from .api import *
