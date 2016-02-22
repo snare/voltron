@@ -31,7 +31,12 @@ from flask import Flask, request, Response, render_template, make_response
 import voltron
 from .api import *
 from .plugin import *
-from .web.ui import app as ui_app
+
+try:
+    from voltron_web import app as ui_app
+except:
+    ui_app = None
+
 
 log = logging.getLogger("core")
 
@@ -42,6 +47,49 @@ elif sys.version_info.major == 3:
 else:
     raise RuntimeError("Not sure what strings look like on python %d" %
                        sys.version_info.major)
+
+
+class APIFlaskApp(Flask):
+    """
+    A Flask app for the API.
+    """
+    def __init__(self, *args, **kwargs):
+        if 'server' in kwargs:
+            self.server = kwargs['server']
+            del kwargs['server']
+        super(APIFlaskApp, self).__init__('voltron_api', *args, **kwargs)
+
+        def api_post():
+            res = self.server.handle_request(request.data.decode('UTF-8'))
+            return Response(str(res), status=200, mimetype='application/json')
+
+        def api_get():
+            res = self.server.handle_request(str(api_request(request.path.split('/')[-1], **request.args.to_dict())))
+            return Response(str(res), status=200, mimetype='application/json')
+
+        # Handle API POST requests at /api/request
+        api_post.methods = ["POST"]
+        self.add_url_rule('/request', 'request', api_post)
+
+        # Handle API GET requests at /api/<request_name> e.g. /api/version
+        for plugin in voltron.plugin.pm.api_plugins:
+            self.add_url_rule('/{}'.format(plugin), plugin, api_get)
+
+
+class RootFlaskApp(Flask):
+    """
+    A Flask app for /.
+    """
+    def __init__(self, *args, **kwargs):
+        super(RootFlaskApp, self).__init__('voltron', *args, **kwargs)
+
+        def index():
+            if ui_app:
+                return redirect('/ui')
+            else:
+                return "The Voltron web interface is not installed. Install the <tt>voltron_web</tt> package."
+
+        self.add_url_rule('/', 'index', index)
 
 
 class Server(object):
@@ -62,8 +110,9 @@ class Server(object):
         """
         plugins = voltron.plugin.pm.web_plugins
         self.app = DispatcherMiddleware(
-            VoltronFlaskApp('voltron', template_folder='web/templates', static_folder='web/static', server=self),
+            RootFlaskApp(),
             {
+                "/api": APIFlaskApp(server=self),
                 "/view": SharedDataMiddleware(
                     None,
                     {'/{}'.format(n): os.path.join(p._dir, 'static') for (n, p) in six.iteritems(plugins)}
@@ -258,39 +307,6 @@ class ThreadedUnixWSGIServer(ThreadingMixIn, UnixWSGIServer):
     source and you'll see why.
     """
     multithread = True
-
-
-class VoltronFlaskApp(Flask):
-    """
-    A Voltron Flask app.
-    """
-    def __init__(self, *args, **kwargs):
-        if 'server' in kwargs:
-            self.server = kwargs['server']
-            del kwargs['server']
-        super(VoltronFlaskApp, self).__init__(*args, **kwargs)
-
-        def index():
-            return make_response(render_template('index.html', views=voltron.plugin.pm.web_plugins.keys()))
-
-        def api_post():
-            res = self.server.handle_request(request.data.decode('UTF-8'))
-            return Response(str(res), status=200, mimetype='application/json')
-
-        def api_get():
-            res = self.server.handle_request(str(api_request(request.path.split('/')[-1], **request.args.to_dict())))
-            return Response(str(res), status=200, mimetype='application/json')
-
-        # Show main page at index
-        self.add_url_rule('/', 'index', index)
-
-        # Handle API POST requests at /api/request
-        api_post.methods = ["POST"]
-        self.add_url_rule('/api/request', 'request', api_post)
-
-        # Handle API GET requests at /api/<request_name> e.g. /api/version
-        for plugin in voltron.plugin.pm.api_plugins:
-            self.add_url_rule('/api/{}'.format(plugin), plugin, api_get)
 
 
 class ClientThread(threading.Thread):
