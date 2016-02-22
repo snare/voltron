@@ -96,7 +96,7 @@ See the [wiki](https://github.com/snare/voltron/wiki) on github.
 Bugs
 ----
 
-### Known issues with GDB
+There are some known issues with GDB.
 
 Loading Voltron in GDB on Linux fails with an error about `blessed`. GDB on some distros is built with Python 3, but the system's Python is version 2. See [this page on the wiki](https://github.com/snare/voltron/wiki/Voltron-on-Ubuntu-14.04-with-GDB). for a fix.
 
