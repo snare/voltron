@@ -87,7 +87,7 @@ class RootFlaskApp(Flask):
             if ui_app:
                 return redirect('/ui')
             else:
-                return "The Voltron web interface is not installed. Install the <tt>voltron_web</tt> package."
+                return "The Voltron web interface is not installed. Install the <tt>voltron-web</tt> package with <tt>pip</tt>."
 
         self.add_url_rule('/', 'index', index)
 
