@@ -98,9 +98,9 @@ Bugs
 
 There are some known issues with GDB.
 
-Loading Voltron in GDB on Linux fails with an error about `blessed`. GDB on some distros is built with Python 3, but the system's Python is version 2. See [this page on the wiki](https://github.com/snare/voltron/wiki/Voltron-on-Ubuntu-14.04-with-GDB). for a fix.
+GDB on some distros is built with Python 3, but the system's Python is version 2. If Voltron is installed into Python 2's `site-packages` it will not work with GDB. See [this page on the wiki](https://github.com/snare/voltron/wiki/Voltron-on-Ubuntu-14.04-with-GDB) for installation instructions.
 
-Views show "Connection refused" before the inferior has been started. There is no clean way to hook GDB's exit, only the inferior's exit, so the Voltron server is started and stopped along with the inferior.
+There is no clean way to hook GDB's exit, only the inferior's exit, so the Voltron server is started and stopped along with the inferior. This results in views show "Connection refused" before the inferior has been started.
 
 Due to a limitation in the GDB API, the views are only updated when the debugger is stopped (e.g. by hitting a breakpoint).
 
