@@ -37,6 +37,8 @@ try:
 except:
     ui_app = None
 
+# make sure we use HTTP 1.1 for keep-alive
+WSGIRequestHandler.protocol_version = "HTTP/1.1"
 
 log = logging.getLogger("core")
 
