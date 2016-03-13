@@ -50,9 +50,7 @@ try:
         """
         def handle_command(self, command):
             global log
-            if "status" in command:
-                self.status()
-            elif 'debug' in command:
+            if 'debug' in command:
                 if 'enable' in command:
                     log.setLevel(logging.DEBUG)
                     print("Debug logging enabled")
@@ -68,24 +66,7 @@ try:
                 self.adaptor.update_state()
                 self.server.dispatch_queue()
             else:
-                print("Usage: voltron <init|status|debug|update>")
-
-        def status(self):
-            if self.server is not None:
-                summs = self.server.client_summary()
-                print("The following listeners are active:")
-                listen = voltron.config['server']['listen']
-                if listen['domain']:
-                    print("  domain socket ({})".format(voltron.env['sock']))
-                if listen['tcp']:
-                    print("  TCP socket ({})".format(listen['tcp']))
-                if listen['http']:
-                    print("  web server ({})".format(listen['http']))
-                print("There are {} clients attached:".format(len(summs)))
-                for summary in summs:
-                    print("  " + summary)
-            else:
-                print("Server is not running (no inferior)")
+                print("Usage: voltron <init|debug|update>")
 
     if in_lldb:
         class VoltronLLDBCommand (VoltronCommand):
