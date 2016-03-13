@@ -15,14 +15,6 @@ except:
 import threading
 import os.path
 
-import six
-if six.PY2:
-    from SocketServer import UnixStreamServer, ThreadingMixIn
-    from BaseHTTPServer import HTTPServer
-else:
-    from six.moves.socketserver import UnixStreamServer, ThreadingMixIn
-    from six.moves.BaseHTTPServer import HTTPServer
-
 from werkzeug.serving import WSGIRequestHandler, BaseWSGIServer, ThreadedWSGIServer
 from werkzeug.wsgi import SharedDataMiddleware, DispatcherMiddleware
 
@@ -31,6 +23,14 @@ from flask import Flask, request, Response, render_template, make_response, redi
 import voltron
 from .api import *
 from .plugin import *
+
+import six
+if six.PY2:
+    from SocketServer import UnixStreamServer, ThreadingMixIn
+    from BaseHTTPServer import HTTPServer
+else:
+    from six.moves.socketserver import UnixStreamServer, ThreadingMixIn
+    from six.moves.BaseHTTPServer import HTTPServer
 
 try:
     from voltron_web import app as ui_app
