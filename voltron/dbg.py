@@ -35,6 +35,7 @@ def validate_target(func, *args, **kwargs):
         return func(self, *args, **kwargs)
     return inner
 
+
 def validate_busy(func, *args, **kwargs):
     """
     A decorator that raises an exception if the specified target is busy.
@@ -59,6 +60,7 @@ def validate_busy(func, *args, **kwargs):
         # call the function
         return func(self, *args, **kwargs)
     return inner
+
 
 def lock_host(func, *args, **kwargs):
     """
@@ -104,7 +106,7 @@ class DebuggerAdaptor(object):
         except Exception as e:
             log.error("Exception checking if target exists: {} {}".format(type(e), e))
             return False
-        return target != None
+        return target is not None
 
     def target_is_valid(self, target_id=0):
         """
