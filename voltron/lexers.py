@@ -29,7 +29,6 @@ class LLDBIntelLexer(RegexLexer):
     wordop = r'seg|wrt|strict'
     type = r'byte|[dq]?word|ptr'
 
-
     flags = re.IGNORECASE | re.MULTILINE
     tokens = {
         'root': [
@@ -119,8 +118,8 @@ class VDBIntelLexer(RegexLexer):
              "instruction"),
             (r'^(%s)(%s)(: )(%s)(%s)' % (space, hexn, hexr, space),
              bygroups(Text, Name.Label, Text, Number.Hex, Text),
-             "instruction"),
-         ],
+             "instruction")
+        ],
         'instruction': [
             (space, Text),
             (r"(rep[a-z]*)( )", bygroups(Name.Function, Text)),
@@ -153,7 +152,7 @@ class VDBIntelLexer(RegexLexer):
             (identifier, Name.Variable),
             (r'[\r\n]+', Text, '#pop'),
         ],
-       'punctuation': [
+        'punctuation': [
             (r'[,():\[\]]+', Punctuation),
             (r'[&|^<>+*/%~-]+', Operator),
             (r'[$]+', Keyword.Constant),
