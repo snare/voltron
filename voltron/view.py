@@ -21,6 +21,11 @@ try:
 except:
     have_pygments = False
 
+try:
+    import cursor
+except:
+    cursor = None
+
 from collections import defaultdict
 
 from scruffy import Config
@@ -187,7 +192,10 @@ class VoltronView (object):
             self.config.footer.show = self.args.footer
 
         # Setup a SIGWINCH handler so we do reasonable things on resize
-        signal.signal(signal.SIGWINCH, self.sigwinch_handler)
+        try:
+            signal.signal(signal.SIGWINCH, self.sigwinch_handler)
+        except:
+            pass
 
     def build_config(self):
         # Start with all_views config
@@ -280,20 +288,25 @@ class VoltronView (object):
 
 class TerminalView (VoltronView):
     def __init__(self, *a, **kw):
-        # Initialise window
         self.init_window()
         self.trunc_top = False
         super(TerminalView, self).__init__(*a, **kw)
 
     def init_window(self):
-        # Hide cursor
-        os.system('tput civis')
+        self.t = Terminal()
+        print(self.t.civis)
+        if cursor:
+            cursor.hide()
 
     def cleanup(self):
         log.debug('Cleaning up view')
-        os.system('tput cnorm')
+        print(self.t.cnorm)
+        if cursor:
+            cursor.show()
 
     def clear(self):
+        # blessed's clear doesn't work properly on windaz
+        # maybe figure out the right way to do it some time
         os.system('clear')
 
     def render(self):
@@ -331,9 +344,9 @@ class TerminalView (VoltronView):
         self.do_render()
 
     def window_size(self):
-        height, width = subprocess.check_output(['stty', 'size']).split()
-        height = int(height)
-        width = int(width)
+        height, width = subprocess.check_output(['stty','size']).split()
+        height = int(height) - int(self.config.pad.pad_bottom)
+        width = int(width) - int(self.config.pad.pad_right)
         return (height, width)
 
     def body_height(self):

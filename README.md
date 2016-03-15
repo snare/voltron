@@ -25,13 +25,13 @@ Support
 
 The following architectures are supported:
 
-|         | lldb | gdb | vdb |
-|---------|------|-----|-----|
-| x86     | ✓    | ✓   | ✓   |
-| x86_64  | ✓    | ✓   | ✓   |
-| arm     | ✓    | ✓   | ✓   |
-| arm64   | ✓    | x   | x   |
-| powerpc | x    | ✓   | x   |
+|         | lldb | gdb | vdb | windbg |
+|---------|------|-----|-----|--------|
+| x86     | ✓    | ✓   | ✓   | ✓      |
+| x86_64  | ✓    | ✓   | ✓   | ✓      |
+| arm     | ✓    | ✓   | ✓   | x      |
+| arm64   | ✓    | x   | x   | x      |
+| powerpc | x    | ✓   | x   | x      |
 
 Installation
 ------------
@@ -49,21 +49,26 @@ Quick Start
 
 1. Configure your debugger to load Voltron when it starts by sourcing the `entry.py` entry point script. The full path will be inside the `voltron` package. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron/entry.py*.
 
-    For LLDB:
+    LLDB:
 
-        command script import /path/to/voltron/entry.py
+        > command script import /path/to/voltron/entry.py
 
-    For GDB:
+    GDB:
 
-        source /path/to/voltron/entry.py
-        voltron init
-        set disassembly-flavor intel
+        > source /path/to/voltron/entry.py
+        > voltron init
+        > set disassembly-flavor intel
 
     VDB:
 
-        script /path/to/voltron/entry.py
+        > script /path/to/voltron/entry.py
 
-    This part can go in your `.lldbinit` or `.gdbinit` so it's automatically executed when the debugger starts.
+    WinDbg (requires [PyKD](https://pykd.codeplex.com/)):
+
+        > .load pykd.pyd
+        > !py --global C:\path\to\voltron\entry.py
+
+    This part can go in your debugger's init script (if it has one) so it's automatically executed when the debugger starts.
 
 2. Start your debugger. On LLDB you need to call `voltron init` after you load the inferior.
 

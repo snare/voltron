@@ -26,10 +26,16 @@ from .plugin import *
 
 import six
 if six.PY2:
-    from SocketServer import UnixStreamServer, ThreadingMixIn
+    if sys.platform == 'win32':
+        from SocketServer import ThreadingMixIn
+    else:
+        from SocketServer import UnixStreamServer, ThreadingMixIn
     from BaseHTTPServer import HTTPServer
 else:
-    from six.moves.socketserver import UnixStreamServer, ThreadingMixIn
+    if sys.platform == 'win32':
+        from six.moves.socketserver import ThreadingMixIn
+    else:
+        from six.moves.socketserver import UnixStreamServer, ThreadingMixIn
     from six.moves.BaseHTTPServer import HTTPServer
 
 try:
@@ -134,7 +140,7 @@ class Server(object):
         if voltron.config.server.listen.tcp:
             run_listener('tcp', ThreadedVoltronWSGIServer, list(voltron.config.server.listen.tcp) + [self.app])
 
-        if voltron.config.server.listen.domain:
+        if voltron.config.server.listen.domain and sys.platform != 'win32':
             path = os.path.expanduser(str(voltron.config.server.listen.domain))
             try:
                 os.unlink(path)
@@ -281,36 +287,35 @@ class ThreadedVoltronWSGIServer(ThreadingMixIn, VoltronWSGIServer):
     pass
 
 
-class UnixWSGIServer(UnixStreamServer, VoltronWSGIServer):
-    """
-    A subclass of BaseWSGIServer that does sane things with Unix domain sockets.
-    """
-    def __init__(self, sockfile=None, app=None):
-        self.address_family = socket.AF_UNIX
-        UnixStreamServer.__init__(self, sockfile, UnixWSGIRequestHandler)
-        self.app = app
-        self.passthrough_errors = None
-        self.shutdown_signal = False
-        self.ssl_context = None
+if sys.platform != 'win32':
+    class UnixWSGIServer(UnixStreamServer, VoltronWSGIServer):
+        """
+        A subclass of BaseWSGIServer that does sane things with Unix domain sockets.
+        """
+        def __init__(self, sockfile=None, app=None):
+            self.address_family = socket.AF_UNIX
+            UnixStreamServer.__init__(self, sockfile, UnixWSGIRequestHandler)
+            self.app = app
+            self.passthrough_errors = None
+            self.shutdown_signal = False
+            self.ssl_context = None
 
+    class UnixWSGIRequestHandler(WSGIRequestHandler):
+        """
+        A WSGIRequestHandler that does sane things with Unix domain sockets.
+        """
+        def make_environ(self, *args, **kwargs):
+            self.client_address = ('127.0.0.1', 0)
+            return super(UnixWSGIRequestHandler, self).make_environ(*args, **kwargs)
 
-class UnixWSGIRequestHandler(WSGIRequestHandler):
-    """
-    A WSGIRequestHandler that does sane things with Unix domain sockets.
-    """
-    def make_environ(self, *args, **kwargs):
-        self.client_address = ('127.0.0.1', 0)
-        return super(UnixWSGIRequestHandler, self).make_environ(*args, **kwargs)
+    class ThreadedUnixWSGIServer(ThreadingMixIn, UnixWSGIServer):
+        """
+        Threaded HTTP server that works over Unix domain sockets.
 
-
-class ThreadedUnixWSGIServer(ThreadingMixIn, UnixWSGIServer):
-    """
-    Threaded HTTP server that works over Unix domain sockets.
-
-    Note: this intentionally does not inherit from HTTPServer. Go look at the
-    source and you'll see why.
-    """
-    multithread = True
+        Note: this intentionally does not inherit from HTTPServer. Go look at the
+        source and you'll see why.
+        """
+        multithread = True
 
 
 class ClientThread(threading.Thread):
@@ -363,6 +368,7 @@ class Client(object):
         res = APIEmptyResponseErrorResponse()
 
         # perform the request
+        log.debug("Client sending request: " + str(request))
         response = self.session.post(self.url, data=str(request))
         data = response.text
         if response.status_code != 200:

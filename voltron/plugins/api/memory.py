@@ -80,18 +80,22 @@ class APIMemoryRequest(APIRequest):
                 addr = list(regs.values())[0]
 
             # read memory
-            memory = voltron.debugger.memory(address=addr, length=self.length, target_id=self.target_id)
+            memory = voltron.debugger.memory(address=int(addr), length=int(self.length), target_id=int(self.target_id))
 
             # deref pointers
             deref = None
             if self.deref:
                 fmt = ('<' if target['byte_order'] == 'little' else '>') + {2: 'H', 4: 'L', 8: 'Q'}[target['addr_size']]
                 deref = []
-                for chunk in zip(*[six.iterbytes(memory)]*target['addr_size']):
+                for chunk in zip(*[six.iterbytes(memory)] * target['addr_size']):
                     chunk = ''.join([six.unichr(x) for x in chunk]).encode('latin1')
-                    try:
-                        deref.append(voltron.debugger.dereference(pointer=list(struct.unpack(fmt, chunk))[0]))
-                    except:
+                    p = list(struct.unpack(fmt, chunk))[0]
+                    if p > 0:
+                        try:
+                            deref.append(voltron.debugger.dereference(pointer=p))
+                        except:
+                            deref.append([])
+                    else:
                         deref.append([])
 
             res = APIMemoryResponse()

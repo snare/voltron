@@ -374,16 +374,16 @@ if HAVE_GDB:
 
             return breakpoints
 
-            def capabilities(self):
-                """
-                Return a list of the debugger's capabilities.
+        def capabilities(self):
+            """
+            Return a list of the debugger's capabilities.
 
-                Thus far only the 'async' capability is supported. This indicates
-                that the debugger host can be queried from a background thread,
-                and that views can use non-blocking API requests without queueing
-                requests to be dispatched next time the debugger stops.
-                """
-                return []
+            Thus far only the 'async' capability is supported. This indicates
+            that the debugger host can be queried from a background thread,
+            and that views can use non-blocking API requests without queueing
+            requests to be dispatched next time the debugger stops.
+            """
+            return []
 
         #
         # Private functions

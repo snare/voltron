@@ -50,7 +50,7 @@ class MemoryView (TerminalView):
 
         # get memory and target info
         m_res, t_res = self.client.send_requests(
-            api_request('memory', block=self.block, deref=True, **args),
+            api_request('memory', block=self.block, deref=self.args.deref is True, **args),
             api_request('targets', block=self.block))
 
         # don't render if it timed out, probably haven't stepped the debugger again
@@ -113,6 +113,9 @@ class MemoryView (TerminalView):
             elif t == "string":
                 item = item.replace('\n', '\\n')
                 fmtd.append(self.colour('"' + item + '"', self.config.format.string_colour))
+            elif t == "unicode":
+                item = item.replace('\n', '\\n')
+                fmtd.append(self.colour('u"' + item + '"', self.config.format.string_colour))
             elif t == "symbol":
                 fmtd.append(self.colour('`' + item + '`', self.config.format.symbol_colour))
             elif t == "circular":

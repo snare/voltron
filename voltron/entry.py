@@ -44,6 +44,11 @@ try:
         pass
     if "vtrace" in locals():
         host = "vdb"
+    try:
+        import pykd
+        host = "windbg"
+    except:
+        pass
     if not host:
         raise Exception("No debugger host is present")
 

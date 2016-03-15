@@ -162,8 +162,16 @@ class VDBIntelLexer(RegexLexer):
     }
 
 
+class WinDbgIntelLexer(VDBIntelLexer):
+    name = 'WinDbgIntel'
+    aliases = ['windbg_intel']
+
+
+
 all_lexers = {
     'lldb_intel': LLDBIntelLexer,
     'gdb_intel': LLDBIntelLexer,
     'vdb_intel': VDBIntelLexer,
+    # 'windbg_intel': WinDbgIntelLexer,
+    'capstone_intel': LLDBIntelLexer
 }
