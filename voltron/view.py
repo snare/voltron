@@ -329,7 +329,7 @@ class TerminalView (VoltronView):
         self.do_render()
 
     def window_size(self):
-        height, width = os.popen('stty size').read().split()
+        height, width = subprocess.check_output(['stty', 'size']).split()
         height = int(height)
         width = int(width)
         return (height, width)
