@@ -9,6 +9,7 @@ import signal
 import time
 import argparse
 import traceback
+import subprocess
 from requests import ConnectionError
 from blessed import Terminal
 
