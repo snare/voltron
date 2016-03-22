@@ -250,7 +250,7 @@ class Server(object):
             try:
                 res = req.dispatch()
             except Exception as e:
-                msg = "Exception raised while dispatching request: {}".format(e)
+                msg = "Exception raised while dispatching request: {}".format(repr(e))
                 log.exception(msg)
                 res = APIGenericErrorResponse(msg)
 
