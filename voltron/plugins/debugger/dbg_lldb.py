@@ -268,6 +268,26 @@ if HAVE_LLDB:
         @validate_busy
         @validate_target
         @lock_host
+        def resolve_variable(self, symbol, target_id=0):
+            """
+            Resolve a symbol, or None if not found
+
+            returns some rich data structure including the name, address and
+            more metadata that seems like a good idea as I go.
+            """
+            target = self.host.GetTargetAtIndex(target_id)
+            # Send some absurd upper bound on matches
+            candidates = target.FindGlobalVariables(symbol, 256)
+            if len(candidates) == 0:
+                return None
+            elif len(candidates) != 1:
+                raise RuntimeError("Found more than 1 location for {}".format(symbol))
+            else:
+                return candidates[0]
+
+        @validate_busy
+        @validate_target
+        @lock_host
         def memory(self, address, length, target_id=0):
             """
             Get the register values for .
