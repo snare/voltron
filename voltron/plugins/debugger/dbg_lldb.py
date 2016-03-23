@@ -356,7 +356,12 @@ if HAVE_LLDB:
         def read_pointer(self, pointer, target_id=0):
             t = self.host.GetTargetAtIndex(target_id)
             error = lldb.SBError()
-            ptr = t.process.ReadPointerFromMemory(addr, error)
+            if isinstance(pointer, lldb.SBValue):
+                # For convenience, do something reasonable if you hand in an
+                # SBValue, as retrieved by resolve_function, but default to
+                # doing the right thing when handed an address
+                pointer = pointer.load_addr
+            ptr = t.process.ReadPointerFromMemory(pointer, error)
             if not error.Success():
                 raise Exception("Failed reading memory: {}".format(error.GetCString()))
             return ptr
