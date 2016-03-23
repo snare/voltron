@@ -353,6 +353,18 @@ if HAVE_LLDB:
         @validate_busy
         @validate_target
         @lock_host
+        def read_pointer(self, pointer, target_id=0):
+            t = self.host.GetTargetAtIndex(target_id)
+            error = lldb.SBError()
+            ptr = t.process.ReadPointerFromMemory(addr, error)
+            if not error.Success():
+                raise Exception("Failed reading memory: {}".format(error.GetCString()))
+            return ptr
+
+
+        @validate_busy
+        @validate_target
+        @lock_host
         def dereference(self, pointer, target_id=0):
             """
             Recursively dereference a pointer for display
