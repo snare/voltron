@@ -31,7 +31,7 @@ class APIDerefRequest(APIRequest):
         except NoSuchTargetException:
             res = APINoSuchTargetErrorResponse()
         except Exception as e:
-            msg = "Exception dereferencing pointer: {}".format(e)
+            msg = "Exception dereferencing pointer: {}".format(repr(e))
             log.exception(msg)
             res = APIGenericErrorResponse(msg)
 
