@@ -41,11 +41,13 @@ The following architectures are supported:
 Installation
 ------------
 
-A standard python setup script is included.
+Releases are on PyPI. Install with `pip`:
 
-    # python setup.py install
+    $ pip install voltron
 
-This will install the `voltron` package and the entry point executable wherever that happens on your system.
+If you want to be bleeding edge, clone this repo and install with `setup.py`:
+
+    $ python setup.py install
 
 Quick Start
 -----------
