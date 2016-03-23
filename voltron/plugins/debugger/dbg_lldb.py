@@ -270,10 +270,7 @@ if HAVE_LLDB:
         @lock_host
         def resolve_variable(self, symbol, target_id=0):
             """
-            Resolve a symbol, or None if not found
-
-            returns some rich data structure including the name, address and
-            more metadata that seems like a good idea as I go.
+            Resolve a symbol, returning an SBValue if found, or None if not located.
             """
             target = self.host.GetTargetAtIndex(target_id)
             # Send some absurd upper bound on matches
@@ -354,6 +351,12 @@ if HAVE_LLDB:
         @validate_target
         @lock_host
         def read_pointer(self, pointer, target_id=0):
+            """Read process memory at *pointer* returning the value pointed to.
+
+            if *pointer* is an SBValue it will automatically be lowered to an
+            address, otherwise pointer is assumed to be an *int* of pointer
+            width on the target platform
+            """
             t = self.host.GetTargetAtIndex(target_id)
             error = lldb.SBError()
             if isinstance(pointer, lldb.SBValue):
