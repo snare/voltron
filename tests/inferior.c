@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 
+int global = 0xfeedface;
+
 void test_function()
 {
     printf("*** test_function()\n");
