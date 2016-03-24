@@ -11,7 +11,7 @@ setup(
     url="https://github.com/snare/voltron",
     packages=find_packages(exclude=['tests', 'examples']),
     install_requires=[
-        'scruffington',
+        'scruffington>=0.3.2',
         'flask',
         'flask_restful',
         'blessed',
