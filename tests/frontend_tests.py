@@ -134,6 +134,11 @@ try:
         assert res.status == 'success'
         assert len(res.disassembly) > 0
         assert 'push' in res.disassembly
+        req = api_request('disassemble', count=16, use_capstone=True)
+        res = client.send_request(req)
+        assert res.status == 'success'
+        assert len(res.disassembly) > 0
+        assert 'push' in res.disassembly
         target.process.Destroy()
 
     def test_dereference():

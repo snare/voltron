@@ -7,7 +7,15 @@ try:
 except ImportError:
     have_pygments = False
 
-class DisasmView (TerminalView):
+
+class DisasmView(TerminalView):
+    @classmethod
+    def configure_subparser(cls, subparsers):
+        sp = subparsers.add_parser('disasm', help='disassembly view', aliases=('d', 'dis', 'disasm'))
+        VoltronView.add_generic_arguments(sp)
+        sp.set_defaults(func=DisasmView)
+        sp.add_argument('--use-capstone', '-c',  action='store_true', default=False, help='use capstone')
+
     def render(self):
         height, width = self.window_size()
 
@@ -15,7 +23,7 @@ class DisasmView (TerminalView):
         self.title = '[code]'
 
         # Request data
-        req = api_request('disassemble', block=self.block)
+        req = api_request('disassemble', block=self.block, use_capstone=self.args.use_capstone)
         req.count = self.body_height()
         res = self.client.send_request(req)
 

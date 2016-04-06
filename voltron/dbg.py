@@ -1,3 +1,8 @@
+try:
+    import capstone
+except:
+    capstone = None
+
 from voltron.api import *
 from voltron.plugin import *
 
@@ -80,6 +85,11 @@ def lock_host(func, *args, **kwargs):
 
 
 class DebuggerAdaptor(object):
+    """
+    Base debugger adaptor class. Debugger adaptors implemented in plugins for
+    specific debuggers inherit from this.
+    """
+
     reg_names = {
         "x86":      {"pc": "eip", "sp": "esp"},
         "x86_64":   {"pc": "rip", "sp": "rsp"},
@@ -90,6 +100,18 @@ class DebuggerAdaptor(object):
         "arm64":    {"pc": "pc", "sp": "sp"},
         "powerpc":  {"pc": "pc", "sp": "r1"},
     }
+    cs_archs = {}
+    if capstone:
+        cs_archs = {
+            "x86":      (capstone.CS_ARCH_X86, capstone.CS_MODE_32),
+            "x86_64":   (capstone.CS_ARCH_X86, capstone.CS_MODE_64),
+            "arm":      (capstone.CS_ARCH_ARM, capstone.CS_MODE_ARM),
+            "armv6":    (capstone.CS_ARCH_ARM, capstone.CS_MODE_ARM),
+            "armv7":    (capstone.CS_ARCH_ARM, capstone.CS_MODE_ARM),
+            "armv7s":   (capstone.CS_ARCH_ARM, capstone.CS_MODE_ARM),
+            "arm64":    (capstone.CS_ARCH_ARM64, capstone.CS_MODE_ARM),
+            "powerpc":  (capstone.CS_ARCH_PPC, capstone.CS_MODE_32),
+        }
 
     def __init__(self, *args, **kwargs):
         self.listeners = []
@@ -171,3 +193,28 @@ class DebuggerAdaptor(object):
         requests to be dispatched next time the debugger stops.
         """
         return []
+
+    def pc(self, target_id=0, thread_id=None):
+        return self.program_counter(target_id, thread_id)
+
+    def sp(self, target_id=0, thread_id=None):
+        return self.stack_pointer(target_id, thread_id)
+
+    def disassemble_capstone(self, target_id=0, address=None, count=None):
+        """
+        Disassemble with capstone.
+        """
+        target = self._target(target_id)
+        if not address:
+            pc_name, address = self.pc()
+
+        mem = self.memory(address, count * 16, target_id=target_id)
+
+        md = capstone.Cs(*self.cs_archs[target['arch']])
+        output = []
+        for idx, i in enumerate(md.disasm(mem, address)):
+            if idx >= count:
+                break
+            output.append("0x%x:\t%s\t%s" % (i.address, i.mnemonic, i.op_str))
+
+        return '\n'.join(output)

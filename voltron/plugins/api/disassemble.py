@@ -16,7 +16,8 @@ class APIDisassembleRequest(APIRequest):
         "data": {
             "target_id":    0,
             "address":      0x12341234,
-            "count":        16
+            "count":        16,
+            "use_capstone": False
         }
     }
 
@@ -24,8 +25,10 @@ class APIDisassembleRequest(APIRequest):
     `address` is the address at which to start disassembling. Defaults to
     instruction pointer if not specified.
     `count` is the number of instructions to disassemble.
+    `use_capstone` a flag to indicate whether or not Capstone should be used
+    instead of the debugger's disassembler.
     """
-    _fields = {'target_id': False, 'address': False, 'count': True}
+    _fields = {'target_id': False, 'address': False, 'count': True, 'use_capstone': False}
 
     target_id = 0
     address = None
@@ -36,7 +39,11 @@ class APIDisassembleRequest(APIRequest):
         try:
             if self.address == None:
                 pc_name, self.address = voltron.debugger.program_counter(target_id=self.target_id)
-            disasm = voltron.debugger.disassemble(target_id=self.target_id, address=self.address, count=self.count)
+            if self.use_capstone:
+                disasm = voltron.debugger.disassemble_capstone(target_id=self.target_id, address=self.address,
+                                                               count=self.count)
+            else:
+                disasm = voltron.debugger.disassemble(target_id=self.target_id, address=self.address, count=self.count)
             res = APIDisassembleResponse()
             res.disassembly = disasm
             try:
