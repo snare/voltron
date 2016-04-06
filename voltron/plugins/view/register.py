@@ -4,6 +4,175 @@ from voltron.view import *
 from voltron.plugin import *
 from voltron.api import *
 
+def format_flags(self, val):
+    values = {}
+
+    # Get formatting info for flags
+    if self.curr_arch == 'x86_64':
+        reg = 'rflags'
+    elif self.curr_arch == 'x86':
+        reg = 'eflags'
+    fmt = dict(list(self.config.format.items()) + list(list(filter(lambda x: reg in x['regs'], self.FORMAT_INFO[self.curr_arch]))[0].items()))
+
+    # Handle each flag bit
+    val = int(val, 10)
+    formatted = {}
+    for flag in self.FLAG_BITS.keys():
+        values[flag] = (val & (1 << self.FLAG_BITS[flag]) > 0)
+        log.debug("Flag {} value {} (for flags 0x{})".format(flag, values[flag], val))
+        formatted[flag] = str.upper(flag) if values[flag] else flag
+        if self.last_flags != None and self.last_flags[flag] != values[flag]:
+            colour = fmt['value_colour_mod']
+        else:
+            colour = fmt['value_colour']
+        formatted[flag] = self.colour(formatted[flag], colour)
+
+    # Store the flag values for comparison
+    self.last_flags = values
+
+    # Format with template
+    flags = self.FLAG_TEMPLATE.format(**formatted)
+
+    return flags
+
+def format_jump(self, val):
+    # Grab flag bits
+    val = int(val, 10)
+    values = {}
+    for flag in self.FLAG_BITS.keys():
+        values[flag] = (val & (1 << self.FLAG_BITS[flag]) > 0)
+
+    # If this is a jump instruction, see if it will be taken
+    j = None
+    if self.curr_inst:
+        inst = self.curr_inst.split()[0]
+        if inst in ['ja', 'jnbe']:
+            if not values['c'] and not values['z']:
+                j = (True, '!c && !z')
+            else:
+                j = (False, 'c || z')
+        elif inst in ['jae', 'jnb', 'jnc']:
+            if not values['c']:
+                j = (True, '!c')
+            else:
+                j = (False, 'c')
+        elif inst in ['jb', 'jc', 'jnae']:
+            if values['c']:
+                j = (True, 'c')
+            else:
+                j = (False, '!c')
+        elif inst in ['jbe', 'jna']:
+            if values['c'] or values['z']:
+                j = (True, 'c || z')
+            else:
+                j = (False, '!c && !z')
+        elif inst in ['jcxz', 'jecxz', 'jrcxz']:
+            if self.get_arch() == 'x64':
+                cx = regs['rcx']
+            elif self.get_arch() == 'x86':
+                cx = regs['ecx']
+            if cx == 0:
+                j = (True, cx+'==0')
+            else:
+                j = (False, cx+'!=0')
+        elif inst in ['je', 'jz']:
+            if values['z']:
+                j = (True, 'z')
+            else:
+                j = (False, '!z')
+        elif inst in ['jnle', 'jg']:
+            if not values['z'] and values['s'] == values['o']:
+                j = (True, '!z && s==o')
+            else:
+                j = (False, 'z || s!=o')
+        elif inst in ['jge', 'jnl']:
+            if values['s'] == values['o']:
+                j = (True, 's==o')
+            else:
+                j = (False, 's!=o')
+        elif inst in ['jl', 'jnge']:
+            if values['s'] == values['o']:
+                j = (False, 's==o')
+            else:
+                j = (True, 's!=o')
+        elif inst in ['jle', 'jng']:
+            if values['z'] or values['s'] == values['o']:
+                j = (True, 'z || s==o')
+            else:
+                j = (False, '!z && s!=o')
+        elif inst in ['jne', 'jnz']:
+            if not values['z']:
+                j = (True, '!z')
+            else:
+                j = (False, 'z')
+        elif inst in ['jno']:
+            if not values['o']:
+                j = (True, '!o')
+            else:
+                j = (False, 'o')
+        elif inst in ['jnp', 'jpo']:
+            if not values['p']:
+                j = (True, '!p')
+            else:
+                j = (False, 'p')
+        elif inst in ['jns']:
+            if not values['s']:
+                j = (True, '!s')
+            else:
+                j = (False, 's')
+        elif inst in ['jo']:
+            if values['o']:
+                j = (True, 'o')
+            else:
+                j = (False, '!o')
+        elif inst in ['jp', 'jpe']:
+            if values['p']:
+                j = (True, 'p')
+            else:
+                j = (False, '!p')
+        elif inst in ['js']:
+            if values['s']:
+                j = (True, 's')
+            else:
+                j = (False, '!s')
+
+    # Construct message
+    if j is not None:
+        taken, reason = j
+        if taken:
+            jump = 'Jump ({})'.format(reason)
+        else:
+            jump = '!Jump ({})'.format(reason)
+    else:
+        jump = ''
+
+    # Pad out
+    jump = '{:^19}'.format(jump)
+
+    # Colour
+    if j is not None:
+        jump = self.colour(jump, self.config.format.value_colour_mod)
+    else:
+        jump = self.colour(jump, self.config.format.value_colour)
+
+    return '[' + jump + ']'
+
+def format_xmm(self, val):
+    if self.config.orientation == 'vertical':
+        height, width = self.window_size()
+        if width < len(SHORT_ADDR_FORMAT_128.format(0)) + self.XMM_INDENT:
+            return val[:16] + '\n' + ' '*self.XMM_INDENT + val[16:]
+        else:
+            return val[:16] + ':' + val[16:]
+    else:
+        return val
+
+def format_fpu(self, val):
+    if self.config.orientation == 'vertical':
+        return val
+    else:
+        return val
+
 
 class RegisterView (TerminalView):
     FORMAT_INFO = {
@@ -22,14 +191,14 @@ class RegisterView (TerminalView):
             {
                 'regs':             ['rflags'],
                 'value_format':     '{}',
-                'value_func':       'self.format_flags',
+                'value_func':       format_flags,
                 'value_colour_en':  False,
                 'category':         'general',
             },
             {
                 'regs':             ['rflags'],
                 'value_format':     '{}',
-                'value_func':       'self.format_jump',
+                'value_func':       format_jump,
                 'value_colour_en':  False,
                 'category':         'general',
                 'format_name':      'jump'
@@ -38,13 +207,13 @@ class RegisterView (TerminalView):
                 'regs':             ['xmm0','xmm1','xmm2','xmm3','xmm4','xmm5','xmm6','xmm7','xmm8',
                                      'xmm9','xmm10','xmm11','xmm12','xmm13','xmm14','xmm15'],
                 'value_format':     SHORT_ADDR_FORMAT_128,
-                'value_func':       'self.format_xmm',
+                'value_func':       format_xmm,
                 'category':         'sse',
             },
             {
                 'regs':             ['st0','st1','st2','st3','st4','st5','st6','st7'],
                 'value_format':     '{0:0=20X}',
-                'value_func':       'self.format_fpu',
+                'value_func':       format_fpu,
                 'category':         'fpu',
             },
         ],
@@ -63,14 +232,14 @@ class RegisterView (TerminalView):
             {
                 'regs':             ['eflags'],
                 'value_format':     '{}',
-                'value_func':       'self.format_flags',
+                'value_func':       format_flags,
                 'value_colour_en':  False,
                 'category':         'general',
             },
             {
                 'regs':             ['eflags'],
                 'value_format':     '{}',
-                'value_func':       'self.format_jump',
+                'value_func':       format_jump,
                 'value_colour_en':  False,
                 'category':         'general',
                 'format_name':      'jump'
@@ -78,13 +247,13 @@ class RegisterView (TerminalView):
             {
                 'regs':             ['xmm0','xmm1','xmm2','xmm3','xmm4','xmm5','xmm6','xmm7'],
                 'value_format':     SHORT_ADDR_FORMAT_128,
-                'value_func':       'self.format_xmm',
+                'value_func':       format_xmm,
                 'category':         'sse',
             },
             {
                 'regs':             ['st0','st1','st2','st3','st4','st5','st6','st7'],
                 'value_format':     '{0:0=20X}',
-                'value_func':       'self.format_fpu',
+                'value_func':       format_fpu,
                 'category':         'fpu',
             },
         ],
@@ -367,10 +536,7 @@ class RegisterView (TerminalView):
                         if fmt['value_format'] != None and isinstance(formatted_reg, Number):
                             formatted_reg = fmt['value_format'].format(formatted_reg)
                         if fmt['value_func'] != None:
-                            if isinstance(fmt['value_func'], STRTYPES):
-                                formatted_reg = eval(fmt['value_func'])(formatted_reg)
-                            else:
-                                formatted_reg = fmt['value_func'](formatted_reg)
+                            formatted_reg = fmt['value_func'](self, formatted_reg)
                         if fmt['value_colour_en']:
                             formatted_reg = self.colour(formatted_reg, colour)
                     if fmt['format_name'] == None:
@@ -397,174 +563,7 @@ class RegisterView (TerminalView):
         # Call parent's render method
         super(RegisterView, self).render()
 
-    def format_flags(self, val):
-        values = {}
 
-        # Get formatting info for flags
-        if self.curr_arch == 'x86_64':
-            reg = 'rflags'
-        elif self.curr_arch == 'x86':
-            reg = 'eflags'
-        fmt = dict(list(self.config.format.items()) + list(list(filter(lambda x: reg in x['regs'], self.FORMAT_INFO[self.curr_arch]))[0].items()))
-
-        # Handle each flag bit
-        val = int(val, 10)
-        formatted = {}
-        for flag in self.FLAG_BITS.keys():
-            values[flag] = (val & (1 << self.FLAG_BITS[flag]) > 0)
-            log.debug("Flag {} value {} (for flags 0x{})".format(flag, values[flag], val))
-            formatted[flag] = str.upper(flag) if values[flag] else flag
-            if self.last_flags != None and self.last_flags[flag] != values[flag]:
-                colour = fmt['value_colour_mod']
-            else:
-                colour = fmt['value_colour']
-            formatted[flag] = self.colour(formatted[flag], colour)
-
-        # Store the flag values for comparison
-        self.last_flags = values
-
-        # Format with template
-        flags = self.FLAG_TEMPLATE.format(**formatted)
-
-        return flags
-
-    def format_jump(self, val):
-        # Grab flag bits
-        val = int(val, 10)
-        values = {}
-        for flag in self.FLAG_BITS.keys():
-            values[flag] = (val & (1 << self.FLAG_BITS[flag]) > 0)
-
-        # If this is a jump instruction, see if it will be taken
-        j = None
-        if self.curr_inst:
-            inst = self.curr_inst.split()[0]
-            if inst in ['ja', 'jnbe']:
-                if not values['c'] and not values['z']:
-                    j = (True, '!c && !z')
-                else:
-                    j = (False, 'c || z')
-            elif inst in ['jae', 'jnb', 'jnc']:
-                if not values['c']:
-                    j = (True, '!c')
-                else:
-                    j = (False, 'c')
-            elif inst in ['jb', 'jc', 'jnae']:
-                if values['c']:
-                    j = (True, 'c')
-                else:
-                    j = (False, '!c')
-            elif inst in ['jbe', 'jna']:
-                if values['c'] or values['z']:
-                    j = (True, 'c || z')
-                else:
-                    j = (False, '!c && !z')
-            elif inst in ['jcxz', 'jecxz', 'jrcxz']:
-                if self.get_arch() == 'x64':
-                    cx = regs['rcx']
-                elif self.get_arch() == 'x86':
-                    cx = regs['ecx']
-                if cx == 0:
-                    j = (True, cx+'==0')
-                else:
-                    j = (False, cx+'!=0')
-            elif inst in ['je', 'jz']:
-                if values['z']:
-                    j = (True, 'z')
-                else:
-                    j = (False, '!z')
-            elif inst in ['jnle', 'jg']:
-                if not values['z'] and values['s'] == values['o']:
-                    j = (True, '!z && s==o')
-                else:
-                    j = (False, 'z || s!=o')
-            elif inst in ['jge', 'jnl']:
-                if values['s'] == values['o']:
-                    j = (True, 's==o')
-                else:
-                    j = (False, 's!=o')
-            elif inst in ['jl', 'jnge']:
-                if values['s'] == values['o']:
-                    j = (False, 's==o')
-                else:
-                    j = (True, 's!=o')
-            elif inst in ['jle', 'jng']:
-                if values['z'] or values['s'] == values['o']:
-                    j = (True, 'z || s==o')
-                else:
-                    j = (False, '!z && s!=o')
-            elif inst in ['jne', 'jnz']:
-                if not values['z']:
-                    j = (True, '!z')
-                else:
-                    j = (False, 'z')
-            elif inst in ['jno']:
-                if not values['o']:
-                    j = (True, '!o')
-                else:
-                    j = (False, 'o')
-            elif inst in ['jnp', 'jpo']:
-                if not values['p']:
-                    j = (True, '!p')
-                else:
-                    j = (False, 'p')
-            elif inst in ['jns']:
-                if not values['s']:
-                    j = (True, '!s')
-                else:
-                    j = (False, 's')
-            elif inst in ['jo']:
-                if values['o']:
-                    j = (True, 'o')
-                else:
-                    j = (False, '!o')
-            elif inst in ['jp', 'jpe']:
-                if values['p']:
-                    j = (True, 'p')
-                else:
-                    j = (False, '!p')
-            elif inst in ['js']:
-                if values['s']:
-                    j = (True, 's')
-                else:
-                    j = (False, '!s')
-
-        # Construct message
-        if j is not None:
-            taken, reason = j
-            if taken:
-                jump = 'Jump ({})'.format(reason)
-            else:
-                jump = '!Jump ({})'.format(reason)
-        else:
-            jump = ''
-
-        # Pad out
-        jump = '{:^19}'.format(jump)
-
-        # Colour
-        if j is not None:
-            jump = self.colour(jump, self.config.format.value_colour_mod)
-        else:
-            jump = self.colour(jump, self.config.format.value_colour)
-
-        return '[' + jump + ']'
-
-    def format_xmm(self, val):
-        if self.config.orientation == 'vertical':
-            height, width = self.window_size()
-            if width < len(SHORT_ADDR_FORMAT_128.format(0)) + self.XMM_INDENT:
-                return val[:16] + '\n' + ' '*self.XMM_INDENT + val[16:]
-            else:
-                return val[:16] + ':' + val[16:]
-        else:
-            return val
-
-    def format_fpu(self, val):
-        if self.config.orientation == 'vertical':
-            return val
-        else:
-            return val
 
 
 class RegisterViewPlugin(ViewPlugin):
