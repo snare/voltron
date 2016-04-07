@@ -22,14 +22,14 @@ class RegisterView (TerminalView):
             {
                 'regs':             ['rflags'],
                 'value_format':     '{}',
-                'value_func':       'self.format_flags',
+                'value_func':       'format_flags',
                 'value_colour_en':  False,
                 'category':         'general',
             },
             {
                 'regs':             ['rflags'],
                 'value_format':     '{}',
-                'value_func':       'self.format_jump',
+                'value_func':       'format_jump',
                 'value_colour_en':  False,
                 'category':         'general',
                 'format_name':      'jump'
@@ -38,13 +38,13 @@ class RegisterView (TerminalView):
                 'regs':             ['xmm0','xmm1','xmm2','xmm3','xmm4','xmm5','xmm6','xmm7','xmm8',
                                      'xmm9','xmm10','xmm11','xmm12','xmm13','xmm14','xmm15'],
                 'value_format':     SHORT_ADDR_FORMAT_128,
-                'value_func':       'self.format_xmm',
+                'value_func':       'format_xmm',
                 'category':         'sse',
             },
             {
                 'regs':             ['st0','st1','st2','st3','st4','st5','st6','st7'],
                 'value_format':     '{0:0=20X}',
-                'value_func':       'self.format_fpu',
+                'value_func':       'format_fpu',
                 'category':         'fpu',
             },
         ],
@@ -63,14 +63,14 @@ class RegisterView (TerminalView):
             {
                 'regs':             ['eflags'],
                 'value_format':     '{}',
-                'value_func':       'self.format_flags',
+                'value_func':       'format_flags',
                 'value_colour_en':  False,
                 'category':         'general',
             },
             {
                 'regs':             ['eflags'],
                 'value_format':     '{}',
-                'value_func':       'self.format_jump',
+                'value_func':       'format_jump',
                 'value_colour_en':  False,
                 'category':         'general',
                 'format_name':      'jump'
@@ -78,13 +78,13 @@ class RegisterView (TerminalView):
             {
                 'regs':             ['xmm0','xmm1','xmm2','xmm3','xmm4','xmm5','xmm6','xmm7'],
                 'value_format':     SHORT_ADDR_FORMAT_128,
-                'value_func':       'self.format_xmm',
+                'value_func':       'format_xmm',
                 'category':         'sse',
             },
             {
                 'regs':             ['st0','st1','st2','st3','st4','st5','st6','st7'],
                 'value_format':     '{0:0=20X}',
-                'value_func':       'self.format_fpu',
+                'value_func':       'format_fpu',
                 'category':         'fpu',
             },
         ],
@@ -285,6 +285,10 @@ class RegisterView (TerminalView):
         sp.add_argument('--fpu', '-p',          dest="sections",    action='append_const',  const="fpu",        help='show fpu registers')
         sp.add_argument('--no-fpu', '-P',       dest="sections",    action='append_const',  const="no_fpu",     help='show fpu registers')
 
+    def __init__(self, *args, **kwargs):
+        super(RegisterView, self).__init__(*args, **kwargs)
+        self.str_upper = str.upper
+
     def apply_cli_config(self):
         super(RegisterView, self).apply_cli_config()
         if self.args.orientation != None:
@@ -348,7 +352,7 @@ class RegisterView (TerminalView):
                     # Format the label
                     label = fmt['label_format'].format(reg)
                     if fmt['label_func'] != None:
-                        formatted[reg+'l'] = eval(fmt['label_func'])(str(label))
+                        formatted[reg+'l'] = getattr(self, fmt['label_func'])(str(label))
                     if fmt['label_colour_en']:
                         formatted[reg+'l'] =  self.colour(formatted[reg+'l'], fmt['label_colour'])
 
@@ -368,7 +372,7 @@ class RegisterView (TerminalView):
                             formatted_reg = fmt['value_format'].format(formatted_reg)
                         if fmt['value_func'] != None:
                             if isinstance(fmt['value_func'], STRTYPES):
-                                formatted_reg = eval(fmt['value_func'])(formatted_reg)
+                                formatted_reg = getattr(self, fmt['value_func'])(formatted_reg)
                             else:
                                 formatted_reg = fmt['value_func'](formatted_reg)
                         if fmt['value_colour_en']:
