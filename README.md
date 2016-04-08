@@ -82,9 +82,9 @@ Quick Start
         (*db) b main
         (*db) run
 
-5. The debugger should hit the breakpoint and the views will be updated. A forced update can be triggered with the following command:
+5. When the debugger hits the breakpoint, the views will be updated to reflect the current state of registers, stack, memory, etc. Views are updated after each command is executed in the debugger CLI, using the debugger's "stop hook" mechanism. So each time you step, or continue and hit a breakpoint, the views will update. A forced update can be triggered with the following command:
 
-        (lldb) voltron stopped
+        (lldb) voltron update
 
 Documentation
 -------------
