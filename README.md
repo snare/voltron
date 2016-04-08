@@ -1,7 +1,7 @@
 Voltron
 =======
 
-Voltron is an extensible debugger interface written in Python. It allows you to attach utility views to your debugger (LLDB, GDB or VDB) that can retrieve and display data from the debugger host. By running these views in other terminal windows or panes, you can build a customised debugger user interface to suit your needs.
+Voltron is an extensible debugger user interface toolkit written in Python. It aims to lessen the pain of various CLI debuggers by allowing you to attach utility views that can retrieve and display data from the debugger host. By running these views in other TTYs, you can build a customised debugger user interface to suit your needs.
 
 Built-in views are provided for:
 
