@@ -16,6 +16,8 @@ In VDB:
     (vdb) script /path/to/voltron/entry.py
 """
 
+log = None
+
 try:
     import logging
     import os
