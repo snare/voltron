@@ -34,6 +34,7 @@ class MemoryView (TerminalView):
     def render(self):
         height, width = self.window_size()
         target = None
+        self.trunc_top = self.args.reverse
 
         # check args
         if self.args.register:

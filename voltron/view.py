@@ -282,6 +282,7 @@ class TerminalView (VoltronView):
     def __init__(self, *a, **kw):
         # Initialise window
         self.init_window()
+        self.trunc_top = False
         super(TerminalView, self).__init__(*a, **kw)
 
     def init_window(self):
@@ -395,7 +396,11 @@ class TerminalView (VoltronView):
             lines.append(line)
 
         # truncate body vertically
-        lines = lines[:self.body_height()]
+        if len(lines) > self.body_height():
+            if self.trunc_top:
+                lines = lines[len(lines) - self.body_height():]
+            else:
+                lines = lines[:self.body_height()]
 
         self.fmt_body = '\n'.join(lines)
 
