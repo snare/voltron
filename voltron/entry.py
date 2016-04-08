@@ -65,7 +65,10 @@ try:
         print("Run `voltron init` after you load a target.")
 
 except Exception as e:
-    msg = "Exception {} raised while loading Voltron: {}".format(type(e), str(e))
+    import traceback
+    msg = "An error occurred while loading Voltron:\n\n{}".format(traceback.format_exc())
     if blessed:
         msg = blessed.Terminal().bold_red(msg)
+    if log:
+        log.exception("Exception raised while loading Voltron")
     print(msg)
