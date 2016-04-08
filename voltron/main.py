@@ -8,13 +8,9 @@ import logging.config
 import voltron
 from .view import *
 from .core import *
-try:
-    from .console import *
-    HAS_CONSOLE = True
-except ImportError:
-    HAS_CONSOLE = False
 
 log = logging.getLogger('main')
+
 
 def main(debugger=None):
     voltron.setup_logging('main')
@@ -35,9 +31,6 @@ def main(debugger=None):
     pm = PluginManager()
     for plugin in pm.view_plugins:
         pm.view_plugins[plugin].view_class.configure_subparser(view_sp)
-
-    if HAS_CONSOLE:
-        Console.configure_subparser(top_level_sp)
 
     # Parse args
     args = parser.parse_args()
