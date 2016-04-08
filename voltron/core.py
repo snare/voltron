@@ -158,6 +158,7 @@ class Server(object):
         self.listeners = []
         self.threads = []
         self.is_running = False
+        log.debug("Listeners stopped and threads joined")
 
     def handle_request(self, data):
         req = None
@@ -219,6 +220,7 @@ class Server(object):
             req.response = APIServerExitedErrorResponse()
         for req in self.queue:
             req.signal()
+        self.queue = []
 
     def dispatch_queue(self):
         """

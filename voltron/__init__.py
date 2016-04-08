@@ -11,13 +11,13 @@ from scruffy import Environment, Directory, File, ConfigFile, PluginDirectory, P
 env = None
 config = None
 
-# reference to debugger adaptor
 debugger = None
-
-# plugin commands
+command = None
 commands = None
+server = None
 
 loaded = False
+
 
 def setup_env():
     global env, config
@@ -66,6 +66,7 @@ LOG_CONFIG = {
     }
 }
 
+
 def setup_logging(logname=None):
     # configure logging
     logging.config.dictConfig(LOG_CONFIG)
@@ -85,9 +86,11 @@ def setup_logging(logname=None):
 
     return logging.getLogger(logname)
 
+
 # Python 3 shim
 if not hasattr(__builtins__, "xrange"):
     xrange = range
+
 
 # Setup the Voltron environment
 setup_env()

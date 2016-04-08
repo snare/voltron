@@ -218,3 +218,28 @@ class DebuggerAdaptor(object):
             output.append("0x%x:\t%s\t%s" % (i.address, i.mnemonic, i.op_str))
 
         return '\n'.join(output)
+
+
+class DebuggerCommand (object):
+    """
+    The `voltron` command in the debugger.
+    """
+    def handle_command(self, command):
+        global log
+        if 'debug' in command:
+            if 'enable' in command:
+                log.setLevel(logging.DEBUG)
+                print("Debug logging enabled")
+            elif 'disable' in command:
+                log.setLevel(logging.INFO)
+                print("Debug logging disabled")
+            else:
+                enabled = "enabled" if log.getEffectiveLevel() == logging.DEBUG else "disabled"
+                print("Debug logging is currently " + enabled)
+        elif 'init' in command:
+            self.register_hooks()
+        elif 'stopped' in command or 'update' in command:
+            self.adaptor.update_state()
+            voltron.server.dispatch_queue()
+        else:
+            print("Usage: voltron <init|debug|update>")

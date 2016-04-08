@@ -578,7 +578,53 @@ if HAVE_GDB:
             return 'little' if 'little' in gdb.execute('show endian', to_string=True) else 'big'
 
 
+    class GDBCommand(DebuggerCommand, gdb.Command):
+        """
+        Debugger command class for GDB
+        """
+        def __init__(self):
+            super(GDBCommand, self).__init__("voltron", gdb.COMMAND_NONE, gdb.COMPLETE_NONE)
+
+            self.adaptor = voltron.debugger
+
+            self.registered = False
+
+        def invoke(self, arg, from_tty):
+            self.handle_command(arg)
+
+        def register_hooks(self):
+            if not self.registered:
+                gdb.events.stop.connect(self.stop_handler)
+                gdb.events.exited.connect(self.stop_and_exit_handler)
+                gdb.events.cont.connect(self.cont_handler)
+
+        def unregister_hooks(self):
+            if self.registered:
+                gdb.events.stop.disconnect(self.stop_handler)
+                gdb.events.exited.disconnect(self.stop_and_exit_handler)
+                gdb.events.cont.disconnect(self.cont_handler)
+
+        def stop_handler(self, event):
+            self.adaptor.update_state()
+            voltron.server.dispatch_queue()
+            log.debug('Inferior stopped')
+
+        def exit_handler(self, event):
+            log.debug('Inferior exited')
+            voltron.server.stop()
+
+        def stop_and_exit_handler(self, event):
+            log.debug('Inferior stopped and exited')
+            self.stop_handler(event)
+            self.exit_handler(event)
+
+        def cont_handler(self, event):
+            log.debug('Inferior continued')
+            if not voltron.server.is_running:
+                voltron.server.start()
+
+
     class GDBAdaptorPlugin(DebuggerAdaptorPlugin):
         host = 'gdb'
         adaptor_class = GDBAdaptor
-
+        command_class = GDBCommand

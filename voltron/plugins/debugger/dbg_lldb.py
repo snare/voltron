@@ -504,6 +504,46 @@ if HAVE_LLDB:
             self.host.HandleCommand("command script add -f voltron.commands.{} {}".format(name, name))
 
 
+    class LLDBCommand(DebuggerCommand):
+        """
+        Debugger command class for LLDB
+        """
+        @staticmethod
+        def _invoke(debugger, command, result, dict):
+            voltron.command.invoke(debugger, command, result, dict)
+
+        def __init__(self):
+            super(LLDBCommand, self).__init__()
+
+            self.hook_idx = None
+            self.adaptor = voltron.debugger
+
+            # install the voltron command handler
+            self.adaptor.command("script import voltron")
+            self.adaptor.command('command script add -f voltron.command._invoke voltron')
+
+        def invoke(self, debugger, command, result, dict):
+            self.handle_command(command)
+
+        def register_hooks(self):
+            try:
+                output = self.adaptor.command("target stop-hook list")
+                if 'voltron' not in output:
+                    output = self.adaptor.command('target stop-hook add -o \'voltron stopped\'')
+                    try:
+                        # hahaha this sucks
+                        self.hook_idx = int(res.GetOutput().strip().split()[2][1:])
+                    except:
+                        pass
+                print("Registered stop-hook")
+            except:
+                print("No targets")
+
+        def unregister_hooks(self):
+            self.adaptor.command('target stop-hook delete {}'.format(self.hook_idx if self.hook_idx else ''))
+
+
     class LLDBAdaptorPlugin(DebuggerAdaptorPlugin):
         host = 'lldb'
         adaptor_class = LLDBAdaptor
+        command_class = LLDBCommand
