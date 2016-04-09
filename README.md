@@ -95,8 +95,6 @@ Quick Start
 
 5. When the debugger hits the breakpoint, the views will be updated to reflect the current state of registers, stack, memory, etc. Views are updated after each command is executed in the debugger CLI, using the debugger's "stop hook" mechanism. So each time you step, or continue and hit a breakpoint, the views will update.
 
-More information for WinDbg/CDB [here](https://github.com/snare/voltron/wiki/WinDbg).
-
 Documentation
 -------------
 
@@ -119,7 +117,11 @@ See the [issue tracker](https://github.com/snare/voltron/issues) on github for m
 
 ### LLDB
 
-1. The `voltron init` command must be run manually after loading the debug target, as a target must be loaded before Voltron's hooks can be installed. This means `voltron init` cannot be called from `.lldbinit` the way it can from `.gdbinit`. Hopefully this will be remedied with a more versatile hooking mechanism in a future version of LLDB (this has been discussed with the developers).
+The `voltron init` command must be run manually after loading the debug target, as a target must be loaded before Voltron's hooks can be installed. This means `voltron init` cannot be called from `.lldbinit` the way it can from `.gdbinit`. Hopefully this will be remedied with a more versatile hooking mechanism in a future version of LLDB (this has been discussed with the developers).
+
+### WinDbg
+
+More information about WinDbg/CDB support [here](https://github.com/snare/voltron/wiki/WinDbg).
 
 ### Misc
 
