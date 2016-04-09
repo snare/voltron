@@ -122,7 +122,7 @@ See the [issue tracker](https://github.com/snare/voltron/issues) on github for m
 
 ### LLDB
 
-The `voltron init` command must be run manually after loading the debug target, as a target must be loaded before Voltron's hooks can be installed. This means `voltron init` cannot be called from `.lldbinit` the way it can from `.gdbinit`. Hopefully this will be remedied with a more versatile hooking mechanism in a future version of LLDB (this has been discussed with the developers).
+On older versions of LLDB, the `voltron init` command must be run manually after loading the debug target, as a target must be loaded before Voltron's hooks can be installed. Voltron will attempt to automatically register its event handler, and it will inform the user if `voltron init` is required.
 
 ### WinDbg
 
