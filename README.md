@@ -123,7 +123,9 @@ See the [issue tracker](https://github.com/snare/voltron/issues) on github for m
 
 ### Misc
 
-1. Intel is the only disassembly flavour currently supported for syntax highlighting.
+1. The authors primarily use Voltron with the most recent version of LLDB on OS X. We will try to test everything on as many platforms and architectures as possible before releases, but LLDB/OS X/x64 is going to be by far the most frequently-used combination. Hopefully Voltron doesn't set your pets on fire, but YMMV.
+
+2. Intel is the only disassembly flavour currently supported for syntax highlighting.
 
 License
 -------
