@@ -1,9 +1,9 @@
 Voltron
 =======
 
-Voltron is an extensible debugger UI toolkit written in Python. It aims to improve the user experience of various debuggers (LLDB, GDB and VDB) by enabling the attachment of utility views that can retrieve and display data from the debugger host. By running these views in other TTYs, you can build a customised debugger user interface to suit your needs.
+Voltron is an extensible debugger UI toolkit written in Python. It aims to improve the user experience of various debuggers (LLDB, GDB, VDB and WinDbg) by enabling the attachment of utility views that can retrieve and display data from the debugger host. By running these views in other TTYs, you can build a customised debugger user interface to suit your needs.
 
-Voltron does not aim to be everything to everyone. It's not a wholesale replacement for your debugger's CLI. Rather, it aims to complement your existing setup and allow you to extend your CLI debugger as much or as little as you like. If you just want a view of the register contents in a window alongside your debugger, you can do that. If you want to go all out and have something that looks more like OllyDbg, Immmunity Debugger, or another GUI debugger of choice, you can do that too.
+Voltron does not aim to be everything to everyone. It's not a wholesale replacement for your debugger's CLI. Rather, it aims to complement your existing setup and allow you to extend your CLI debugger as much or as little as you like. If you just want a view of the register contents in a window alongside your debugger, you can do that. If you want to go all out and have something that looks more like OllyDbg, you can do that too.
 
 Built-in views are provided for:
 
@@ -21,7 +21,7 @@ The author's setup looks something like this:
 Support
 -------
 
-`voltron` supports LLDB, GDB and VDB. Support for WinDbg (via PyKD) is in progress.
+`voltron` supports LLDB, GDB, VDB and WinDbg/CDB (via [PyKD](https://pykd.codeplex.com/)).
 
 The following architectures are supported:
 
@@ -47,33 +47,37 @@ If you want to be bleeding edge, clone this repo and install with `setup.py`:
 Quick Start
 -----------
 
-1. Configure your debugger to load Voltron when it starts by sourcing the `entry.py` entry point script. The full path will be inside the `voltron` package. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron/entry.py*.
+1. If your debugger has an init script (`.lldbinit` for LLDB or `.gdbinit` for GDB) configure it to load Voltron when it starts by sourcing the `entry.py` entry point script. The full path will be inside the `voltron` package. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron/entry.py*. If you don't add this to your init script, you'll need to execute the commands after starting your debugger.
 
     LLDB:
 
-        > command script import /path/to/voltron/entry.py
+        command script import /path/to/voltron/entry.py
 
     GDB:
 
-        > source /path/to/voltron/entry.py
-        > voltron init
-        > set disassembly-flavor intel
+        source /path/to/voltron/entry.py
+        voltron init
+        set disassembly-flavor intel
+
+2. Start your debugger and initialise Voltron manually if necessary.
+
+    On LLDB you need to call `voltron init` after you load the inferior:
+
+        $ lldb target_binary
+        (lldb) voltron init
+
+    GDB:
+
+        $ gdb target_binary
 
     VDB:
 
+        $ ./vdbbin target_binary
         > script /path/to/voltron/entry.py
 
-    WinDbg (requires [PyKD](https://pykd.codeplex.com/)):
+    WinDbg/CDB (requires [PyKD](https://pykd.codeplex.com/)):
 
-        > .load pykd.pyd
-        > !py --global C:\path\to\voltron\entry.py
-
-    This part can go in your debugger's init script (if it has one) so it's automatically executed when the debugger starts.
-
-2. Start your debugger. On LLDB you need to call `voltron init` after you load the inferior.
-
-        $ lldb file_to_debug
-        (lldb) voltron init
+        > cdb -c '.load C:\path\to\pykd.pyd ; !py --global C:\path\to\voltron\entry.py' target_binary
 
 3. In another terminal (I use iTerm panes) start one of the UI views
 
@@ -87,9 +91,7 @@ Quick Start
         (*db) b main
         (*db) run
 
-5. When the debugger hits the breakpoint, the views will be updated to reflect the current state of registers, stack, memory, etc. Views are updated after each command is executed in the debugger CLI, using the debugger's "stop hook" mechanism. So each time you step, or continue and hit a breakpoint, the views will update. A forced update can be triggered with the following command:
-
-        (lldb) voltron update
+5. When the debugger hits the breakpoint, the views will be updated to reflect the current state of registers, stack, memory, etc. Views are updated after each command is executed in the debugger CLI, using the debugger's "stop hook" mechanism. So each time you step, or continue and hit a breakpoint, the views will update.
 
 Documentation
 -------------
