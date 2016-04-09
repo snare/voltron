@@ -87,7 +87,7 @@ try:
         voltron.server.start()
 
     print(blessed.Terminal().bold_red("Voltron loaded."))
-    if host == 'lldb':
+    if host == 'lldb' and not voltron.command.registered:
         print("Run `voltron init` after you load a target.")
 
 except Exception as e:

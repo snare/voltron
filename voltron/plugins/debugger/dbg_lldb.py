@@ -538,13 +538,16 @@ if HAVE_LLDB:
                         self.hook_idx = int(res.GetOutput().strip().split()[2][1:])
                     except:
                         pass
-                print("Registered stop-hook")
+                self.registered = True
+                if not quiet:
+                    print("Registered stop-hook")
             except:
                 if not quiet:
                     print("No targets")
 
         def unregister_hooks(self):
             self.adaptor.command('target stop-hook delete {}'.format(self.hook_idx if self.hook_idx else ''))
+            self.registered = False
 
 
     class LLDBAdaptorPlugin(DebuggerAdaptorPlugin):

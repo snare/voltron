@@ -227,6 +227,7 @@ class DebuggerCommand (object):
     def __init__(self, *args, **kwargs):
         super(DebuggerCommand, self).__init__(*args, **kwargs)
         self.adaptor = voltron.debugger
+        self.registered = False
 
     def handle_command(self, command):
         global log
