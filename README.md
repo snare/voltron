@@ -18,6 +18,8 @@ The author's setup looks something like this:
 
 ![voltron example LLDB](http://i.imgur.com/p3XcagJ.png)
 
+More screenshots are [here](https://github.com/snare/voltron/wiki/Screenshots).
+
 Support
 -------
 
