@@ -21,7 +21,7 @@ The author's setup looks something like this:
 Support
 -------
 
-`voltron` supports LLDB, GDB, VDB and WinDbg/CDB (via [PyKD](https://pykd.codeplex.com/)).
+`voltron` supports LLDB, GDB, VDB and WinDbg/CDB (via [PyKD](https://pykd.codeplex.com/)) and runs on OS X, Linux and Windows.
 
 WinDbg support is new, please [open an issue](https://github.com/snare/voltron/issues) if you have problems.
 
