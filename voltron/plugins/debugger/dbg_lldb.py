@@ -393,7 +393,7 @@ if HAVE_LLDB:
             if command:
                 res = lldb.SBCommandReturnObject()
                 ci = self.host.GetCommandInterpreter()
-                ci.HandleCommand(str(command), res)
+                ci.HandleCommand(str(command), res, False)
                 if res.Succeeded():
                     return res.GetOutput().strip()
                 else:
