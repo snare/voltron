@@ -23,6 +23,8 @@ Support
 
 `voltron` supports LLDB, GDB, VDB and WinDbg/CDB (via [PyKD](https://pykd.codeplex.com/)).
 
+WinDbg support is new, please [open an issue](https://github.com/snare/voltron/issues) if you have problems.
+
 The following architectures are supported:
 
 |         | lldb | gdb | vdb | windbg |
