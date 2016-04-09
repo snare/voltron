@@ -522,10 +522,13 @@ if HAVE_LLDB:
             self.adaptor.command("script import voltron")
             self.adaptor.command('command script add -f voltron.command._invoke voltron')
 
+            # try to register hooks automatically, as this works on new LLDB versions
+            self.register_hooks(True)
+
         def invoke(self, debugger, command, result, dict):
             self.handle_command(command)
 
-        def register_hooks(self):
+        def register_hooks(self, quiet=False):
             try:
                 output = self.adaptor.command("target stop-hook list")
                 if 'voltron' not in output:
@@ -537,7 +540,8 @@ if HAVE_LLDB:
                         pass
                 print("Registered stop-hook")
             except:
-                print("No targets")
+                if not quiet:
+                    print("No targets")
 
         def unregister_hooks(self):
             self.adaptor.command('target stop-hook delete {}'.format(self.hook_idx if self.hook_idx else ''))

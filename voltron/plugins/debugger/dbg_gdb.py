@@ -586,6 +586,7 @@ if HAVE_GDB:
             super(GDBCommand, self).__init__("voltron", gdb.COMMAND_NONE, gdb.COMPLETE_NONE)
             self.adaptor = voltron.debugger
             self.registered = False
+            self.register_hooks()
 
         def invoke(self, arg, from_tty):
             self.handle_command(arg)
