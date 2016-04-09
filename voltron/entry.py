@@ -3,17 +3,22 @@ This is the main entry point for Voltron from the debugger host's perspective.
 This file is loaded into the debugger through whatever means the given host
 supports.
 
-In LLDB:
+LLDB:
 
     (lldb) command script import /path/to/voltron/entry.py
 
-In GDB:
+GDB:
 
     (gdb) source /path/to/voltron/entry.py
 
-In VDB:
+VDB:
 
     (vdb) script /path/to/voltron/entry.py
+
+WinDbg/CDB (via PyKD):
+
+    > .load pykd.pyd
+    > !py --global C:\path\to\voltron\entry.py
 """
 
 log = None
