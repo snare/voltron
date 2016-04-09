@@ -79,14 +79,14 @@ Quick Start
 
         > cdb -c '.load C:\path\to\pykd.pyd ; !py --global C:\path\to\voltron\entry.py' target_binary
 
-3. In another terminal (I use iTerm panes) start one of the UI views
+3. In another terminal (I use iTerm panes) start one of the UI views. On LLDB and WinDbg the views will update immediately. On GDB and VDB they will not update until the inferior stops (at a breakpoint, after a step, etc):
 
         $ voltron view register
         $ voltron view stack
         $ voltron view disassembly
         $ voltron view backtrace
 
-4. Set a breakpoint and run your inferior. Once the inferior has started and the debugger has stopped (either because you interrupted it or because it hit a breakpoint) the views will update.
+4. Set a breakpoint and run your inferior.
 
         (*db) b main
         (*db) run
