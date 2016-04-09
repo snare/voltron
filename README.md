@@ -132,7 +132,7 @@ More information about WinDbg/CDB support [here](https://github.com/snare/voltro
 License
 -------
 
-See the LICENSE file.
+See the [LICENSE](https://github.com/snare/voltron/blob/master/LICENSE) file.
 
 If you use this and don't hate it, buy me a beer at a conference some time. This license also extends to other contributors - [richo](http://github.com/richo) definitely deserves a few beers for his contributions.
 
