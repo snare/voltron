@@ -60,12 +60,15 @@ Quick Start
     GDB:
 
         source /path/to/voltron/entry.py
-        voltron init
         set disassembly-flavor intel
 
 2. Start your debugger and initialise Voltron manually if necessary.
 
-    On LLDB you need to call `voltron init` after you load the inferior:
+    On recent versions of LLDB you do not need to initialise Voltron manually:
+
+        $ lldb target_binary
+
+    On older versions of LLDB you need to call `voltron init` after you load the inferior:
 
         $ lldb target_binary
         (lldb) voltron init
