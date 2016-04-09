@@ -224,7 +224,8 @@ class DebuggerCommand (object):
     """
     The `voltron` command in the debugger.
     """
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super(DebuggerCommand, self).__init__(*args, **kwargs)
         self.adaptor = voltron.debugger
 
     def handle_command(self, command):

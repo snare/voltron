@@ -584,9 +584,7 @@ if HAVE_GDB:
         """
         def __init__(self):
             super(GDBCommand, self).__init__("voltron", gdb.COMMAND_NONE, gdb.COMPLETE_NONE)
-
             self.adaptor = voltron.debugger
-
             self.registered = False
 
         def invoke(self, arg, from_tty):
@@ -603,6 +601,7 @@ if HAVE_GDB:
                 gdb.events.stop.disconnect(self.stop_handler)
                 gdb.events.exited.disconnect(self.stop_and_exit_handler)
                 gdb.events.cont.disconnect(self.cont_handler)
+                self.registered = False
 
         def stop_handler(self, event):
             self.adaptor.update_state()
