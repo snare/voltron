@@ -32,8 +32,7 @@ def setup_env():
     )
     config = env.config
 
-    # create shared instance of plugin manager
-    voltron.plugin.pm = voltron.plugin.PluginManager()
+    voltron.plugin.pm.register_plugins()
 
 LOGGER_DEFAULT = {
     'handlers': ['null'],
@@ -74,7 +73,7 @@ def setup_logging(logname=None):
     # enable the debug_file in all the loggers if the config says to
     if config and 'general' in config and config['general']['debug_logging']:
         if logname:
-            filename = 'voltron_{}.log'.format(logname)
+            filename = '{}.log'.format(logname)
         else:
             filename = 'voltron.log'
         for name in LOG_CONFIG['loggers']:

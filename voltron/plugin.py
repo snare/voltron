@@ -27,10 +27,6 @@ class PluginManager(object):
         self._web_plugins = defaultdict(lambda: None)
         self._command_plugins = defaultdict(lambda: None)
 
-        log.debug("Initalising PluginManager {}".format(self))
-
-        self.register_plugins()
-
     def register_plugins(self):
         for p in voltron.env.plugins:
             self.register_plugin(p)
@@ -298,7 +294,8 @@ class CommandPlugin(VoltronPlugin):
 # Shared plugin manager and convenience methods
 #
 
-pm = None
+pm = PluginManager()
+
 
 def api_request(request, *args, **kwargs):
     """
@@ -315,6 +312,7 @@ def api_request(request, *args, **kwargs):
         raise Exception("Invalid request type")
     return req
 
+
 def api_response(request, *args, **kwargs):
     plugin = pm.api_plugin_for_request(request)
     if plugin and plugin.response_class:
@@ -322,6 +320,7 @@ def api_response(request, *args, **kwargs):
     else:
         raise Exception("Invalid request type")
     return req
+
 
 def debugger_adaptor(host, *args, **kwargs):
     plugin = pm.debugger_plugin_for_host(host)
@@ -331,6 +330,7 @@ def debugger_adaptor(host, *args, **kwargs):
         raise Exception("Invalid debugger host")
     return adaptor
 
+
 def view(name, *args, **kwargs):
     plugin = pm.view_plugin_with_name(name)
     if plugin and plugin.view_class:
@@ -338,6 +338,7 @@ def view(name, *args, **kwargs):
     else:
         raise Exception("Invalid view name")
     return view
+
 
 def command(name, *args, **kwargs):
     plugin = pm.command_plugin_with_name(name)
@@ -347,7 +348,6 @@ def command(name, *args, **kwargs):
         raise Exception("Invalid command name")
     return command
 
+
 def web_plugins():
     return pm.web_plugins
-
-

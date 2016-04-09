@@ -29,6 +29,7 @@ def main(debugger=None):
 
     # Set up a subcommand for each view class
     pm = PluginManager()
+    pm.register_plugins()
     for plugin in pm.view_plugins:
         pm.view_plugins[plugin].view_class.configure_subparser(view_sp)
 

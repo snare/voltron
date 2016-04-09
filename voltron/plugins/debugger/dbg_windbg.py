@@ -12,15 +12,19 @@ from voltron.plugin import *
 from voltron.dbg import *
 
 try:
-    import pykd
-    in_windbg = True
-except ImportError:
     in_windbg = False
+    import pykd
+    try:
+        import vtrace
+    except:
+        in_windbg = True
+except ImportError:
+    pass
 
 log = logging.getLogger('debugger')
 
-if in_windbg:
 
+if in_windbg:
     class WinDbgAdaptor(DebuggerAdaptor):
         sizes = {
             'x86': 4,

@@ -30,6 +30,18 @@ try:
     blessed = None
     import blessed
 
+    # add vtrace to the path so that dbg_vdb.py can import from vdb/vtrace.
+    if "vtrace" in locals():
+        def parent_directory(the_path):
+            return os.path.abspath(os.path.join(the_path, os.pardir))
+
+        def add_vdb_to_path(vtrace):
+            sys.path.append(parent_directory(parent_directory(vtrace.__file__)))
+
+        add_vdb_to_path(vtrace)
+    else:
+        pass
+
     import voltron
     from voltron.plugin import pm
     from voltron.core import Server
@@ -37,6 +49,7 @@ try:
     log = voltron.setup_logging('debugger')
 
     # figure out in which debugger host we are running
+    args = []
     try:
         import lldb
         host = "lldb"
@@ -47,13 +60,14 @@ try:
         host = "gdb"
     except ImportError:
         pass
-    if "vtrace" in locals():
-        host = "vdb"
     try:
         import pykd
         host = "windbg"
     except:
         pass
+    if "vtrace" in locals():
+        host = "vdb"
+        args = [db]
     if not host:
         raise Exception("No debugger host is present")
 
@@ -64,8 +78,8 @@ try:
     plugin = pm.debugger_plugin_for_host(host)
 
     # set up command and adaptor instances
-    voltron.debugger = plugin.adaptor_class()
-    voltron.command = plugin.command_class()
+    voltron.debugger = plugin.adaptor_class(*args)
+    voltron.command = plugin.command_class(*args)
 
     # create and start the voltron server
     voltron.server = Server()
