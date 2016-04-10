@@ -77,18 +77,19 @@ try:
     # get the debugger plugin for the host we're in
     plugin = pm.debugger_plugin_for_host(host)
 
-    # set up command and adaptor instances
-    voltron.debugger = plugin.adaptor_class(*args)
-    voltron.command = plugin.command_class(*args)
+    if not voltron.command:
+        # set up command and adaptor instances
+        voltron.debugger = plugin.adaptor_class(*args)
+        voltron.command = plugin.command_class(*args)
 
-    # create and start the voltron server
-    voltron.server = Server()
-    if host != "gdb":
-        voltron.server.start()
+        # create and start the voltron server
+        voltron.server = Server()
+        if host != "gdb":
+            voltron.server.start()
 
-    print(blessed.Terminal().bold_red("Voltron loaded."))
-    if host == 'lldb' and not voltron.command.registered:
-        print("Run `voltron init` after you load a target.")
+        print(blessed.Terminal().bold_red("Voltron loaded."))
+        if host == 'lldb' and not voltron.command.registered:
+            print("Run `voltron init` after you load a target.")
 
 except Exception as e:
     import traceback
