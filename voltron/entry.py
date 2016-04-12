@@ -65,6 +65,9 @@ try:
     try:
         import lldb
         host = "lldb"
+
+        def invoke(*args):
+            voltron.command._invoke(*args)
     except ImportError:
         pass
     try:

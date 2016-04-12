@@ -509,8 +509,8 @@ if HAVE_LLDB:
         Debugger command class for LLDB
         """
         @staticmethod
-        def _invoke(debugger, command, result, dict):
-            voltron.command.invoke(debugger, command, result, dict)
+        def _invoke(debugger, command, *args):
+            voltron.command.handle_command(command)
 
         def __init__(self):
             super(LLDBCommand, self).__init__()
@@ -520,7 +520,7 @@ if HAVE_LLDB:
 
             # install the voltron command handler
             self.adaptor.command("script import voltron")
-            self.adaptor.command('command script add -f voltron.command._invoke voltron')
+            self.adaptor.command('command script add -f entry.invoke voltron')
 
             # try to register hooks automatically, as this works on new LLDB versions
             self.register_hooks(True)
