@@ -33,9 +33,9 @@ The following architectures are supported:
 |---------|------|-----|-----|--------|
 | x86     | ✓    | ✓   | ✓   | ✓      |
 | x86_64  | ✓    | ✓   | ✓   | ✓      |
-| arm     | ✓    | ✓   | ✓   | x      |
-| arm64   | ✓    | x   | x   | x      |
-| powerpc | x    | ✓   | x   | x      |
+| arm     | ✓    | ✓   | ✓   | ✗      |
+| arm64   | ✓    | ✗   | ✗   | ✗      |
+| powerpc | ✗    | ✓   | ✗   | ✗      |
 
 Installation
 ------------
