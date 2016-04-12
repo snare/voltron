@@ -18,6 +18,10 @@ The author's setup looks something like this:
 
 ![voltron example LLDB](http://i.imgur.com/p3XcagJ.png)
 
+Any debugger command can be split off into a view:
+
+![command views](http://i.imgur.com/iatgsgN.png)
+
 More screenshots are [here](https://github.com/snare/voltron/wiki/Screenshots).
 
 Support
