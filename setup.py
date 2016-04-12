@@ -16,12 +16,12 @@ if sys.platform == 'win32':
 
 setup(
     name="voltron",
-    version="0.1",
+    version="0.1.1",
     author="snare",
     author_email="snare@ho.ax",
     description=("A debugger UI"),
     license="MIT",
-    keywords="voltron debugger ui gdb lldb vdb",
+    keywords="voltron debugger ui gdb lldb vdb vivisect vtrace windbg cdb pykd",
     url="https://github.com/snare/voltron",
     packages=find_packages(exclude=['tests', 'examples']),
     install_requires=requirements,
