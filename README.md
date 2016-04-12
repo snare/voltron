@@ -60,6 +60,7 @@ Quick Start
     GDB:
 
         source /path/to/voltron/entry.py
+        voltron init
         set disassembly-flavor intel
 
 2. Start your debugger and initialise Voltron manually if necessary.
