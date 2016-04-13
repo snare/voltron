@@ -175,6 +175,7 @@ class VoltronView (object):
         # Commonly set by render method for header and footer formatting
         self.title = ''
         self.info = ''
+        self.body = ''
 
         # Build configuration
         self.build_config()
