@@ -95,7 +95,7 @@ Quick Start
 
         $ voltron view register
         $ voltron view stack
-        $ voltron view disassembly
+        $ voltron view disasm
         $ voltron view backtrace
 
 4. Set a breakpoint and run your inferior.
