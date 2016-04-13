@@ -68,7 +68,7 @@ def start_debugger(do_break=True):
     p.sendline("run loop")
     read_data()
 
-    time.sleep(2)
+    time.sleep(5)
 
     client = Client()
 

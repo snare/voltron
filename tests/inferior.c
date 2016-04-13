@@ -26,6 +26,7 @@ int main(int argc, char **argv)
             d+=2;
             e+=3;
         }
+        sleep(1);
     }
     else if (argc > 1 && strcmp(argv[1], "function") == 0)
     {
