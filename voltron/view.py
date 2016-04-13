@@ -58,12 +58,7 @@ class AliasedSubParsersAction(argparse._SubParsersAction):
             sup.__init__(option_strings=[], dest=dest, help=help)
 
     def add_parser(self, name, **kwargs):
-        if 'aliases' in kwargs:
-            aliases = kwargs['aliases']
-            del kwargs['aliases']
-        else:
-            aliases = []
-
+        aliases = kwargs.pop('aliases', [])
         parser = super(AliasedSubParsersAction, self).add_parser(name, **kwargs)
 
         # Make the aliases work.
