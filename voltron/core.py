@@ -14,6 +14,7 @@ except:
     import requests
 import threading
 import os.path
+import pkgutil
 
 from werkzeug.serving import WSGIRequestHandler, BaseWSGIServer, ThreadedWSGIServer
 from werkzeug.wsgi import SharedDataMiddleware, DispatcherMiddleware
@@ -42,6 +43,16 @@ try:
     from voltron_web import app as ui_app
 except:
     ui_app = None
+
+
+def get_loader(name):
+    try:
+        return orig_get_loader(name)
+    except AttributeError:
+        pass
+orig_get_loader = pkgutil.get_loader
+pkgutil.get_loader = get_loader
+
 
 # make sure we use HTTP 1.1 for keep-alive
 WSGIRequestHandler.protocol_version = "HTTP/1.1"
