@@ -1,0 +1,34 @@
+# os:
+#   - linux
+#   - os x
+
+sudo: required
+
+dist: trusty
+
+language: python
+
+python:
+  # - "2.7"
+  - "3.3"
+  - "3.4"
+  - "3.5"
+
+addons:
+  apt:
+    packages:
+      - build-essential
+      - gdb
+
+# before install:
+#   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
+#   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install graphviz; fi
+
+install:
+  - pip install mock pexpect
+  - pip install .
+
+script:
+  - mkdir ~/.voltron
+  - echo '{"general":{"debug_logging":true}}' >~/.voltron/config
+  - nosetests -sv tests/gdb_cli_tests.py
