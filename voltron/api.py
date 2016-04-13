@@ -130,13 +130,9 @@ def server_side(func):
     client and server sides without too much confusion.
     """
     def inner(*args, **kwargs):
-        if len(args) and hasattr(args[0], 'is_server'):
-            if voltron.debugger:
-                return func(*args, **kwargs)
-            else:
-                raise ServerSideOnlyException("This method can only be called on a server-side instance")
-        else:
-            return func(*args, **kwargs)
+        if args and hasattr(args[0], 'is_server') and not voltron.debugger:
+            raise ServerSideOnlyException("This method can only be called on a server-side instance")
+        return func(*args, **kwargs)
     return inner
 
 
@@ -149,20 +145,16 @@ def client_side(func):
     client and server sides without too much confusion.
     """
     def inner(*args, **kwargs):
-        if len(args) and hasattr(args[0], 'is_server'):
-            if not voltron.debugger:
-                return func(*args, **kwargs)
-            else:
-                raise ClientSideOnlyException("This method can only be called on a client-side instance")
-        else:
-            return func(*args, **kwargs)
+        if args and hasattr(args[0], 'is_server') and voltron.debugger:
+            raise ClientSideOnlyException("This method can only be called on a client-side instance")
+        return func(*args, **kwargs)
     return inner
 
 
 def cast_b(val):
-    if type(val) == six.binary_type:
+    if isinstance(val, six.binary_type):
         return val
-    elif type(val) == six.text_type:
+    elif isinstance(val, six.text_type):
         return val.encode('latin1')
     return six.binary_type(val)
 
@@ -204,11 +196,7 @@ class APIMessage(object):
         """
         Return a transmission-safe dictionary representation of the API message properties.
         """
-        d = {}
-        # set values of top-level fields
-        for field in self._top_fields:
-            if hasattr(self, field):
-                d[field] = getattr(self, field)
+        d = {field: getattr(self, field) for field in self._top_fields if hasattr(self, field)}
 
         # set values of data fields
         d['data'] = {}
