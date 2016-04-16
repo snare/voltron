@@ -34,6 +34,7 @@ if HAVE_GDB:
             'arm': 4,
             'powerpc': 4,
         }
+        max_frame = 64
 
         """
         The interface with an instance of GDB
@@ -373,6 +374,21 @@ if HAVE_GDB:
                 })
 
             return breakpoints
+
+        @lock_host
+        def backtrace(self, target_id=0, thread_id=None):
+            """
+            Return a list of stack frames.
+            """
+            frames = []
+            f = gdb.newest_frame()
+            for i in range(self.max_frame):
+                if not f:
+                    break
+                frames.append({'index': i, 'addr': f.pc(), 'name': f.name()})
+                f = f.older()
+
+            return frames
 
         def capabilities(self):
             """

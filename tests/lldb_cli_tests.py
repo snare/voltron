@@ -253,3 +253,10 @@ def test_capabilities():
     restart(True)
     res = client.perform_request('version')
     assert res.capabilities == ['async']
+
+
+def test_backtrace():
+    restart(True)
+    res = client.perform_request('backtrace')
+    assert res.frames[0]['name'] == "inferior`main + 0"
+    assert res.frames[0]['index'] == 0

@@ -157,3 +157,11 @@ def test_disassemble():
     assert res.status == 'success'
     assert len(res.disassembly) > 0
     assert 'DWORD' in res.disassembly
+
+
+def test_backtrace():
+    res = client.perform_request('backtrace')
+    print(res)
+    assert res.is_success
+    assert res.frames[0]['name'] == "main"
+    assert res.frames[0]['index'] == 0

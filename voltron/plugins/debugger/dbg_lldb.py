@@ -472,6 +472,32 @@ if HAVE_LLDB:
 
             return breakpoints
 
+        @validate_busy
+        @validate_target
+        @lock_host
+        def backtrace(self, target_id=0, thread_id=None):
+            """
+            Return a list of stack frames.
+            """
+            target = self.host.GetTargetAtIndex(target_id)
+            if not thread_id:
+                thread_id = target.process.selected_thread.id
+            try:
+                thread = target.process.GetThreadByID(thread_id)
+            except:
+                raise NoSuchThreadException()
+
+            frames = []
+            for frame in thread:
+                start_addr = frame.GetSymbol().GetStartAddress().GetFileAddress()
+                offset = frame.addr.GetFileAddress() - start_addr
+                ctx = frame.GetSymbolContext(lldb.eSymbolContextEverything)
+                mod = ctx.GetModule()
+                name = '{mod}`{symbol} + {offset}'.format(mod=os.path.basename(str(mod.file)), symbol=frame.name, offset=offset)
+                frames.append({'index': frame.idx, 'addr': frame.addr.GetFileAddress(), 'name': name})
+
+            return frames
+
         def capabilities(self):
             """
             Return a list of the debugger's capabilities.
