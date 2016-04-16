@@ -284,6 +284,8 @@ class VoltronWSGIServer(BaseWSGIServer):
 
     This just needs to exist so we can swallow errors when clients disconnect.
     """
+    host = 'localhost'
+
     def finish_request(self, *args):
         try:
             super(VoltronWSGIServer, self).finish_request(*args)
