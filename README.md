@@ -125,7 +125,7 @@ See the [issue tracker](https://github.com/snare/voltron/issues) on github for m
 
 3. Due to a limitation in the GDB API, the views are only updated each time the debugger is stopped (e.g. by hitting a breakpoint), so view contents are not populated immediately when the view is connected, only when the first breakpoint is hit.
 
-4. If the stack view is causing GDB to hang then it must be launched **after** the debugger has been launched, the inferior started, and the debugger stopped (e.g. a breakpoint hit). This is due to a GDB bug that has not yet been resolved.
+4. If the stack view is causing GDB to hang then it must be launched **after** the debugger has been launched, the inferior started, and the debugger stopped (e.g. a breakpoint hit). This has been fixed, but this note will remain until another release is issued.
 
 ### LLDB
 
