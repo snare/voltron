@@ -284,8 +284,6 @@ class VoltronWSGIServer(BaseWSGIServer):
 
     This just needs to exist so we can swallow errors when clients disconnect.
     """
-    host = 'localhost'
-
     def finish_request(self, *args):
         try:
             super(VoltronWSGIServer, self).finish_request(*args)
@@ -312,6 +310,8 @@ if sys.platform != 'win32':
             self.passthrough_errors = None
             self.shutdown_signal = False
             self.ssl_context = None
+            self.host = 'localhost'
+            self.port = 0
 
     class UnixWSGIRequestHandler(WSGIRequestHandler):
         """
