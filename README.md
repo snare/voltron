@@ -20,7 +20,7 @@ The author's setup looks something like this:
 
 ![voltron example LLDB](http://i.imgur.com/p3XcagJ.png)
 
-Any debugger command can be split off into a view:
+Any debugger command can be split off into a view and highlighted with a specified Pygments lexer:
 
 ![command views](http://i.imgur.com/mqptE3Z.png)
 
