@@ -35,6 +35,7 @@ if HAVE_GDB:
             'powerpc': 4,
         }
         max_frame = 64
+        max_string = 128
 
         """
         The interface with an instance of GDB
@@ -284,16 +285,22 @@ if HAVE_GDB:
             # first try to resolve a symbol context for the address
             if len(chain):
                 p, addr = chain[-1]
-                output = gdb.execute('info symbol {}'.format(addr), to_string=True)
+                output = gdb.execute('info symbol 0x{:x}'.format(addr), to_string=True)
+                log.debug('output = {}'.format(output))
                 if 'No symbol matches' not in output:
                     chain.append(('symbol', output.strip()))
                     log.debug("symbol context: {}".format(str(chain[-1])))
                 else:
-                    log.debug("no symbol context")
-                    mem = gdb.selected_inferior().read_memory(addr, 1)
-                    if ord(mem[0]) < 127:
-                        output = gdb.execute('x/s 0x{:X}'.format(addr), to_string=True)
-                        chain.append(('string', '"'.join(output.split('"')[1:-1]).strip()))
+                    log.debug("no symbol context, trying as a string")
+                    mem = gdb.selected_inferior().read_memory(addr, 2)
+                    if ord(mem[0]) <= 127 and ord(mem[0]) != 0:
+                        a = []
+                        for i in range(0, self.max_string):
+                            mem = gdb.selected_inferior().read_memory(addr + i, 1)
+                            if ord(mem[0]) == 0 or ord(mem[0]) > 127:
+                                break
+                            a.append(str(mem))
+                        chain.append(('string', ''.join(a)))
 
             log.debug("chain: {}".format(chain))
             return chain
