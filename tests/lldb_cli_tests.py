@@ -257,6 +257,8 @@ def test_capabilities():
 
 def test_backtrace():
     restart(True)
+    time.sleep(1)
     res = client.perform_request('backtrace')
+    print(res)
     assert res.frames[0]['name'] == "inferior`main + 0"
     assert res.frames[0]['index'] == 0
