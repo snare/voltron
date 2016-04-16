@@ -20,7 +20,7 @@ class DisasmView(TerminalView):
         height, width = self.window_size()
 
         # Set up header & error message if applicable
-        self.title = '[code]'
+        self.title = '[disassembly]'
 
         # Request data
         req = api_request('disassemble', block=self.block, use_capstone=self.args.use_capstone)
