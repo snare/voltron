@@ -18,13 +18,20 @@ Vagrant.configure(2) do |config|
         build-essential \
         gdb \
         zsh \
-        python3-pip
+        python3-pip \
+        lldb-3.4
+    sudo pip3 install six --upgrade
     sudo pip3 install -e /voltron
-    echo "source /voltron/dbgentry.py" >/home/vagrant/.gdbinit
+    echo "source /voltron/voltron/entry.py" >/home/vagrant/.gdbinit
+    echo "command script import /voltron/voltron/entry.py" >/home/vagrant/.lldbinit
     echo "voltron init" >>/home/vagrant/.gdbinit
     echo "set disassembly-flavor intel" >>/home/vagrant/.gdbinit
     mkdir -p /home/vagrant/.voltron
     chown vagrant:vagrant /home/vagrant/.voltron
-    echo '{"server":{"listen":{"tcp":["0.0.0.0",5555]}}}' >/home/vagrant/.voltron/config
+    cat >/home/vagrant/.voltron/config <<END
+    chown -R vagrant ~/.voltron
+general:
+  debug_logging: true
+END
   SHELL
 end
