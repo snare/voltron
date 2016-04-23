@@ -232,12 +232,13 @@ class Server(object):
         """
         Cancel all requests in the queue so we can exit.
         """
-        log.debug("Canceling requests: {}".format(self.queue))
-        for req in self.queue:
-            req.response = APIServerExitedErrorResponse()
-        for req in self.queue:
-            req.signal()
+        q = list(self.queue)
         self.queue = []
+        log.debug("Canceling requests: {}".format(q))
+        for req in q:
+            req.response = APIServerExitedErrorResponse()
+        for req in q:
+            req.signal()
 
     def dispatch_queue(self):
         """
@@ -245,10 +246,12 @@ class Server(object):
 
         Called by the debugger when it stops.
         """
-        log.debug("Dispatching requests: {}".format(self.queue))
-        for req in self.queue:
+        q = list(self.queue)
+        self.queue = []
+        log.debug("Dispatching requests: {}".format(q))
+        for req in q:
             req.response = self.dispatch_request(req)
-        for req in self.queue:
+        for req in q:
             req.signal()
 
     def dispatch_request(self, req):
