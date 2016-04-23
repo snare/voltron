@@ -122,6 +122,7 @@ class Server(object):
         self.listeners = []
         self.is_running = False
         self.queue = []
+        self.queue_lock = threading.Lock()
 
     def start(self):
         """
@@ -232,8 +233,10 @@ class Server(object):
         """
         Cancel all requests in the queue so we can exit.
         """
+        self.queue_lock.acquire()
         q = list(self.queue)
         self.queue = []
+        self.queue_lock.release()
         log.debug("Canceling requests: {}".format(q))
         for req in q:
             req.response = APIServerExitedErrorResponse()
@@ -246,8 +249,10 @@ class Server(object):
 
         Called by the debugger when it stops.
         """
+        self.queue_lock.acquire()
         q = list(self.queue)
         self.queue = []
+        self.queue_lock.release()
         log.debug("Dispatching requests: {}".format(q))
         for req in q:
             req.response = self.dispatch_request(req)
