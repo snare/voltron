@@ -9,14 +9,15 @@ requirements = [
     'blessed',
     'pygments',
     'requests',
-    'requests_unixsocket'
+    'requests_unixsocket',
+    'six'
 ]
 if sys.platform == 'win32':
     requirements.append('cursor')
 
 setup(
     name="voltron",
-    version="0.1.2",
+    version="0.1.3",
     author="snare",
     author_email="snare@ho.ax",
     description=("A debugger UI"),
