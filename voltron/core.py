@@ -209,7 +209,9 @@ class Server(object):
         if not res:
             # no errors so far, queue the request and wait
             if req and req.block:
+                self.queue_lock.acquire()
                 self.queue.append(req)
+                self.queue_lock.release()
 
                 # When this returns the request will have been processed by the dispatch_queue method on the main
                 # thread (or timed out). We have to do it this way because GDB sucks.
@@ -221,8 +223,10 @@ class Server(object):
                     res = req.response
 
                 # Remove the request from the queue
+                self.queue_lock.acquire()
                 if req in self.queue:
                     self.queue.remove(req)
+                self.queue_lock.release()
             else:
                 # non-blocking, dispatch request straight away
                 res = self.dispatch_request(req)
