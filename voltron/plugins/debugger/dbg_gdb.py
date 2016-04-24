@@ -299,7 +299,10 @@ if HAVE_GDB:
                             mem = gdb.selected_inferior().read_memory(addr + i, 1)
                             if ord(mem[0]) == 0 or ord(mem[0]) > 127:
                                 break
-                            a.append(str(mem))
+                            if isinstance(mem, memoryview):
+                                a.append(mem.tobytes().decode('latin1'))
+                            else:
+                                a.append(str(mem))
                         chain.append(('string', ''.join(a)))
 
             log.debug("chain: {}".format(chain))
