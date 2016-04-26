@@ -371,7 +371,7 @@ class RegisterView (TerminalView):
                         formatted_reg = self.colour(val, fmt['value_colour'])
                     else:
                         colour = fmt['value_colour']
-                        if self.last_regs is not None or self.last_regs is not None and val != self.last_regs[reg]:
+                        if self.last_regs is None or self.last_regs is not None and val != self.last_regs[reg]:
                             colour = fmt['value_colour_mod']
                         formatted_reg = val
                         if fmt['value_format'] != None and isinstance(formatted_reg, Number):
