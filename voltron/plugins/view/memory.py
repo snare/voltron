@@ -8,6 +8,7 @@ from voltron.api import *
 
 log = logging.getLogger("view")
 
+
 class MemoryView (TerminalView):
     printable_filter = ''.join([(len(repr(chr(x))) == 3) and chr(x) or '.' for x in range(256)])
 
@@ -18,17 +19,20 @@ class MemoryView (TerminalView):
         sp = subparsers.add_parser('memory', help='display a chunk of memory', aliases=('m', 'mem'))
         VoltronView.add_generic_arguments(sp)
         group = sp.add_mutually_exclusive_group(required=False)
-        group.add_argument('--deref', '-d', action='store_true', help=('display the data in a column one CPU word wide '
-            'and dereference any valid pointers'), default=False)
+        group.add_argument('--deref', '-d', action='store_true',
+                           help='display the data in a column one CPU word wide and dereference any valid pointers',
+                           default=False)
         group.add_argument('--bytes', '-b', action='store', type=int, help='bytes per line (default 16)', default=16)
         sp.add_argument('--reverse', '-v', action='store_true', help='reverse the output', default=False)
         group = sp.add_mutually_exclusive_group(required=True)
-        group.add_argument('--address', '-a', action='store', help='address (in hex) from which to start reading memory')
-        group.add_argument('--command', '-c', action='store', help=('command to execute resulting in the address from '
-            'which to start reading memory. voltron will do his almighty best to find an address in the output by '
-            'splitting it on whitespace and searching from the end of the list of tokens. e.g. "print \$rip + 0x1234"'),
-            default=None)
-        group.add_argument('--register', '-r', action='store', help='register containing the address from which to start reading memory', default=None)
+        group.add_argument('--address', '-a', action='store',
+                           help='address (in hex or decimal) from which to start reading memory')
+        group.add_argument('--command', '-c', action='store',
+                           help=('command to execute resulting in the address from which to start reading memory. '
+                                 'voltron will do his almighty best to find an address. e.g. "print \$rip + 0x1234"'),
+                           default=None)
+        group.add_argument('--register', '-r', action='store',
+                           help='register containing the address from which to start reading memory', default=None)
         sp.set_defaults(func=MemoryView)
 
     def render(self):
@@ -53,7 +57,7 @@ class MemoryView (TerminalView):
         if self.args.deref:
             args['words'] = height
         else:
-            args['length'] = height*self.args.bytes
+            args['length'] = height * self.args.bytes
 
         # get memory and target info
         m_res, t_res = self.client.send_requests(
@@ -73,12 +77,12 @@ class MemoryView (TerminalView):
             if m_res and m_res.is_success:
                 lines = []
                 for c in range(0, m_res.bytes, self.args.bytes):
-                    chunk = m_res.memory[c:c+self.args.bytes]
+                    chunk = m_res.memory[c:c + self.args.bytes]
                     addr_str = self.colour(self.format_address(m_res.address + c, size=target['addr_size'], pad=False),
-                                            self.config.format.addr_colour)
+                                           self.config.format.addr_colour)
                     if self.args.deref:
-                        fmt = ('<' if target['byte_order'] == 'little' else '>') + \
-                                {2: 'H', 4: 'L', 8: 'Q'}[target['addr_size']]
+                        l = {2: 'H', 4: 'L', 8: 'Q'}[target['addr_size']]
+                        fmt = '{}{}'.format(('<' if target['byte_order'] == 'little' else '>'), l)
                         info_str = ''
                         if len(chunk) == target['addr_size']:
                             pointer = list(struct.unpack(fmt, chunk))[0]
@@ -106,7 +110,7 @@ class MemoryView (TerminalView):
         super(MemoryView, self).render()
 
     def format_address(self, address, size=8, pad=True, prefix='0x'):
-        fmt = '{:' + ('0=' + str(size*2) if pad else '') + 'X}'
+        fmt = '{:' + ('0=' + str(size * 2) if pad else '') + 'X}'
         addr_str = fmt.format(address)
         if prefix:
             addr_str = prefix + addr_str
@@ -114,7 +118,7 @@ class MemoryView (TerminalView):
 
     def format_deref(self, deref, size=8):
         fmtd = []
-        for t,item in deref:
+        for t, item in deref:
             if t == "pointer":
                 fmtd.append(self.format_address(item, size=size, pad=False))
             elif t == "string":

@@ -276,14 +276,20 @@ class RegisterView (TerminalView):
         VoltronView.add_generic_arguments(sp)
         sp.set_defaults(func=RegisterView)
         g = sp.add_mutually_exclusive_group()
-        g.add_argument('--horizontal', '-o',    dest="orientation", action='store_const',   const="horizontal", help='horizontal orientation')
-        g.add_argument('--vertical', '-v',      dest="orientation", action='store_const',   const="vertical",   help='vertical orientation (default)')
-        sp.add_argument('--general', '-g',      dest="sections",    action='append_const',  const="general",    help='show general registers')
-        sp.add_argument('--no-general', '-G',   dest="sections",    action='append_const',  const="no_general", help='show general registers')
-        sp.add_argument('--sse', '-s',          dest="sections",    action='append_const',  const="sse",        help='show sse registers')
-        sp.add_argument('--no-sse', '-S',       dest="sections",    action='append_const',  const="no_sse",     help='show sse registers')
-        sp.add_argument('--fpu', '-p',          dest="sections",    action='append_const',  const="fpu",        help='show fpu registers')
-        sp.add_argument('--no-fpu', '-P',       dest="sections",    action='append_const',  const="no_fpu",     help='show fpu registers')
+        g.add_argument('--horizontal', '-o', dest="orientation", action='store_const', const="horizontal",
+                       help='horizontal orientation')
+        g.add_argument('--vertical', '-v', dest="orientation", action='store_const', const="vertical",
+                       help='vertical orientation (default)')
+        sp.add_argument('--general', '-g', dest="sections", action='append_const', const="general",
+                        help='show general registers')
+        sp.add_argument('--no-general', '-G', dest="sections", action='append_const', const="no_general",
+                        help='show general registers')
+        sp.add_argument('--sse', '-s', dest="sections", action='append_const', const="sse", help='show sse registers')
+        sp.add_argument('--no-sse', '-S', dest="sections", action='append_const', const="no_sse",
+                        help='show sse registers')
+        sp.add_argument('--fpu', '-p', dest="sections", action='append_const', const="fpu", help='show fpu registers')
+        sp.add_argument('--no-fpu', '-P', dest="sections", action='append_const', const="no_fpu",
+                        help='show fpu registers')
 
     def __init__(self, *args, **kwargs):
         super(RegisterView, self).__init__(*args, **kwargs)
@@ -291,10 +297,10 @@ class RegisterView (TerminalView):
 
     def apply_cli_config(self):
         super(RegisterView, self).apply_cli_config()
-        if self.args.orientation != None:
+        if self.args.orientation is not None:
             self.config.orientation = self.args.orientation
-        if self.args.sections != None:
-            a = filter(lambda x: 'no_'+x not in self.args.sections and not x.startswith('no_'), list(self.config.sections) + self.args.sections)
+        if self.args.sections is not None:
+            a = filter(lambda x: 'no_' + x not in self.args.sections and not x.startswith('no_'), list(self.config.sections) + self.args.sections)
             config_sections = []
             for sec in a:
                 if sec not in config_sections:
@@ -352,20 +358,20 @@ class RegisterView (TerminalView):
                     # Format the label
                     label = fmt['label_format'].format(reg)
                     if fmt['label_func'] != None:
-                        formatted[reg+'l'] = getattr(self, fmt['label_func'])(str(label))
+                        formatted[reg + 'l'] = getattr(self, fmt['label_func'])(str(label))
                     if fmt['label_colour_en']:
-                        formatted[reg+'l'] =  self.colour(formatted[reg+'l'], fmt['label_colour'])
+                        formatted[reg + 'l'] = self.colour(formatted[reg + 'l'], fmt['label_colour'])
 
                     # Format the value
                     val = data[reg]
                     if isinstance(val, STRTYPES):
                         temp = fmt['value_format'].format(0)
                         if len(val) < len(temp):
-                            val += (len(temp) - len(val))*' '
+                            val += (len(temp) - len(val)) * ' '
                         formatted_reg = self.colour(val, fmt['value_colour'])
                     else:
                         colour = fmt['value_colour']
-                        if self.last_regs == None or self.last_regs != None and val != self.last_regs[reg]:
+                        if self.last_regs is not None or self.last_regs is not None and val != self.last_regs[reg]:
                             colour = fmt['value_colour_mod']
                         formatted_reg = val
                         if fmt['value_format'] != None and isinstance(formatted_reg, Number):
@@ -418,7 +424,7 @@ class RegisterView (TerminalView):
             values[flag] = (val & (1 << self.FLAG_BITS[flag]) > 0)
             log.debug("Flag {} value {} (for flags 0x{})".format(flag, values[flag], val))
             formatted[flag] = str.upper(flag) if values[flag] else flag
-            if self.last_flags != None and self.last_flags[flag] != values[flag]:
+            if self.last_flags is not None and self.last_flags[flag] != values[flag]:
                 colour = fmt['value_colour_mod']
             else:
                 colour = fmt['value_colour']
@@ -469,9 +475,9 @@ class RegisterView (TerminalView):
                 elif self.get_arch() == 'x86':
                     cx = regs['ecx']
                 if cx == 0:
-                    j = (True, cx+'==0')
+                    j = (True, cx + '==0')
                 else:
-                    j = (False, cx+'!=0')
+                    j = (False, cx + '!=0')
             elif inst in ['je', 'jz']:
                 if values['z']:
                     j = (True, 'z')
@@ -558,7 +564,7 @@ class RegisterView (TerminalView):
         if self.config.orientation == 'vertical':
             height, width = self.window_size()
             if width < len(SHORT_ADDR_FORMAT_128.format(0)) + self.XMM_INDENT:
-                return val[:16] + '\n' + ' '*self.XMM_INDENT + val[16:]
+                return val[:16] + '\n' + ' ' * self.XMM_INDENT + val[16:]
             else:
                 return val[:16] + ':' + val[16:]
         else:
