@@ -42,7 +42,14 @@ class MemoryView (TerminalView):
         elif self.args.command:
             args = {'command': self.args.command}
         else:
-            args = {'address': self.args.address}
+            if self.args.address.startswith('0x'):
+                addr = int(self.args.address, 16)
+            else:
+                try:
+                    addr = int(self.args.address, 10)
+                except:
+                    addr = int(self.args.address, 16)
+            args = {'address': addr}
         if self.args.deref:
             args['words'] = height
         else:
