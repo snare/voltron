@@ -427,6 +427,6 @@ class APIEmptyResponseErrorResponse(APIGenericErrorResponse):
     message = "Empty response"
 
 
-class APIServerExitedErrorResponse(APIGenericErrorResponse):
+class APIServerNotRunningErrorResponse(APIGenericErrorResponse):
     code = 0x1009
-    message = "Server exited"
+    message = "Server is not running"

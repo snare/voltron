@@ -319,7 +319,9 @@ class RegisterView (TerminalView):
         if t_res.timed_out:
             return
 
-        if t_res and t_res.is_error or t_res is None or t_res and len(t_res.targets) == 0:
+        if t_res and t_res.is_error:
+            error = t_res.message
+        elif t_res is None or t_res and len(t_res.targets) == 0:
             error = "No such target"
         else:
             arch = t_res.targets[0]['arch']

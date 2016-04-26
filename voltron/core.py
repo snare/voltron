@@ -167,7 +167,9 @@ class Server(object):
         Stop the server.
         """
         log.debug("Stopping listeners")
+        self.queue_lock.acquire()
         for s in self.listeners:
+            log.debug("Stopping {}".format(s))
             s.shutdown()
             s.socket.close()
         self.cancel_queue()
@@ -176,60 +178,64 @@ class Server(object):
         self.listeners = []
         self.threads = []
         self.is_running = False
+        self.queue_lock.release()
         log.debug("Listeners stopped and threads joined")
 
     def handle_request(self, data):
         req = None
         res = None
 
-        # make sure we have a debugger, or we're gonna have a bad time
-        if voltron.debugger:
-            # parse incoming request with the top level APIRequest class so we can determine the request type
-            try:
-                req = APIRequest(data=data)
-            except Exception as e:
-                req = None
-                log.exception("Exception raised while parsing API request: {} {}".format(type(e), e))
-
-            if req:
-                # instantiate the request class
+        if self.is_running:
+            # make sure we have a debugger, or we're gonna have a bad time
+            if voltron.debugger:
+                # parse incoming request with the top level APIRequest class so we can determine the request type
                 try:
-                    log.debug("data = {}".format(data))
-                    req = api_request(req.request, data=data)
+                    req = APIRequest(data=data)
                 except Exception as e:
-                    log.exception("Exception raised while creating API request: {} {}".format(type(e), e))
                     req = None
-                if not req:
-                    res = APIPluginNotFoundErrorResponse()
-            else:
-                res = APIInvalidRequestErrorResponse()
-        else:
-            res = APIDebuggerNotPresentErrorResponse()
+                    log.exception("Exception raised while parsing API request: {} {}".format(type(e), e))
 
-        if not res:
-            # no errors so far, queue the request and wait
-            if req and req.block:
-                self.queue_lock.acquire()
-                self.queue.append(req)
-                self.queue_lock.release()
-
-                # When this returns the request will have been processed by the dispatch_queue method on the main
-                # thread (or timed out). We have to do it this way because GDB sucks.
-                req.wait()
-
-                if req.timed_out:
-                    res = APITimedOutErrorResponse()
+                if req:
+                    # instantiate the request class
+                    try:
+                        log.debug("data = {}".format(data))
+                        req = api_request(req.request, data=data)
+                    except Exception as e:
+                        log.exception("Exception raised while creating API request: {} {}".format(type(e), e))
+                        req = None
+                    if not req:
+                        res = APIPluginNotFoundErrorResponse()
                 else:
-                    res = req.response
-
-                # Remove the request from the queue
-                self.queue_lock.acquire()
-                if req in self.queue:
-                    self.queue.remove(req)
-                self.queue_lock.release()
+                    res = APIInvalidRequestErrorResponse()
             else:
-                # non-blocking, dispatch request straight away
-                res = self.dispatch_request(req)
+                res = APIDebuggerNotPresentErrorResponse()
+
+            if not res:
+                # no errors so far, queue the request and wait
+                if req and req.block:
+                    self.queue_lock.acquire()
+                    self.queue.append(req)
+                    self.queue_lock.release()
+
+                    # When this returns the request will have been processed by the dispatch_queue method on the main
+                    # thread (or timed out). We have to do it this way because GDB sucks.
+                    req.wait()
+
+                    if req.timed_out:
+                        res = APITimedOutErrorResponse()
+                    else:
+                        res = req.response
+
+                    # Remove the request from the queue
+                    self.queue_lock.acquire()
+                    if req in self.queue:
+                        self.queue.remove(req)
+                    self.queue_lock.release()
+                else:
+                    # non-blocking, dispatch request straight away
+                    res = self.dispatch_request(req)
+        else:
+            res = APIServerNotRunningErrorResponse()
 
         return res
 
@@ -237,13 +243,11 @@ class Server(object):
         """
         Cancel all requests in the queue so we can exit.
         """
-        self.queue_lock.acquire()
         q = list(self.queue)
         self.queue = []
-        self.queue_lock.release()
         log.debug("Canceling requests: {}".format(q))
         for req in q:
-            req.response = APIServerExitedErrorResponse()
+            req.response = APIServerNotRunningErrorResponse()
         for req in q:
             req.signal()
 
@@ -296,11 +300,24 @@ class VoltronWSGIServer(BaseWSGIServer):
 
     This just needs to exist so we can swallow errors when clients disconnect.
     """
+    clients = []
+
     def finish_request(self, *args):
+        self.clients.append(args[0])
+        log.debug("finish_request({})".format(args))
         try:
             super(VoltronWSGIServer, self).finish_request(*args)
         except socket.error as e:
             log.error("Error in finish_request: {}".format(e))
+
+    def shutdown(self):
+        super(VoltronWSGIServer, self).shutdown()
+        for c in self.clients:
+            try:
+                c.shutdown(socket.SHUT_RD)
+                c.close()
+            except:
+                pass
 
 
 class ThreadedVoltronWSGIServer(ThreadingMixIn, VoltronWSGIServer):
