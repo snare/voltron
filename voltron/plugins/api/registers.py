@@ -39,7 +39,7 @@ class APIRegistersRequest(APIRequest):
             res = APIRegistersResponse()
             res.registers = regs
             res.deref = {}
-            for reg, val in regs.iteritems():
+            for reg, val in regs.items():
                 if val > 0:
                     try:
                         res.deref[reg] = voltron.debugger.dereference(pointer=val)
