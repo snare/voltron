@@ -425,7 +425,9 @@ class RegisterView (TerminalView):
                             d = self.format_deref(r_res.deref[reg][1:])
                             if d:
                                 info += arrow + d
-                        except KeyError, IndexError:
+                        except KeyError:
+                            pass
+                        except IndexError:
                             pass
                     else:
                         info = ''
