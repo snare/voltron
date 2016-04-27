@@ -40,12 +40,15 @@ class APIRegistersRequest(APIRequest):
             res.registers = regs
             res.deref = {}
             for reg, val in regs.items():
-                if val > 0:
-                    try:
-                        res.deref[reg] = voltron.debugger.dereference(pointer=val)
-                    except:
+                try:
+                    if val > 0:
+                        try:
+                            res.deref[reg] = voltron.debugger.dereference(pointer=val)
+                        except:
+                            res.deref[reg] = []
+                    else:
                         res.deref[reg] = []
-                else:
+                except TypeError:
                     res.deref[reg] = []
         except TargetBusyException:
             res = APITargetBusyErrorResponse()
