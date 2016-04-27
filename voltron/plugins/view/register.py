@@ -200,9 +200,15 @@ class RegisterView (TerminalView):
             'vertical': {
                 'general': (
                     "{eflags}\n{jump}\n"
-                    "{eipl} {eip}\n"
-                    "{eaxl} {eax}\n{ebxl} {ebx}\n{ebpl} {ebp}\n{espl} {esp}\n"
-                    "{edil} {edi}\n{esil} {esi}\n{edxl} {edx}\n{ecxl} {ecx}\n"
+                    "{eipl} {eip}{eipinfo}\n"
+                    "{eaxl} {eax}{eaxinfo}\n"
+                    "{ebxl} {ebx}{ebxinfo}\n"
+                    "{ebpl} {ebp}{ebpinfo}\n"
+                    "{espl} {esp}{espinfo}\n"
+                    "{edil} {edi}{ediinfo}\n"
+                    "{esil} {esi}{esiinfo}\n"
+                    "{edxl} {edx}{edxinfo}\n"
+                    "{ecxl} {ecx}{ecxinfo}\n"
                     "{csl}  {cs}\n{dsl}  {ds}\n{esl}  {es}\n{fsl}  {fs}\n{gsl}  {gs}\n{ssl}  {ss}"
                 ),
                 'sse': (
@@ -225,9 +231,23 @@ class RegisterView (TerminalView):
             },
             'vertical': {
                 'general': (
-                    "{pcl} {pc}\n{spl} {sp}\n{lrl} {lr}\n"
-                    "{r0l} {r0}\n{r1l} {r1}\n{r2l} {r2}\n{r3l} {r3}\n{r4l} {r4}\n{r5l} {r5}\n{r6l} {r6}\n{r7l} {r7}\n"
-                    "{r8l} {r8}\n{r9l} {r9}\n{r10l} {r10}\n{r11l} {r11}\n{r12l} {r12}\n{cpsrl}{cpsr}"
+                    "{pcl} {pc}{pcinfo}\n"
+                    "{spl} {sp}{spinfo}\n"
+                    "{lrl} {lr}{lrinfo}\n"
+                    "{r0l} {r0}{r0info}\n"
+                    "{r1l} {r1}{r1info}\n"
+                    "{r2l} {r2}{r2info}\n"
+                    "{r3l} {r3}{r3info}\n"
+                    "{r4l} {r4}{r4info}\n"
+                    "{r5l} {r5}{r5info}\n"
+                    "{r6l} {r6}{r6info}\n"
+                    "{r7l} {r7}{r7info}\n"
+                    "{r8l} {r8}{r8info}\n"
+                    "{r9l} {r9}{r9info}\n"
+                    "{r10l} {r10}{r10info}\n"
+                    "{r11l} {r11}{r11info}\n"
+                    "{r12l} {r12}{r12info}\n"
+                    "{cpsrl}{cpsr}"
                 ),
             }
         },
@@ -247,34 +267,119 @@ class RegisterView (TerminalView):
             },
             'vertical': {
                 'general': (
-                    "{pcl} {pc}\n{crl} {cr}\n{lrl} {lr}\n"
-                    "{msrl} {msr}\n{ctrl} {ctr}\n"
-                    "{r0l} {r0}\n{r1l} {r1}\n{r2l} {r2}\n{r3l} {r3}\n{r4l} {r4}\n{r5l} {r5}\n{r6l} {r6}\n{r7l} {r7}\n"
-                    "{r8l} {r8}\n{r9l} {r9}\n{r10l} {r10}\n{r11l} {r11}\n{r12l} {r12}\n{r13l} {r13}\n{r14l} {r14}\n{r15l} {r15}\n"
-                    "{r16l} {r16}\n{r17l} {r17}\n{r18l} {r18}\n{r19l} {r19}\n{r20l} {r20}\n{r21l} {r21}\n{r22l} {r22}\n{r23l} {r23}\n"
-                    "{r24l} {r24}\n{r25l} {r25}\n{r26l} {r26}\n{r27l} {r27}\n{r28l} {r28}\n{r29l} {r29}\n{r30l} {r30}\n{r31l} {r31}"
+                    "{pcl} {pc}{pcinfo}\n"
+                    "{crl} {cr}{crinfo}\n"
+                    "{lrl} {lr}{lrinfo}\n"
+                    "{msrl} {msr}{msrinfo}\n"
+                    "{ctrl} {ctr}{ctrinfo}\n"
+                    "{r0l} {r0}{r0info}\n"
+                    "{r1l} {r1}{r1info}\n"
+                    "{r2l} {r2}{r2info}\n"
+                    "{r3l} {r3}{r3info}\n"
+                    "{r4l} {r4}{r4info}\n"
+                    "{r5l} {r5}{r5info}\n"
+                    "{r6l} {r6}{r6info}\n"
+                    "{r7l} {r7}{r7info}\n"
+                    "{r8l} {r8}{r8info}\n"
+                    "{r9l} {r9}{r9info}\n"
+                    "{r10l} {r10}{r10info}\n"
+                    "{r11l} {r11}{r11info}\n"
+                    "{r12l} {r12}{r12info}\n"
+                    "{r13l} {r13}{r13info}\n"
+                    "{r14l} {r14}{r14info}\n"
+                    "{r15l} {r15}{r15info}\n"
+                    "{r16l} {r16}{r16info}\n"
+                    "{r17l} {r17}{r17info}\n"
+                    "{r18l} {r18}{r18info}\n"
+                    "{r19l} {r19}{r19info}\n"
+                    "{r20l} {r20}{r20info}\n"
+                    "{r21l} {r21}{r21info}\n"
+                    "{r22l} {r22}{r22info}\n"
+                    "{r23l} {r23}{r23info}\n"
+                    "{r24l} {r24}{r24info}\n"
+                    "{r25l} {r25}{r25info}\n"
+                    "{r26l} {r26}{r26info}\n"
+                    "{r27l} {r27}{r27info}\n"
+                    "{r28l} {r28}{r28info}\n"
+                    "{r29l} {r29}{r29info}\n"
+                    "{r30l} {r30}{r30info}\n"
+                    "{r31l} {r31}{r31info}"
                 ),
             }
         },
         'arm64': {
             'horizontal': {
                 'general': (
-                    "{pcl} {pc}\n{spl} {sp}\n"
-                    "{x0l} {x0}\n{x1l} {x1}\n{x2l} {x2}\n{x3l} {x3}\n{x4l} {x4}\n{x5l} {x5}\n{x6l} {x6}\n{x7l} {x7}\n"
-                    "{x8l} {x8}\n{x9l} {x9}\n{x10l} {x10}\n{x11l} {x11}\n{x12l} {x12}\n{x13l} {x13}\n{x14l} {x14}\n"
-                    "{x15l} {x15}\n{x16l} {x16}\n{x17l} {x17}\n{x18l} {x18}\n{x19l} {x19}\n{x20l} {x20}\n{x21l} {x21}\n"
-                    "{x22l} {x22}\n{x23l} {x23}\n{x24l} {x24}\n{x25l} {x25}\n{x26l} {x26}\n{x27l} {x27}\n{x28l} {x28}\n"
-                    "{x29l} {x29}\n{x30l} {x30}\n"
+                    "{pcl} {pc}{pcinfo}\n"
+                    "{spl} {sp}{spinfo}\n"
+                    "{x0l} {x0}{x0info}\n"
+                    "{x1l} {x1}{x1info}\n"
+                    "{x2l} {x2}{x2info}\n"
+                    "{x3l} {x3}{x3info}\n"
+                    "{x4l} {x4}{x4info}\n"
+                    "{x5l} {x5}{x5info}\n"
+                    "{x6l} {x6}{x6info}\n"
+                    "{x7l} {x7}{x7info}\n"
+                    "{x8l} {x8}{x8info}\n"
+                    "{x9l} {x9}{x9info}\n"
+                    "{x10l} {x10}{x10info}\n"
+                    "{x11l} {x11}{x11info}\n"
+                    "{x12l} {x12}{x12info}\n"
+                    "{x13l} {x13}{x13info}\n"
+                    "{x14l} {x14}{x14info}\n"
+                    "{x15l} {x15}{x15info}\n"
+                    "{x16l} {x16}{x16info}\n"
+                    "{x17l} {x17}{x17info}\n"
+                    "{x18l} {x18}{x18info}\n"
+                    "{x19l} {x19}{x19info}\n"
+                    "{x20l} {x20}{x20info}\n"
+                    "{x21l} {x21}{x21info}\n"
+                    "{x22l} {x22}{x22info}\n"
+                    "{x23l} {x23}{x23info}\n"
+                    "{x24l} {x24}{x24info}\n"
+                    "{x25l} {x25}{x25info}\n"
+                    "{x26l} {x26}{x26info}\n"
+                    "{x27l} {x27}{x27info}\n"
+                    "{x28l} {x28}{x28info}\n"
+                    "{x29l} {x29}{x29info}\n"
+                    "{x30l} {x30}{x30info}\n"
                 ),
             },
             'vertical': {
                 'general': (
-                    "{pcl} {pc}\n{spl} {sp}\n"
-                    "{x0l} {x0}\n{x1l} {x1}\n{x2l} {x2}\n{x3l} {x3}\n{x4l} {x4}\n{x5l} {x5}\n{x6l} {x6}\n{x7l} {x7}\n"
-                    "{x8l} {x8}\n{x9l} {x9}\n{x10l} {x10}\n{x11l} {x11}\n{x12l} {x12}\n{x13l} {x13}\n{x14l} {x14}\n"
-                    "{x15l} {x15}\n{x16l} {x16}\n{x17l} {x17}\n{x18l} {x18}\n{x19l} {x19}\n{x20l} {x20}\n{x21l} {x21}\n"
-                    "{x22l} {x22}\n{x23l} {x23}\n{x24l} {x24}\n{x25l} {x25}\n{x26l} {x26}\n{x27l} {x27}\n{x28l} {x28}\n"
-                    "{x29l} {x29}\n{x30l} {x30}"
+                    "{pcl} {pc}{pcinfo}\n"
+                    "{spl} {sp}{spinfo}\n"
+                    "{x0l} {x0}{x0info}\n"
+                    "{x1l} {x1}{x1info}\n"
+                    "{x2l} {x2}{x2info}\n"
+                    "{x3l} {x3}{x3info}\n"
+                    "{x4l} {x4}{x4info}\n"
+                    "{x5l} {x5}{x5info}\n"
+                    "{x6l} {x6}{x6info}\n"
+                    "{x7l} {x7}{x7info}\n"
+                    "{x8l} {x8}{x8info}\n"
+                    "{x9l} {x9}{x9info}\n"
+                    "{x10l} {x10}{x10info}\n"
+                    "{x11l} {x11}{x11info}\n"
+                    "{x12l} {x12}{x12info}\n"
+                    "{x13l} {x13}{x13info}\n"
+                    "{x14l} {x14}{x14info}\n"
+                    "{x15l} {x15}{x15info}\n"
+                    "{x16l} {x16}{x16info}\n"
+                    "{x17l} {x17}{x17info}\n"
+                    "{x18l} {x18}{x18info}\n"
+                    "{x19l} {x19}{x19info}\n"
+                    "{x20l} {x20}{x20info}\n"
+                    "{x21l} {x21}{x21info}\n"
+                    "{x22l} {x22}{x22info}\n"
+                    "{x23l} {x23}{x23info}\n"
+                    "{x24l} {x24}{x24info}\n"
+                    "{x25l} {x25}{x25info}\n"
+                    "{x26l} {x26}{x26info}\n"
+                    "{x27l} {x27}{x27info}\n"
+                    "{x28l} {x28}{x28info}\n"
+                    "{x29l} {x29}{x29info}\n"
+                    "{x30l} {x30}{x30info}\n"
                 ),
             }
         }
@@ -627,7 +732,7 @@ class RegisterView (TerminalView):
         else:
             jump = self.colour(jump, self.config.format.value_colour)
 
-        return jump
+        return '[' + jump + ']'
 
     def format_xmm(self, val):
         if self.config.orientation == 'vertical':
