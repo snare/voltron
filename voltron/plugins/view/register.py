@@ -1,3 +1,6 @@
+import six
+import struct
+
 from numbers import Number
 from voltron.core import STRTYPES
 from voltron.view import *
@@ -11,7 +14,7 @@ class RegisterView (TerminalView):
             {
                 'regs':             ['rax','rbx','rcx','rdx','rbp','rsp','rdi','rsi','rip',
                                      'r8','r9','r10','r11','r12','r13','r14','r15'],
-                'label_format':     '{0:3s}:',
+                'label_format':     '{0:3s}',
                 'category':         'general',
             },
             {
@@ -51,7 +54,7 @@ class RegisterView (TerminalView):
         'x86': [
             {
                 'regs':             ['eax','ebx','ecx','edx','ebp','esp','edi','esi','eip'],
-                'label_format':     '{0:3s}:',
+                'label_format':     '{0:3s}',
                 'value_format':     SHORT_ADDR_FORMAT_32,
                 'category':         'general',
             },
@@ -92,7 +95,7 @@ class RegisterView (TerminalView):
             {
                 'regs':             ['pc','sp','lr','cpsr','r0','r1','r2','r3','r4','r5','r6',
                                     'r7','r8','r9','r10','r11','r12'],
-                'label_format':     '{0:>3s}:',
+                'label_format':     '{0:>3s}',
                 'value_format':     SHORT_ADDR_FORMAT_32,
                 'category':         'general',
             }
@@ -102,7 +105,7 @@ class RegisterView (TerminalView):
                 'regs':             ['pc', 'sp', 'x0', 'x1', 'x2', 'x3', 'x4', 'x5', 'x6', 'x7', 'x8', 'x9', 'x10',
                                     'x11', 'x12', 'x13', 'x14', 'x15', 'x16', 'x17', 'x18', 'x19', 'x20',
                                     'x21', 'x22', 'x23', 'x24', 'x25', 'x26', 'x27', 'x28', 'x29', 'x30'],
-                'label_format':     '{0:3s}:',
+                'label_format':     '{0:3s}',
                 'value_format':     SHORT_ADDR_FORMAT_64,
                 'category':         'general',
             },
@@ -114,7 +117,7 @@ class RegisterView (TerminalView):
                                      'r8','r9','r10','r11','r12','r13','r14', 'r15',
                                      'r16','r17','r18','r19','r20','r21','r22', 'r23',
                                      'r24','r25','r26','r27','r28','r29','r30', 'r31'],
-                'label_format':     '{0:>3s}:',
+                'label_format':     '{0:>3s}',
                 'value_format':     SHORT_ADDR_FORMAT_32,
                 'category':         'general',
             }
@@ -146,11 +149,23 @@ class RegisterView (TerminalView):
             'vertical': {
                 'general': (
                     "{rflags}\n{jump}\n"
-                    "{ripl} {rip}\n"
-                    "{raxl} {rax}\n{rbxl} {rbx}\n{rbpl} {rbp}\n{rspl} {rsp}\n"
-                    "{rdil} {rdi}\n{rsil} {rsi}\n{rdxl} {rdx}\n{rcxl} {rcx}\n"
-                    "{r8l} {r8}\n{r9l} {r9}\n{r10l} {r10}\n{r11l} {r11}\n{r12l} {r12}\n"
-                    "{r13l} {r13}\n{r14l} {r14}\n{r15l} {r15}\n"
+                    "{ripl} {rip}{ripinfo}\n"
+                    "{raxl} {rax}{raxinfo}\n"
+                    "{rbxl} {rbx}{rbxinfo}\n"
+                    "{rbpl} {rbp}{rbpinfo}\n"
+                    "{rspl} {rsp}{rspinfo}\n"
+                    "{rdil} {rdi}{rdiinfo}\n"
+                    "{rsil} {rsi}{rsiinfo}\n"
+                    "{rdxl} {rdx}{rdxinfo}\n"
+                    "{rcxl} {rcx}{rcxinfo}\n"
+                    "{r8l} {r8}{r8info}\n"
+                    "{r9l} {r9}{r9info}\n"
+                    "{r10l} {r10}{r10info}\n"
+                    "{r11l} {r11}{r11info}\n"
+                    "{r12l} {r12}{r12info}\n"
+                    "{r13l} {r13}{r13info}\n"
+                    "{r14l} {r14}{r14info}\n"
+                    "{r15l} {r15}{r15info}\n"
                     "{csl}  {cs}  {dsl}  {ds}\n{esl}  {es}  {fsl}  {fs}\n{gsl}  {gs}  {ssl}  {ss}"
                 ),
                 'sse': (
@@ -290,6 +305,8 @@ class RegisterView (TerminalView):
         sp.add_argument('--fpu', '-p', dest="sections", action='append_const', const="fpu", help='show fpu registers')
         sp.add_argument('--no-fpu', '-P', dest="sections", action='append_const', const="no_fpu",
                         help='show fpu registers')
+        sp.add_argument('--info', '-i', action='store_true', help='show info (pointer derefs, ascii) for registers',
+                        default=False)
 
     def __init__(self, *args, **kwargs):
         super(RegisterView, self).__init__(*args, **kwargs)
@@ -390,6 +407,30 @@ class RegisterView (TerminalView):
                     else:
                         formatted[fmt['format_name']] = formatted_reg
 
+                    # Format the info
+                    if self.args.info:
+                        arrow = self.colour(' => ', self.config.format.divider_colour)
+                        info = ""
+                        try:
+                            l = {2: 'H', 4: 'L', 8: 'Q'}[t_res.targets[0]['addr_size']]
+                            f = '{}{}'.format(('<' if t_res.targets[0]['byte_order'] == 'little' else '>'), l)
+                            chunk = struct.pack(f, data[reg])
+                            printable_filter = ''.join([(len(repr(chr(x))) == 3) and chr(x) or '.' for x in range(256)])
+                            ascii_str = ''.join(["%s" % ((x <= 127 and printable_filter[x]) or '.') for x in six.iterbytes(chunk)])
+                            pipe = self.colour('|', self.config.format.divider_colour)
+                            info += ' ' + pipe + ' ' + ascii_str + ' ' + pipe
+                        except:
+                            pass
+                        try:
+                            d = self.format_deref(r_res.deref[reg][1:])
+                            if d:
+                                info += arrow + d
+                        except KeyError, IndexError:
+                            pass
+                    else:
+                        info = ''
+                    formatted[reg + 'info'] = info
+
             # Prepare output
             log.debug('Formatted: ' + str(formatted))
             self.body = template.format(**formatted)
@@ -408,6 +449,30 @@ class RegisterView (TerminalView):
 
         # Call parent's render method
         super(RegisterView, self).render()
+
+    def format_address(self, address, size=8, pad=True, prefix='0x'):
+        fmt = '{:' + ('0=' + str(size * 2) if pad else '') + 'X}'
+        addr_str = fmt.format(address)
+        if prefix:
+            addr_str = prefix + addr_str
+        return addr_str
+
+    def format_deref(self, deref, size=8):
+        fmtd = []
+        for t, item in deref:
+            if t == "pointer":
+                fmtd.append(self.format_address(item, size=size, pad=False))
+            elif t == "string":
+                item = item.replace('\n', '\\n')
+                fmtd.append(self.colour('"' + item + '"', self.config.format.string_colour))
+            elif t == "unicode":
+                item = item.replace('\n', '\\n')
+                fmtd.append(self.colour('u"' + item + '"', self.config.format.string_colour))
+            elif t == "symbol":
+                fmtd.append(self.colour('`' + item + '`', self.config.format.symbol_colour))
+            elif t == "circular":
+                fmtd.append(self.colour('(circular)', self.config.format.divider_colour))
+        return self.colour(' => ', self.config.format.divider_colour).join(fmtd)
 
     def format_flags(self, val):
         values = {}
@@ -560,7 +625,7 @@ class RegisterView (TerminalView):
         else:
             jump = self.colour(jump, self.config.format.value_colour)
 
-        return '[' + jump + ']'
+        return jump
 
     def format_xmm(self, val):
         if self.config.orientation == 'vertical':

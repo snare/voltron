@@ -38,6 +38,15 @@ class APIRegistersRequest(APIRequest):
             regs = voltron.debugger.registers(target_id=self.target_id, thread_id=self.thread_id, registers=self.registers)
             res = APIRegistersResponse()
             res.registers = regs
+            res.deref = {}
+            for reg, val in regs.iteritems():
+                if val > 0:
+                    try:
+                        res.deref[reg] = voltron.debugger.dereference(pointer=val)
+                    except:
+                        res.deref[reg] = []
+                else:
+                    res.deref[reg] = []
         except TargetBusyException:
             res = APITargetBusyErrorResponse()
         except NoSuchTargetException:
@@ -58,11 +67,12 @@ class APIRegistersResponse(APISuccessResponse):
         "type":         "response",
         "status":       "success",
         "data": {
-            "registers": { "rip": 0x12341234, ... }
+            "registers": { "rip": 0x12341234, ... },
+            "deref": {"rip": [(pointer, 0x12341234), ...]}
         }
     }
     """
-    _fields = {'registers': True}
+    _fields = {'registers': True, 'deref': False}
 
 
 class APIRegistersPlugin(APIPlugin):
