@@ -34,7 +34,7 @@ class REPLClient(Client):
         except Exception as e:
             print("Exception reading memory: {}".format(repr(e)))
 
-    def cmd(self, command):
+    def __call__(self, command):
         try:
             res = self.perform_request('command', command=command)
             if res.is_success:
