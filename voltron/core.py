@@ -44,6 +44,8 @@ try:
 except:
     ui_app = None
 
+logging.getLogger("requests").setLevel(logging.WARNING)
+
 
 def get_loader(name):
     try:
