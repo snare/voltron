@@ -273,7 +273,7 @@ if HAVE_GDB:
                     mem = gdb.selected_inferior().read_memory(addr, self.get_addr_size())
                     # log.debug("read mem: {}".format(mem))
                     (ptr,) = struct.unpack(fmt, mem)
-                    if ptr in chain:
+                    if ptr in [x[1] for x in chain]:
                         break
                     chain.append(('pointer', addr))
                     addr = ptr
