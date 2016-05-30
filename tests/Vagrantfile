@@ -28,9 +28,8 @@ Vagrant.configure(2) do |config|
     echo "voltron init" >>/home/vagrant/.gdbinit
     echo "set disassembly-flavor intel" >>/home/vagrant/.gdbinit
     mkdir -p /home/vagrant/.voltron
-    chown vagrant:vagrant /home/vagrant/.voltron
+    chown vagrant:vagrant /home/vagrant/.voltron -R
     cat >/home/vagrant/.voltron/config <<END
-    chown -R vagrant ~/.voltron
 general:
   debug_logging: true
 END
