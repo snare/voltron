@@ -1,7 +1,7 @@
 Voltron
 =======
 
-![build](https://travis-ci.org/snare/voltron.svg?branch=master)
+[![build](https://travis-ci.org/snare/voltron.svg?branch=master)](https://travis-ci.org/snare/voltron/)
 
 Voltron is an extensible debugger UI toolkit written in Python. It aims to improve the user experience of various debuggers (LLDB, GDB, VDB and WinDbg) by enabling the attachment of utility views that can retrieve and display data from the debugger host. By running these views in other TTYs, you can build a customised debugger user interface to suit your needs.
 

@@ -1,31 +1,32 @@
-import os
-import sys
 import errno
-import logging
-import socket
-import select
-import threading
+import json
 import logging
 import logging.config
-import json
+import os
+import os.path
+import pkgutil
+import select
+import signal
+import socket
+import sys
+import threading
+
+import six
+import voltron
+from flask import Flask, Response, make_response, redirect, render_template, request
+from werkzeug.serving import BaseWSGIServer, ThreadedWSGIServer, WSGIRequestHandler
+from werkzeug.wsgi import DispatcherMiddleware, SharedDataMiddleware
+
+import pysigset
+
+from .api import *
+from .plugin import *
+
 try:
     import requests_unixsocket as requests
 except:
     import requests
-import threading
-import os.path
-import pkgutil
 
-from werkzeug.serving import WSGIRequestHandler, BaseWSGIServer, ThreadedWSGIServer
-from werkzeug.wsgi import SharedDataMiddleware, DispatcherMiddleware
-
-from flask import Flask, request, Response, render_template, make_response, redirect
-
-import voltron
-from .api import *
-from .plugin import *
-
-import six
 if six.PY2:
     if sys.platform == 'win32':
         from SocketServer import ThreadingMixIn
@@ -144,12 +145,13 @@ class Server(object):
         )
 
         def run_listener(name, cls, arg):
-            log.debug("Starting listener for {} socket on {}".format(name, str(arg)))
-            s = cls(*arg)
-            t = threading.Thread(target=s.serve_forever)
-            t.start()
-            self.threads.append(t)
-            self.listeners.append(s)
+            with pysigset.suspended_signals(signal.SIGCHLD):
+                log.debug("Starting listener for {} socket on {}".format(name, str(arg)))
+                s = cls(*arg)
+                t = threading.Thread(target=s.serve_forever)
+                t.start()
+                self.threads.append(t)
+                self.listeners.append(s)
 
         if voltron.config.server.listen.tcp:
             run_listener('tcp', ThreadedVoltronWSGIServer, list(voltron.config.server.listen.tcp) + [self.app])

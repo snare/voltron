@@ -10,14 +10,15 @@ requirements = [
     'pygments',
     'requests',
     'requests_unixsocket',
-    'six'
+    'six',
+    'pysigset'
 ]
 if sys.platform == 'win32':
     requirements.append('cursor')
 
 setup(
     name="voltron",
-    version="0.1.4",
+    version="0.1.5",
     author="snare",
     author_email="snare@ho.ax",
     description=("A debugger UI"),
