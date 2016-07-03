@@ -62,6 +62,7 @@ try:
 
     # figure out in which debugger host we are running
     args = []
+    host = None
     try:
         import lldb
         host = "lldb"
@@ -92,7 +93,7 @@ try:
     # get the debugger plugin for the host we're in
     plugin = pm.debugger_plugin_for_host(host)
 
-    if not voltron.command:
+    if not voltron.server:
         # set up command and adaptor instances
         voltron.debugger = plugin.adaptor_class(*args)
         voltron.command = plugin.command_class(*args)
