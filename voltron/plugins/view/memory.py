@@ -53,9 +53,10 @@ class MemoryView(TerminalView):
             args = {'address': addr}
         if self.args.deref:
             args['words'] = height
+            args['offset'] = self.scroll_offset if self.args.reverse else -self.scroll_offset
         else:
             args['length'] = height * self.args.bytes
-        args['offset'] = self.scroll_offset if self.args.reverse else -self.scroll_offset
+            args['offset'] = self.scroll_offset * self.args.bytes if self.args.reverse else -self.scroll_offset * self.args.bytes
 
         # get memory and target info
         return [
