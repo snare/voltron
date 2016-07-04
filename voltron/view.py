@@ -245,6 +245,8 @@ class VoltronView (object):
 
 
 class TerminalView (VoltronView):
+    valid_key_funcs = ["exit", "page_up", "page_down", "page_up", "page_down", "line_up", "line_down", "reset"]
+
     def __init__(self, *a, **kw):
         self.init_window()
         self.trunc_top = False
@@ -458,14 +460,20 @@ class TerminalView (VoltronView):
         custom keypresses need to be handled other than for exit and scrolling.
         """
         try:
-            if key == 'p':
-                self.scroll_up()
-            elif key == 'n':
-                self.scroll_down()
-            elif key.is_sequence and key.name == 'KEY_ENTER':
-                self.scroll_reset()
-            elif key == 'q':
-                self.exit()
+            func = None
+            if key.is_sequence:
+                try:
+                    func = self.config.keymap[key.name]
+                except:
+                    try:
+                        func = self.config.keymap[key.code]
+                    except:
+                        func = self.config.keymap[str(key)]
+            else:
+                func = self.config.keymap[str(key)]
+
+            if func in self.valid_key_funcs:
+                getattr(self, func)()
         except:
             raise
 
@@ -473,17 +481,27 @@ class TerminalView (VoltronView):
         os._exit(0)
 
     @requires_async
-    def scroll_up(self):
+    def page_up(self):
         self.scroll_offset += self.body_height()
         self.update()
 
     @requires_async
-    def scroll_down(self):
+    def page_down(self):
         self.scroll_offset -= self.body_height()
         self.update()
 
     @requires_async
-    def scroll_reset(self):
+    def line_up(self):
+        self.scroll_offset += 1
+        self.update()
+
+    @requires_async
+    def line_down(self):
+        self.scroll_offset -= 1
+        self.update()
+
+    @requires_async
+    def reset(self):
         self.scroll_offset = 0
         self.update()
 
