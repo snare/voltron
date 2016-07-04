@@ -3,6 +3,8 @@ from voltron.plugin import *
 from voltron.api import *
 try:
     from voltron.lexers import *
+    import pygments
+    import pygments.formatters
     have_pygments = True
 except ImportError:
     have_pygments = False
@@ -16,16 +18,16 @@ class DisasmView(TerminalView):
         sp.set_defaults(func=DisasmView)
         sp.add_argument('--use-capstone', '-c', action='store_true', default=False, help='use capstone')
 
-    def render(self):
-        height, width = self.window_size()
+    def build_requests(self):
+        req = api_request('disassemble', block=self.block, use_capstone=self.args.use_capstone, offset=self.scroll_offset)
+        req.count = self.body_height()
+        return [req]
+
+    def render(self, results):
+        [res] = results
 
         # Set up header & error message if applicable
         self.title = '[disassembly]'
-
-        # Request data
-        req = api_request('disassemble', block=self.block, use_capstone=self.args.use_capstone)
-        req.count = self.body_height()
-        res = self.client.send_request(req)
 
         # don't render if it timed out, probably haven't stepped the debugger again
         if res.timed_out:
@@ -52,7 +54,7 @@ class DisasmView(TerminalView):
             self.body = self.colour(res.message, 'red')
 
         # Call parent's render method
-        super(DisasmView, self).render()
+        super(DisasmView, self).render(results)
 
 
 class DisasmViewPlugin(ViewPlugin):

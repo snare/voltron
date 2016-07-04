@@ -1,11 +1,14 @@
 import six
 import struct
+import logging
 
 from numbers import Number
 from voltron.core import STRTYPES
 from voltron.view import *
 from voltron.plugin import *
 from voltron.api import *
+
+log = logging.getLogger("view")
 
 
 class RegisterView (TerminalView):
@@ -429,17 +432,16 @@ class RegisterView (TerminalView):
                     config_sections.append(sec)
             self.config.sections = config_sections
 
-    def render(self):
+    def build_requests(self):
+        return [
+            api_request('targets', block=self.block),
+            api_request('disassemble', count=1, block=self.block),
+            api_request('registers', block=self.block)
+        ]
+
+    def render(self, results):
         error = None
-
-        # get target info (ie. arch)
-        t_res, d_res, r_res = self.client.send_requests(api_request('targets', block=self.block),
-                                                        api_request('disassemble', count=1, block=self.block),
-                                                        api_request('registers', block=self.block))
-
-        # don't render if it timed out, probably haven't stepped the debugger again
-        if t_res.timed_out:
-            return
+        t_res, d_res, r_res = results
 
         if t_res and t_res.is_error:
             error = t_res.message
@@ -555,7 +557,7 @@ class RegisterView (TerminalView):
             self.title = '[regs]'
 
         # Call parent's render method
-        super(RegisterView, self).render()
+        super(RegisterView, self).render(results)
 
     def format_address(self, address, size=8, pad=True, prefix='0x'):
         fmt = '{:' + ('0=' + str(size * 2) if pad else '') + 'X}'

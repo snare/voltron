@@ -8,12 +8,14 @@ log = logging.getLogger('view')
 
 
 class BacktraceView (TerminalView):
-    def render(self):
-        height, width = self.window_size()
+    def build_requests(self):
+        return [api_request('command', block=self.block, command='bt')]
+
+    def render(self, results):
+        [res] = results
 
         # Set up header and error message if applicable
         self.title = '[backtrace]'
-        res = self.client.perform_request('command', block=self.block, command='bt')
 
         # don't render if it timed out, probably haven't stepped the debugger again
         if res.timed_out:
@@ -27,7 +29,7 @@ class BacktraceView (TerminalView):
             self.body = self.colour(res.message, 'red')
 
         # Call parent's render method
-        super(BacktraceView, self).render()
+        super(BacktraceView, self).render(results)
 
 
 class BacktraceViewPlugin(ViewPlugin):

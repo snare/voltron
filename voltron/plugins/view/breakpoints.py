@@ -10,29 +10,27 @@ log = logging.getLogger('view')
 
 
 class BreakpointsView (TerminalView):
-    def render(self):
+    def build_requests(self):
+        return [
+            api_request('registers', registers=['pc']),
+            api_request('breakpoints', block=self.block)
+        ]
+
+    def render(self, results):
         self.title = '[breakpoints]'
 
+        r_res, b_res = results
+
         # get PC first so we can highlight a breakpoint we're at
-        req = api_request('registers', registers=['pc'])
-        res = self.client.send_request(req)
-        if res and res.is_success and len(res.registers) > 0:
-            pc = res.registers[list(res.registers.keys())[0]]
+        if r_res and r_res.is_success and len(r_res.registers) > 0:
+            pc = r_res.registers[list(r_res.registers.keys())[0]]
         else:
             pc = -1
 
-        # get breakpoints and render
-        req = api_request('breakpoints', block=self.block)
-        res = self.client.send_request(req)
-
-        # don't render if it timed out, probably haven't stepped the debugger again
-        if res.timed_out:
-            return
-
-        if res and res.is_success:
+        if b_res and b_res.is_success:
             fmtd = []
             term = Terminal()
-            for bp in res.breakpoints:
+            for bp in b_res.breakpoints:
                 # prepare formatting dictionary for the breakpoint
                 d = bp.copy()
                 d['locations'] = None
@@ -61,10 +59,10 @@ class BreakpointsView (TerminalView):
 
             self.body = '\n'.join(fmtd)
         else:
-            log.error("Error getting breakpoints: {}".format(res.message))
-            self.body = self.colour(res.message, 'red')
+            log.error("Error getting breakpoints: {}".format(b_res.message))
+            self.body = self.colour(b_res.message, 'red')
 
-        super(BreakpointsView, self).render()
+        super(BreakpointsView, self).render(results)
 
 
 class BreakpointsViewPlugin(ViewPlugin):

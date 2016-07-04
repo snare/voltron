@@ -24,16 +24,14 @@ class CommandView (TerminalView):
                         default=None)
         sp.set_defaults(func=CommandView)
 
-    def render(self):
+    def build_requests(self):
+        return [api_request('command', block=self.block, command=self.args.command)]
+
+    def render(self, results):
+        [res] = results
+
         # Set up header and error message if applicable
         self.title = '[cmd:' + self.args.command + ']'
-
-        # Get the command output
-        res = self.client.perform_request('command', block=self.block, command=self.args.command)
-
-        # don't render if it timed out, probably haven't stepped the debugger again
-        if res.timed_out:
-            return
 
         if res and res.is_success:
             if get_lexer_by_name and self.args.lexer:
@@ -50,7 +48,7 @@ class CommandView (TerminalView):
             self.body = self.colour(res.message, 'red')
 
         # Call parent's render method
-        super(CommandView, self).render()
+        super(CommandView, self).render(results)
 
 
 class CommandViewPlugin(ViewPlugin):

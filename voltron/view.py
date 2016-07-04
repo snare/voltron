@@ -10,29 +10,26 @@ import time
 import argparse
 import traceback
 import subprocess
+import socket
+import threading
 from requests import ConnectionError
 from blessed import Terminal
 
 try:
-    import pygments
-    import pygments.lexers
-    import pygments.formatters
-    have_pygments = True
+    import urwid
 except:
-    have_pygments = False
+    urwid = None
 
 try:
     import cursor
 except:
     cursor = None
 
-from collections import defaultdict
-
-from scruffy import Config
-
-from .core import *
-from .colour import *
+import voltron
+from .core import Client
+from .colour import fmt_esc
 from .plugin import *
+from .api import BlockingNotSupportedError
 
 log = logging.getLogger("view")
 
@@ -48,7 +45,6 @@ SHORT_ADDR_FORMAT_16 = '{0:0=4X}'
 
 # https://gist.github.com/sampsyo/471779
 class AliasedSubParsersAction(argparse._SubParsersAction):
-
     class _AliasedPseudoAction(argparse.Action):
         def __init__(self, name, aliases, help):
             dest = name
@@ -83,12 +79,12 @@ class AnsiString(object):
         if len(chunks) > 1:
             for chunk in chunks[1:]:
                 if chunk == '(B':
-                    chars.append('\033'+chunk)
+                    chars.append('\033' + chunk)
                 else:
                     p = chunk.find('m')
                     if p > 0:
-                        chars.append('\033'+chunk[:p+1])
-                        chars.extend(list(chunk[p+1:]))
+                        chars.append('\033' + chunk[:p + 1])
+                        chars.extend(list(chunk[p + 1:]))
                     else:
                         chars.extend(list(chunk))
 
@@ -119,6 +115,16 @@ class AnsiString(object):
 
     def clean(self):
         return re.sub('\033\[.{1,2}m', '', str(self))
+
+
+def requires_async(func):
+    def inner(self, *args, **kwargs):
+        if not self.block:
+            return func(self, *args, **kwargs)
+        else:
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+    return inner
 
 
 class VoltronView (object):
@@ -222,51 +228,7 @@ class VoltronView (object):
     def cleanup(self):
         log.debug('Base view class cleanup')
 
-    def run(self):
-        res = None
-        os.system('clear')
-
-        while True:
-            try:
-                # get the server version
-                if not self.server_version:
-                    self.server_version = self.client.perform_request('version')
-
-                    # if the server supports async mode, use it, as some views may only work in async mode
-                    if self.server_version.capabilities and 'async' in self.server_version.capabilities:
-                        self.block = False
-                    elif self.supports_blocking:
-                        self.block = True
-                    else:
-                        raise BlockingNotSupportedError("Debugger requires blocking mode")
-
-                # render the view. if this view is running in asynchronous mode, the view should return immediately.
-                self.render()
-
-                # if the view is not blocking (server supports async || view doesn't support sync), block until the
-                # debugger stops again
-                if not self.block:
-                    done = False
-                    while not done:
-                        res = self.client.perform_request('version', block=True)
-                        if res.is_success:
-                            done = True
-            except ConnectionError as e:
-                # what the hell, requests? a message is a message, not a fucking nested error object
-                try:
-                    msg = e.message.args[1].strerror
-                except:
-                    try:
-                        msg = e.message.args[0]
-                    except:
-                        msg = str(e)
-                traceback.print_exc()
-                # if we're not connected, render an error and try again in a second
-                self.do_render(error='Error: {}'.format(msg))
-                self.server_version = None
-                time.sleep(1)
-
-    def render(self):
+    def render(self, results):
         log.warning('Might wanna implement render() in this view eh')
 
     def do_render(error=None):
@@ -286,6 +248,9 @@ class TerminalView (VoltronView):
     def __init__(self, *a, **kw):
         self.init_window()
         self.trunc_top = False
+        self.done = False
+        self.last_body = None
+        self.scroll_offset = 0
         super(TerminalView, self).__init__(*a, **kw)
 
     def init_window(self):
@@ -305,13 +270,10 @@ class TerminalView (VoltronView):
         # maybe figure out the right way to do it some time
         os.system('clear')
 
-    def render(self):
+    def render(self, results):
         self.do_render()
 
     def do_render(self, error=None):
-        # Clear the screen
-        self.clear()
-
         # If we got an error, we'll use that as the body
         if error:
             self.body = self.colour(error, 'red')
@@ -323,24 +285,30 @@ class TerminalView (VoltronView):
         self.pad_body()
         self.truncate_body()
 
-        # Print the header, body and footer
-        try:
-            if self.config.header.show:
-                print(self.format_header_footer(self.config.header))
-            print(self.fmt_body, end='')
-            if self.config.footer.show:
-                print('\n' + self.format_header_footer(self.config.footer), end='')
-            sys.stdout.flush()
-        except IOError as e:
-            # if we get an EINTR while printing, just do it again
-            if e.errno == socket.EINTR:
-                self.do_render()
+        if self.body != self.last_body:
+            # Clear the screen
+            self.clear()
+
+            # Print the header, body and footer
+            try:
+                if self.config.header.show:
+                    print(self.format_header_footer(self.config.header))
+                print(self.fmt_body, end='')
+                if self.config.footer.show:
+                    print('\n' + self.format_header_footer(self.config.footer), end='')
+                sys.stdout.flush()
+            except IOError as e:
+                # if we get an EINTR while printing, just do it again
+                if e.errno == socket.EINTR:
+                    self.do_render()
+
+        self.last_body = self.body
 
     def sigwinch_handler(self, sig, stack):
         self.do_render()
 
     def window_size(self):
-        height, width = subprocess.check_output(['stty','size']).split()
+        height, width = subprocess.check_output(['stty', 'size']).split()
         height = int(height) - int(self.config.pad.pad_bottom)
         width = int(width) - int(self.config.pad.pad_right)
         return (height, width)
@@ -355,12 +323,12 @@ class TerminalView (VoltronView):
 
     def colour(self, text='', colour=None, background=None, attrs=[]):
         s = ''
-        if colour != None:
+        if colour:
             s += fmt_esc(colour)
-        if background != None:
-            s += fmt_esc('b_'+background)
+        if background:
+            s += fmt_esc('b_' + background)
         if attrs != []:
-            s += ''.join(map(lambda x: fmt_esc('a_'+x), attrs))
+            s += ''.join(map(lambda x: fmt_esc('a_' + x), attrs))
         s += text
         s += fmt_esc('reset')
         return s
@@ -381,7 +349,7 @@ class TerminalView (VoltronView):
         p = self.colour(p, c.colour, c.bg_colour, c.attrs)
 
         # Build
-        data = l + (width - llen - rlen)*p + r
+        data = l + (width - llen - rlen) * p + r
 
         return data
 
@@ -391,7 +359,7 @@ class TerminalView (VoltronView):
         pad = self.body_height() - len(lines)
         if pad < 0:
             pad = 0
-        self.fmt_body += int(pad)*'\n'
+        self.fmt_body += int(pad) * '\n'
 
     def truncate_body(self):
         height, width = self.window_size()
@@ -401,7 +369,7 @@ class TerminalView (VoltronView):
         for line in self.fmt_body.split('\n'):
             s = AnsiString(line)
             if len(s) > width:
-                line = s[:width-1] + self.colour('>', 'red')
+                line = s[:width - 1] + self.colour('>', 'red')
             lines.append(line)
 
         # truncate body vertically
@@ -413,11 +381,119 @@ class TerminalView (VoltronView):
 
         self.fmt_body = '\n'.join(lines)
 
+    def build_requests(self):
+        """
+        Build requests for this view. Concrete view subclasses must implement
+        this.
+        """
+        return []
 
-def merge(d1, d2):
-    for k1,v1 in d1.items():
-        if isinstance(v1, dict) and k1 in d2.keys() and isinstance(d2[k1], dict):
-            merge(v1, d2[k1])
-        else:
-            d2[k1] = v1
-    return d2
+    def run(self):
+        def stopwatch():
+            # loop, updating each time the debugger stops
+            while not self.done:
+                try:
+                    # get the server version info
+                    if not self.server_version:
+                        self.server_version = self.client.perform_request('version')
+
+                        # if the server supports async mode, use it, as some views may only work in async mode
+                        if self.server_version.capabilities and 'async' in self.server_version.capabilities:
+                            self.update()
+                            self.block = False
+                        elif self.supports_blocking:
+                            self.block = True
+                        else:
+                            raise BlockingNotSupportedError("Debugger requires blocking mode")
+
+                    if self.block:
+                        # synchronous requests
+                        self.update()
+                    else:
+                        # async requests, block using a version request until the debugger stops again
+                        res = self.client.perform_request('version', block=True)
+                        if res.is_success:
+                            self.server_version = res
+                            self.update()
+                except ConnectionError as e:
+                    self.do_render(error='Error: {}'.format(normalise_requests_err(e)))
+                    self.server_version = None
+                    time.sleep(1)
+
+        # spin off requester thread
+        self.sw = threading.Thread(target=stopwatch)
+        self.sw.start()
+
+        # handle keyboard input
+        try:
+            with self.t.cbreak():
+                val = ''
+                while not self.done:
+                    val = self.t.inkey(timeout=1)
+                    if val:
+                        self.handle_key(val)
+        except KeyboardInterrupt:
+            self.exit()
+
+    def update(self):
+        """
+        Update the view's display by sending the requests to the back end and
+        passing the results to the render method.
+        """
+        log.debug("Updating view")
+
+        # perform requests
+        reqs = self.build_requests()
+        for r in reqs:
+            r.block = self.block
+        results = self.client.send_requests(*reqs)
+
+        # render results
+        if len(results) and not results[0].timed_out:
+            self.render(results)
+
+    def handle_key(self, key):
+        """
+        Handle a keypress. Concrete subclasses can implement this method if
+        custom keypresses need to be handled other than for exit and scrolling.
+        """
+        try:
+            if key == 'p':
+                self.scroll_up()
+            elif key == 'n':
+                self.scroll_down()
+            elif key.is_sequence and key.name == 'KEY_ENTER':
+                self.scroll_reset()
+            elif key == 'q':
+                self.exit()
+        except:
+            raise
+
+    def exit(self):
+        os._exit(0)
+
+    @requires_async
+    def scroll_up(self):
+        self.scroll_offset += self.body_height()
+        self.update()
+
+    @requires_async
+    def scroll_down(self):
+        self.scroll_offset -= self.body_height()
+        self.update()
+
+    @requires_async
+    def scroll_reset(self):
+        self.scroll_offset = 0
+        self.update()
+
+
+def normalise_requests_err(e):
+    try:
+        msg = e.message.args[1].strerror
+    except:
+        try:
+            msg = e.message.args[0]
+        except:
+            msg = str(e)
+    return msg

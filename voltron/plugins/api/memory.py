@@ -1,7 +1,7 @@
 import voltron
 import logging
-import base64
 import six
+import struct
 
 from voltron.api import *
 
@@ -36,6 +36,8 @@ class APIMemoryRequest(APIRequest):
 
     `deref` is a flag indicating whether or not to dereference any pointers
     within the memory region read.
+
+    `offset` is an offset to add to the address at which to start reading.
     """
     _fields = {
         'target_id': False,
@@ -44,7 +46,8 @@ class APIMemoryRequest(APIRequest):
         'words': False,
         'register': False,
         'command': False,
-        'deref': False
+        'deref': False,
+        'offset': False
     }
 
     target_id = 0
@@ -78,6 +81,11 @@ class APIMemoryRequest(APIRequest):
             elif self.register:
                 regs = voltron.debugger.registers(registers=[self.register])
                 addr = list(regs.values())[0]
+            if self.offset:
+                if self.words:
+                    addr += self.offset * target['addr_size']
+                else:
+                    addr += self.offset
 
             # read memory
             memory = voltron.debugger.memory(address=int(addr), length=int(self.length), target_id=int(self.target_id))

@@ -1,15 +1,14 @@
 import logging
-import struct
 import six
+import struct
 
-from voltron.view import *
-from voltron.plugin import *
-from voltron.api import *
+from voltron.view import TerminalView, VoltronView
+from voltron.plugin import ViewPlugin, api_request
 
 log = logging.getLogger("view")
 
 
-class MemoryView (TerminalView):
+class MemoryView(TerminalView):
     printable_filter = ''.join([(len(repr(chr(x))) == 3) and chr(x) or '.' for x in range(256)])
 
     async = True
@@ -35,10 +34,8 @@ class MemoryView (TerminalView):
                            help='register containing the address from which to start reading memory', default=None)
         sp.set_defaults(func=MemoryView)
 
-    def render(self):
+    def build_requests(self):
         height, width = self.window_size()
-        target = None
-        self.trunc_top = self.args.reverse
 
         # check args
         if self.args.register:
@@ -58,15 +55,19 @@ class MemoryView (TerminalView):
             args['words'] = height
         else:
             args['length'] = height * self.args.bytes
+        args['offset'] = self.scroll_offset
 
         # get memory and target info
-        m_res, t_res = self.client.send_requests(
-            api_request('memory', block=self.block, deref=self.args.deref is True, **args),
-            api_request('targets', block=self.block))
+        return [
+            api_request('targets'),
+            api_request('memory', deref=self.args.deref is True, **args)
+        ]
 
-        # don't render if it timed out, probably haven't stepped the debugger again
-        if t_res.timed_out:
-            return
+    def render(self, results):
+        target = None
+        self.trunc_top = self.args.reverse
+
+        t_res, m_res = results
 
         if t_res and t_res.is_success and len(t_res.targets) > 0:
             target = t_res.targets[0]
@@ -81,11 +82,8 @@ class MemoryView (TerminalView):
                     addr_str = self.colour(self.format_address(m_res.address + c, size=target['addr_size'], pad=False),
                                            self.config.format.addr_colour)
                     if self.args.deref:
-                        l = {2: 'H', 4: 'L', 8: 'Q'}[target['addr_size']]
-                        fmt = '{}{}'.format(('<' if target['byte_order'] == 'little' else '>'), l)
                         info_str = ''
                         if len(chunk) == target['addr_size']:
-                            pointer = list(struct.unpack(fmt, chunk))[0]
                             memory_str = ' '.join(["%02X" % x for x in six.iterbytes(chunk)])
                             info_str = self.format_deref(m_res.deref.pop(0))
                     else:
@@ -107,7 +105,7 @@ class MemoryView (TerminalView):
         if not self.title:
             self.title = "[memory]"
 
-        super(MemoryView, self).render()
+        super(MemoryView, self).render(results)
 
     def format_address(self, address, size=8, pad=True, prefix='0x'):
         fmt = '{:' + ('0=' + str(size * 2) if pad else '') + 'X}'
@@ -147,7 +145,7 @@ class StackView(MemoryView):
         VoltronView.add_generic_arguments(sp)
         sp.set_defaults(func=StackView)
 
-    def render(self):
+    def build_requests(self):
         self.args.reverse = True
         self.args.deref = True
         self.args.register = 'sp'
@@ -155,9 +153,12 @@ class StackView(MemoryView):
         self.args.address = None
         self.args.bytes = None
 
+        return super(StackView, self).build_requests()
+
+    def render(self, results):
         self.title = '[stack]'
 
-        super(StackView, self).render()
+        super(StackView, self).render(results)
 
 
 class StackViewPlugin(ViewPlugin):
