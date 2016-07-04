@@ -17,9 +17,11 @@ class DisasmView(TerminalView):
         VoltronView.add_generic_arguments(sp)
         sp.set_defaults(func=DisasmView)
         sp.add_argument('--use-capstone', '-c', action='store_true', default=False, help='use capstone')
+        sp.add_argument('--address', '-a', action='store', default=None,
+                        help='address (in hex or decimal) from which to start disassembly')
 
     def build_requests(self):
-        req = api_request('disassemble', block=self.block, use_capstone=self.args.use_capstone, offset=self.scroll_offset)
+        req = api_request('disassemble', block=self.block, use_capstone=self.args.use_capstone, offset=self.scroll_offset, address=self.args.address)
         req.count = self.body_height()
         return [req]
 
