@@ -17,7 +17,7 @@ from flask import Flask, Response, make_response, redirect, render_template, req
 from werkzeug.serving import BaseWSGIServer, ThreadedWSGIServer, WSGIRequestHandler
 from werkzeug.wsgi import DispatcherMiddleware, SharedDataMiddleware
 
-import pysigset
+# import pysigset
 
 from .api import *
 from .plugin import *
@@ -145,13 +145,13 @@ class Server(object):
         )
 
         def run_listener(name, cls, arg):
-            with pysigset.suspended_signals(signal.SIGCHLD):
-                log.debug("Starting listener for {} socket on {}".format(name, str(arg)))
-                s = cls(*arg)
-                t = threading.Thread(target=s.serve_forever)
-                t.start()
-                self.threads.append(t)
-                self.listeners.append(s)
+            # with pysigset.suspended_signals(signal.SIGCHLD):
+            log.debug("Starting listener for {} socket on {}".format(name, str(arg)))
+            s = cls(*arg)
+            t = threading.Thread(target=s.serve_forever)
+            t.start()
+            self.threads.append(t)
+            self.listeners.append(s)
 
         if voltron.config.server.listen.tcp:
             run_listener('tcp', ThreadedVoltronWSGIServer, list(voltron.config.server.listen.tcp) + [self.app])
