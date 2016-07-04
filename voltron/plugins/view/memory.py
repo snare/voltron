@@ -23,7 +23,7 @@ class MemoryView(TerminalView):
                            default=False)
         group.add_argument('--bytes', '-b', action='store', type=int, help='bytes per line (default 16)', default=16)
         sp.add_argument('--reverse', '-v', action='store_true', help='reverse the output', default=False)
-        group = sp.add_mutually_exclusive_group(required=True)
+        group = sp.add_mutually_exclusive_group(required=False)
         group.add_argument('--address', '-a', action='store',
                            help='address (in hex or decimal) from which to start reading memory')
         group.add_argument('--command', '-c', action='store',
@@ -42,7 +42,7 @@ class MemoryView(TerminalView):
             args = {'register': self.args.register}
         elif self.args.command:
             args = {'command': self.args.command}
-        else:
+        elif self.args.address:
             if self.args.address.startswith('0x'):
                 addr = int(self.args.address, 16)
             else:
@@ -51,6 +51,9 @@ class MemoryView(TerminalView):
                 except:
                     addr = int(self.args.address, 16)
             args = {'address': addr}
+        else:
+            args = {'register': 'sp'}
+
         if self.args.deref:
             args['words'] = height
             args['offset'] = self.scroll_offset if self.args.reverse else -self.scroll_offset
