@@ -29,7 +29,7 @@ More screenshots are [here](https://github.com/snare/voltron/wiki/Screenshots).
 Support
 -------
 
-`voltron` supports LLDB, GDB, VDB and WinDbg/CDB (via [PyKD](https://pykd.codeplex.com/)) and runs on OS X, Linux and Windows.
+`voltron` supports LLDB, GDB, VDB and WinDbg/CDB (via [PyKD](https://pykd.codeplex.com/)) and runs on macOS, Linux and Windows.
 
 WinDbg support is new, please [open an issue](https://github.com/snare/voltron/issues) if you have problems.
 
@@ -50,14 +50,12 @@ Releases are on PyPI. Install with `pip`:
 
     $ pip install voltron
 
-If you want to be bleeding edge, clone this repo and install with `setup.py`:
-
-    $ python setup.py install
+Voltron needs to be installed using the version of Python that your debugger is linked with. If Voltron cannot be loaded after installing it with the `pip` in your path, you probably have multiple versions of Python installed. See the more detailed [installation documentation](https://github.com/snare/voltron/wiki/Installation) for more info.
 
 Quick Start
 -----------
 
-1. If your debugger has an init script (`.lldbinit` for LLDB or `.gdbinit` for GDB) configure it to load Voltron when it starts by sourcing the `entry.py` entry point script. The full path will be inside the `voltron` package. For example, on OS X it might be */Library/Python/2.7/site-packages/voltron/entry.py*. If you don't add this to your init script, you'll need to execute the commands after starting your debugger.
+1. If your debugger has an init script (`.lldbinit` for LLDB or `.gdbinit` for GDB) configure it to load Voltron when it starts by sourcing the `entry.py` entry point script. The full path will be inside the `voltron` package. For example, on macOS it might be */Library/Python/2.7/site-packages/voltron/entry.py*. If you don't add this to your init script, you'll need to execute the commands after starting your debugger.
 
     LLDB:
 
@@ -137,7 +135,7 @@ More information about WinDbg/CDB support [here](https://github.com/snare/voltro
 
 ### Misc
 
-1. The authors primarily use Voltron with the most recent version of LLDB on OS X. We will try to test everything on as many platforms and architectures as possible before releases, but LLDB/OS X/x64 is going to be by far the most frequently-used combination. Hopefully Voltron doesn't set your pets on fire, but YMMV.
+1. The authors primarily use Voltron with the most recent version of LLDB on macOS. We will try to test everything on as many platforms and architectures as possible before releases, but LLDB/macOS/x64 is going to be by far the most frequently-used combination. Hopefully Voltron doesn't set your pets on fire, but YMMV.
 
 2. Intel is the only disassembly flavour currently supported for syntax highlighting.
 
