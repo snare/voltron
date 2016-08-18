@@ -110,6 +110,17 @@ Documentation
 
 See the [wiki](https://github.com/snare/voltron/wiki) on github.
 
+FAQ
+---
+
+**Q.** Why am I getting an `ImportError` loading Voltron?
+
+**A.** You might have multiple versions of Python installed and have installed Voltron using the wrong one. See the more detailed [installation instructions](https://github.com/snare/voltron/wiki/Installation).
+
+**Q.** Why do the views just say "Connection refused"?
+
+**A.** Due to a limitation in the GDB API, Voltron starts and stops the webserver when the inferior starts and stops when running with GDB. Set a breakpoint and run the inferior, and the views will connect and update upon the breakpoint being hit.
+
 Bugs and Errata
 ---------------
 
