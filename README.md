@@ -115,15 +115,15 @@ Bugs and Errata
 
 See the [issue tracker](https://github.com/snare/voltron/issues) on github for more information or to submit issues.
 
+If you're experiencing an `ImportError` loading Voltron, please ensure you've followed the [installation instructions](https://github.com/snare/voltron/wiki/Installation) for your platform.
+
 ### GDB
 
-1. GDB on some distros is built with Python 3, but the system's Python is version 2. If Voltron is installed into Python 2's `site-packages` it will not work with GDB. See [this page on the wiki](https://github.com/snare/voltron/wiki/Voltron-on-Ubuntu-14.04-with-GDB) for installation instructions.
+1. There is no clean way to hook GDB's exit, only the inferior's exit, so the Voltron server is started and stopped along with the inferior. This results in views showing "Connection refused" before the inferior has been started.
 
-2. There is no clean way to hook GDB's exit, only the inferior's exit, so the Voltron server is started and stopped along with the inferior. This results in views showing "Connection refused" before the inferior has been started.
+2. Due to a limitation in the GDB API, the views are only updated each time the debugger is stopped (e.g. by hitting a breakpoint), so view contents are not populated immediately when the view is connected, only when the first breakpoint is hit.
 
-3. Due to a limitation in the GDB API, the views are only updated each time the debugger is stopped (e.g. by hitting a breakpoint), so view contents are not populated immediately when the view is connected, only when the first breakpoint is hit.
-
-4. If the stack view is causing GDB to hang then it must be launched **after** the debugger has been launched, the inferior started, and the debugger stopped (e.g. a breakpoint hit). This has been fixed, but this note will remain until another release is issued.
+3. If the stack view is causing GDB to hang then it must be launched **after** the debugger has been launched, the inferior started, and the debugger stopped (e.g. a breakpoint hit). This has been fixed, but this note will remain until another release is issued.
 
 ### LLDB
 
@@ -131,7 +131,7 @@ On older versions of LLDB, the `voltron init` command must be run manually after
 
 ### WinDbg
 
-More information about WinDbg/CDB support [here](https://github.com/snare/voltron/wiki/WinDbg).
+More information about WinDbg/CDB support [here](https://github.com/snare/voltron/wiki/Installation#windbg).
 
 ### Misc
 
