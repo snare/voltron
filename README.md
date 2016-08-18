@@ -119,7 +119,7 @@ FAQ
 
 **Q.** Why do the views just say "Connection refused"?
 
-**A.** Due to a limitation in the GDB API, Voltron starts and stops the webserver when the inferior starts and stops when running with GDB. Set a breakpoint and run the inferior, and the views will connect and update upon the breakpoint being hit.
+**A.** When running with GDB, Voltron starts and stops the webserver when the inferior starts and stops, due to a limitation in the GDB API. Set a breakpoint and run the inferior, and the views will connect and update upon the breakpoint being hit.
 
 Bugs and Errata
 ---------------
