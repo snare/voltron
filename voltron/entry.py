@@ -106,10 +106,11 @@ try:
         print(blessed.Terminal().bold_red("Voltron loaded."))
         if host == 'lldb' and not voltron.command.registered:
             print("Run `voltron init` after you load a target.")
-
 except Exception as e:
     import traceback
-    msg = "An error occurred while loading Voltron:\n\n{}".format(traceback.format_exc())
+    msg = ("An error occurred while loading Voltron:\n\n{}"
+           "\nPlease ensure Voltron is installed correctly per the documentation: "
+           "https://github.com/snare/voltron/wiki/Installation").format(traceback.format_exc())
     if blessed:
         msg = blessed.Terminal().bold_red(msg)
     if log:
