@@ -46,16 +46,20 @@ The following architectures are supported:
 Installation
 ------------
 
-Releases are on PyPI. Install with `pip`:
+Download the source and install with the install script:
 
-    $ pip install voltron
+    $ ./install.sh
 
-Voltron needs to be installed using the version of Python that your debugger is linked with. If Voltron cannot be loaded after installing it with the `pip` in your path, you probably have multiple versions of Python installed. See the more detailed [installation documentation](https://github.com/snare/voltron/wiki/Installation) for more info.
+If you want to install Python packages into the user `site-packages` directory, use the `-u` flag:
+
+    $ ./install.sh -u
+
+If you have problems, please see the [manual installation documentation](https://github.com/snare/voltron/wiki/Installation) before opening an issue.
 
 Quick Start
 -----------
 
-1. If your debugger has an init script (`.lldbinit` for LLDB or `.gdbinit` for GDB) configure it to load Voltron when it starts by sourcing the `entry.py` entry point script. The full path will be inside the `voltron` package. For example, on macOS it might be */Library/Python/2.7/site-packages/voltron/entry.py*. If you don't add this to your init script, you'll need to execute the commands after starting your debugger.
+1. If your debugger has an init script (`.lldbinit` for LLDB or `.gdbinit` for GDB) configure it to load Voltron when it starts by sourcing the `entry.py` entry point script. The full path will be inside the `voltron` package. For example, on macOS it might be */Library/Python/2.7/site-packages/voltron/entry.py*. The `install.sh` script will add this to your `.gdbinit` or `.lldbinit` file automatically if it detects GDB or LLDB in your path.
 
     LLDB:
 
@@ -64,7 +68,6 @@ Quick Start
     GDB:
 
         source /path/to/voltron/entry.py
-        voltron init
         set disassembly-flavor intel
 
 2. Start your debugger and initialise Voltron manually if necessary.
