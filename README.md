@@ -54,7 +54,7 @@ If you want to install Python packages into the user `site-packages` directory, 
 
     $ ./install.sh -u
 
-If you have problems, please see the [manual installation documentation](https://github.com/snare/voltron/wiki/Installation) before opening an issue.
+If you have problems or would prefer to install manually, please see the [manual installation documentation](https://github.com/snare/voltron/wiki/Installation) before opening an issue.
 
 Quick Start
 -----------
