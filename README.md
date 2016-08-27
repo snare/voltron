@@ -46,15 +46,17 @@ The following architectures are supported:
 Installation
 ------------
 
-Download the source and install with the install script:
-
+Download the source and run the install script:
+    
+    $ git clone https://github.com/snare/voltron
+    $ cd voltron
     $ ./install.sh
 
 If you want to install Python packages into the user `site-packages` directory, use the `-u` flag:
 
     $ ./install.sh -u
 
-If you have problems or would prefer to install manually, please see the [manual installation documentation](https://github.com/snare/voltron/wiki/Installation) before opening an issue.
+If you are on Windows without a shell, have problems installing, or would prefer to install manually, please see the [manual installation documentation](https://github.com/snare/voltron/wiki/Installation).
 
 Quick Start
 -----------
