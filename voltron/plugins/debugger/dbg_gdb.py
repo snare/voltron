@@ -356,7 +356,7 @@ if HAVE_GDB:
             breakpoints = []
 
             # hahahahaha GDB sucks so much
-            for b in gdb.breakpoints():
+            for b in (gdb.breakpoints() or ()):
                 try:
                     if b.location.startswith('*'):
                         addr = int(b.location[1:], 16)
