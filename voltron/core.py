@@ -499,6 +499,19 @@ class Client(object):
 
         return res
 
+    def update(self):
+        """
+        Update the display
+        """
+        # build requests for this iteration
+        reqs = self.build_requests()
+        for r in reqs:
+            r.block = self.block
+        results = self.send_requests(*reqs)
+
+        # call callback with the results
+        self.callback(results)
+
     def run(self, build_requests=None, callback=None):
         """
         Run the client in a loop, calling the callback each time the debugger
@@ -508,16 +521,6 @@ class Client(object):
             self.callback = callback
         if build_requests:
             self.build_requests = build_requests
-
-        def update():
-            # build requests for this iteration
-            reqs = self.build_requests()
-            for r in reqs:
-                r.block = self.block
-            results = self.send_requests(*reqs)
-
-            # call callback with the results
-            self.callback(results)
 
         def normalise_requests_err(e):
             try:
@@ -538,7 +541,7 @@ class Client(object):
 
                     # if the server supports async mode, use it, as some views may only work in async mode
                     if self.server_version.capabilities and 'async' in self.server_version.capabilities:
-                        update()
+                        self.update()
                         self.block = False
                     elif self.supports_blocking:
                         self.block = True
@@ -547,13 +550,13 @@ class Client(object):
 
                 if self.block:
                     # synchronous requests
-                    update()
+                    self.update()
                 else:
                     # async requests, block using a version request until the debugger stops again
                     res = self.perform_request('version', block=True)
                     if res.is_success:
                         self.server_version = res
-                        update()
+                        self.update()
             except ConnectionError as e:
                 self.callback(error='Error: {}'.format(normalise_requests_err(e)))
                 self.server_version = None

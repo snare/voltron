@@ -443,24 +443,24 @@ class TerminalView (VoltronView):
     @requires_async
     def page_up(self):
         self.scroll_offset += self.body_height()
-        self.update()
+        self.client.update()
 
     @requires_async
     def page_down(self):
         self.scroll_offset -= self.body_height()
-        self.update()
+        self.client.update()
 
     @requires_async
     def line_up(self):
         self.scroll_offset += 1
-        self.update()
+        self.client.update()
 
     @requires_async
     def line_down(self):
         self.scroll_offset -= 1
-        self.update()
+        self.client.update()
 
     @requires_async
     def reset(self):
         self.scroll_offset = 0
-        self.update()
+        self.client.update()
