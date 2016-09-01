@@ -126,6 +126,10 @@ FAQ
 
 **A.** When running with GDB, Voltron starts and stops the webserver when the inferior starts and stops, due to a limitation in the GDB API. Set a breakpoint and run the inferior, and the views will connect and update upon the breakpoint being hit.
 
+**Q.** [GEF](https://github.com/hugsy/gef)? [PEDA](https://github.com/longld/peda)? [PwnDbg](https://github.com/pwndbg/pwndbg)? [fG's gdbinit](https://github.com/gdbinit/gdbinit)?
+
+**A.** All super great extensions for GDB. These tools primarily provide sets of additional commands for exploitation tasks, but each also provides a "context" display similar with a view of registers, stack, code, etc like Voltron. These tools print their context display in the debugger console each time the debugger stops. Voltron takes a different approach by embedding an RPC server implant in the debugger and enabling the attachment of views from other terminals (or even web browsers, or now [synchronising with Binary Ninja](https://github.com/snare/binja)), which allows the user to build a cleaner multi-window interface to their debugger. Voltron works great alongside all of these tools. You can just disable the context view from your GDB extension of choice and hook up some Voltron views, while still getting all the benefits of the useful commands added by these tools.
+
 Bugs and Errata
 ---------------
 
