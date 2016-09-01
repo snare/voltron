@@ -21,7 +21,18 @@ class DisasmView(TerminalView):
                         help='address (in hex or decimal) from which to start disassembly')
 
     def build_requests(self):
-        req = api_request('disassemble', block=self.block, use_capstone=self.args.use_capstone, offset=self.scroll_offset, address=self.args.address)
+        if self.args.address:
+            if self.args.address.startswith('0x'):
+                addr = int(self.args.address, 16)
+            else:
+                try:
+                    addr = int(self.args.address, 10)
+                except:
+                    addr = int(self.args.address, 16)
+        else:
+            addr = None
+        req = api_request('disassemble', block=self.block, use_capstone=self.args.use_capstone,
+                          offset=self.scroll_offset, address=addr)
         req.count = self.body_height()
         return [req]
 
