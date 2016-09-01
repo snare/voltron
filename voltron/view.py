@@ -12,7 +12,6 @@ import traceback
 import subprocess
 import socket
 import threading
-from requests import ConnectionError
 from blessed import Terminal
 
 try:
@@ -245,7 +244,8 @@ class VoltronView (object):
 
 
 class TerminalView (VoltronView):
-    valid_key_funcs = ["exit", "page_up", "page_down", "page_up", "page_down", "line_up", "line_down", "reset"]
+    valid_key_funcs = ["exit", "page_up", "page_down", "page_up", "page_down",
+                       "line_up", "line_down", "reset"]
 
     def __init__(self, *a, **kw):
         self.init_window()
@@ -391,40 +391,17 @@ class TerminalView (VoltronView):
         return []
 
     def run(self):
-        def stopwatch():
-            # loop, updating each time the debugger stops
-            while not self.done:
-                try:
-                    # get the server version info
-                    if not self.server_version:
-                        self.server_version = self.client.perform_request('version')
+        """
+        Run the view event loop.
+        """
+        def render(results=[], error=None):
+            if len(results) and not results[0].timed_out:
+                self.render(results)
+            elif error:
+                self.do_render(error=error)
 
-                        # if the server supports async mode, use it, as some views may only work in async mode
-                        if self.server_version.capabilities and 'async' in self.server_version.capabilities:
-                            self.update()
-                            self.block = False
-                        elif self.supports_blocking:
-                            self.block = True
-                        else:
-                            raise BlockingNotSupportedError("Debugger requires blocking mode")
-
-                    if self.block:
-                        # synchronous requests
-                        self.update()
-                    else:
-                        # async requests, block using a version request until the debugger stops again
-                        res = self.client.perform_request('version', block=True)
-                        if res.is_success:
-                            self.server_version = res
-                            self.update()
-                except ConnectionError as e:
-                    self.do_render(error='Error: {}'.format(normalise_requests_err(e)))
-                    self.server_version = None
-                    time.sleep(1)
-
-        # spin off requester thread
-        self.sw = threading.Thread(target=stopwatch)
-        self.sw.start()
+        # start the client
+        self.client.start(self.build_requests, render)
 
         # handle keyboard input
         try:
@@ -436,23 +413,6 @@ class TerminalView (VoltronView):
                         self.handle_key(val)
         except KeyboardInterrupt:
             self.exit()
-
-    def update(self):
-        """
-        Update the view's display by sending the requests to the back end and
-        passing the results to the render method.
-        """
-        log.debug("Updating view")
-
-        # perform requests
-        reqs = self.build_requests()
-        for r in reqs:
-            r.block = self.block
-        results = self.client.send_requests(*reqs)
-
-        # render results
-        if len(results) and not results[0].timed_out:
-            self.render(results)
 
     def handle_key(self, key):
         """
@@ -504,14 +464,3 @@ class TerminalView (VoltronView):
     def reset(self):
         self.scroll_offset = 0
         self.update()
-
-
-def normalise_requests_err(e):
-    try:
-        msg = e.message.args[1].strerror
-    except:
-        try:
-            msg = e.message.args[0]
-        except:
-            msg = str(e)
-    return msg

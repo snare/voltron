@@ -10,12 +10,13 @@ import signal
 import socket
 import sys
 import threading
-
+import time
 import six
 import voltron
 from flask import Flask, Response, make_response, redirect, render_template, request
 from werkzeug.serving import BaseWSGIServer, ThreadedWSGIServer, WSGIRequestHandler
 from werkzeug.wsgi import DispatcherMiddleware, SharedDataMiddleware
+from requests import ConnectionError
 
 # import pysigset
 
@@ -386,7 +387,8 @@ class Client(object):
     """
     Used by a client (ie. a view) to communicate with the server.
     """
-    def __init__(self, host='127.0.0.1', port=5555, sockfile=None, url=None):
+    def __init__(self, host='127.0.0.1', port=5555, sockfile=None, url=None,
+                 build_requests=None, callback=None, supports_blocking=True):
         """
         Initialise a new client
         """
@@ -395,9 +397,17 @@ class Client(object):
             self.url = url
         elif sockfile:
             self.url = 'http+unix://{}/api/request'.format(sockfile.replace('/', '%2F'))
+        elif voltron.config.view.api_url:
+            self.url = voltron.config.view.api_url
         else:
             self.url = 'http://{}:{}/api/request'.format(host, port)
         self.url = self.url.replace('~', os.path.expanduser('~').replace('/', '%2f'))
+        self.callback = callback
+        self.build_requests = build_requests
+        self.done = False
+        self.server_version = None
+        self.block = False
+        self.supports_blocking = supports_blocking
 
     def send_request(self, request):
         """
@@ -488,3 +498,82 @@ class Client(object):
         res = self.send_request(req)
 
         return res
+
+    def run(self, build_requests=None, callback=None):
+        """
+        Run the client in a loop, calling the callback each time the debugger
+        stops.
+        """
+        if callback:
+            self.callback = callback
+        if build_requests:
+            self.build_requests = build_requests
+
+        def update():
+            # build requests for this iteration
+            reqs = self.build_requests()
+            for r in reqs:
+                r.block = self.block
+            results = self.send_requests(*reqs)
+
+            # call callback with the results
+            self.callback(results)
+
+        def normalise_requests_err(e):
+            try:
+                msg = e.message.args[1].strerror
+            except:
+                try:
+                    msg = e.message.args[0]
+                except:
+                    msg = str(e)
+            return msg
+
+        while not self.done:
+            try:
+
+                # get the server version info
+                if not self.server_version:
+                    self.server_version = self.perform_request('version')
+
+                    # if the server supports async mode, use it, as some views may only work in async mode
+                    if self.server_version.capabilities and 'async' in self.server_version.capabilities:
+                        update()
+                        self.block = False
+                    elif self.supports_blocking:
+                        self.block = True
+                    else:
+                        raise BlockingNotSupportedError("Debugger requires blocking mode")
+
+                if self.block:
+                    # synchronous requests
+                    update()
+                else:
+                    # async requests, block using a version request until the debugger stops again
+                    res = self.perform_request('version', block=True)
+                    if res.is_success:
+                        self.server_version = res
+                        update()
+            except ConnectionError as e:
+                self.callback(error='Error: {}'.format(normalise_requests_err(e)))
+                self.server_version = None
+                time.sleep(1)
+
+    def start(self, build_requests=None, callback=None):
+        """
+        Run the client using a background thread.
+        """
+        if callback:
+            self.callback = callback
+        if build_requests:
+            self.build_requests = build_requests
+
+        # spin off requester thread
+        self.sw = threading.Thread(target=self.run)
+        self.sw.start()
+
+    def stop(self):
+        """
+        Stop the background thread.
+        """
+        self.done = True
