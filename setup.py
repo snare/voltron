@@ -54,20 +54,6 @@ def check_install():
 check_install()
 
 
-requirements = [
-    'scruffington>=0.3.2',
-    'flask',
-    'flask_restful',
-    'blessed',
-    'pygments',
-    'requests',
-    'requests_unixsocket',
-    'six',
-    'pysigset'
-]
-if sys.platform == 'win32':
-    requirements.append('cursor')
-
 setup(
     name="voltron",
     version="0.1.6",
@@ -79,7 +65,18 @@ setup(
              "vivisect vtrace windbg cdb pykd",
     url="https://github.com/snare/voltron",
     packages=find_packages(exclude=['tests', 'examples']),
-    install_requires=requirements,
+    install_requires=[
+        'scruffington>=0.3.2',
+        'flask',
+        'flask_restful',
+        'blessed',
+        'pygments',
+        'requests',
+        'requests_unixsocket',
+        'six',
+        'pysigset',
+        "cursor > 1.0 : sys.platform == 'win32'"
+    ],
     package_data={'voltron': ['config/*']},
     entry_points={
         'console_scripts': ['voltron=voltron:main']
