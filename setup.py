@@ -1,7 +1,9 @@
+from __future__ import print_function
+
 import sys
 import platform
-import subprocess
-import os
+import textwrap
+from subprocess import check_output
 from setuptools import setup, find_packages
 
 
@@ -14,14 +16,36 @@ def check_install():
     """
     if platform.system() == 'Darwin' and sys.executable != '/usr/bin/python':
         print("*" * 79)
-        print("WARNING: You are not using the version of Python included with macOS. If you intend to use Voltron with the LLDB included with Xcode, or GDB installed with Homebrew, it will not work unless it is installed using the system's default Python. If you intend to use Voltron with a debugger installed by some other method, it may be safe to ignore this warning. See the following documentation for more detailed installation instructions: https://github.com/snare/voltron/wiki/Installation")
+        print(textwrap.fill(
+            "WARNING: You are not using the version of Python included with "
+            "macOS. If you intend to use Voltron with the LLDB included "
+            "with Xcode, or GDB installed with Homebrew, it will not work "
+            "unless it is installed using the system's default Python. If "
+            "you intend to use Voltron with a debugger installed by some "
+            "other method, it may be safe to ignore this warning. See the "
+            "following documentation for more detailed installation "
+            "instructions: "
+            "https://github.com/snare/voltron/wiki/Installation", 79))
         print("*" * 79)
     elif platform.system() == 'Linux':
         try:
-            output = subprocess.check_output("readelf -d `which gdb`|grep python", shell=True)
-            if "python3" in output and sys.version_info.major == 2:
+            output = check_output([
+                "gdb", "-batch", "-q", "--nx", "-ex",
+                "pi print(sys.version_info.major)"
+            ]).decode("utf-8")
+            gdb_python = int(output)
+
+            if gdb_python != sys.version_info.major:
                 print("*" * 79)
-                print("WARNING: You are installing Voltron using Python 2.x and GDB is linked with Python 3.x. GDB will not be able to load Voltron. Please install using Python 3 if you intend to use Voltron with the copy of GDB that is installed. See the following documentation for more detailed installation instructions: https://github.com/snare/voltron/wiki/Installation")
+                print(textwrap.fill(
+                    "WARNING: You are installing Voltron using Python {0}.x "
+                    "and GDB is linked with Python {1}.x. GDB will not be "
+                    "able to load Voltron. Please install using Python {1} "
+                    "if you intend to use Voltron with the copy of GDB that "
+                    "is installed. See the following documentation for more "
+                    "detailed installation instructions: "
+                    "https://github.com/snare/voltron/wiki/Installation"
+                    .format(sys.version_info.major, gdb_python), 79))
                 print("*" * 79)
         except:
             pass
@@ -49,9 +73,10 @@ setup(
     version="0.1.5",
     author="snare",
     author_email="snare@ho.ax",
-    description=("A debugger UI"),
+    description="A debugger UI",
     license="MIT",
-    keywords="voltron debugger ui gdb lldb vdb vivisect vtrace windbg cdb pykd",
+    keywords="voltron debugger ui gdb lldb vdb "
+             "vivisect vtrace windbg cdb pykd",
     url="https://github.com/snare/voltron",
     packages=find_packages(exclude=['tests', 'examples']),
     install_requires=requirements,
