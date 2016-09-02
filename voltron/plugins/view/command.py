@@ -1,5 +1,5 @@
 import logging
-import importlib
+
 try:
     from pygments.lexers import get_lexer_by_name
 except:

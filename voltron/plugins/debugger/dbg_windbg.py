@@ -2,9 +2,6 @@ from __future__ import print_function
 
 import logging
 import threading
-import re
-import struct
-import six
 import array
 
 from voltron.api import *

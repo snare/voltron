@@ -4,7 +4,6 @@ import logging
 import threading
 import re
 import struct
-import six
 
 from voltron.api import *
 from voltron.plugin import *
