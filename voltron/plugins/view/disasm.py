@@ -13,7 +13,7 @@ except ImportError:
 class DisasmView(TerminalView):
     @classmethod
     def configure_subparser(cls, subparsers):
-        sp = subparsers.add_parser('disasm', help='disassembly view', aliases=('d', 'dis', 'disasm'))
+        sp = subparsers.add_parser('disasm', help='disassembly view', aliases=('d', 'dis'))
         VoltronView.add_generic_arguments(sp)
         sp.set_defaults(func=DisasmView)
         sp.add_argument('--use-capstone', '-c', action='store_true', default=False, help='use capstone')
