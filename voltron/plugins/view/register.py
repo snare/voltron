@@ -406,13 +406,13 @@ class RegisterView (TerminalView):
         sp.add_argument('--general', '-g', dest="sections", action='append_const', const="general",
                         help='show general registers')
         sp.add_argument('--no-general', '-G', dest="sections", action='append_const', const="no_general",
-                        help='show general registers')
+                        help='hide general registers')
         sp.add_argument('--sse', '-s', dest="sections", action='append_const', const="sse", help='show sse registers')
         sp.add_argument('--no-sse', '-S', dest="sections", action='append_const', const="no_sse",
-                        help='show sse registers')
+                        help='hide sse registers')
         sp.add_argument('--fpu', '-p', dest="sections", action='append_const', const="fpu", help='show fpu registers')
         sp.add_argument('--no-fpu', '-P', dest="sections", action='append_const', const="no_fpu",
-                        help='show fpu registers')
+                        help='hide fpu registers')
         sp.add_argument('--info', '-i', action='store_true', help='show info (pointer derefs, ascii) for registers',
                         default=False)
 
