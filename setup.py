@@ -55,7 +55,7 @@ check_install()
 
 
 requirements = [
-    'scruffington>=0.3.2',
+    'scruffington>=0.3.6',
     'flask',
     'flask_restful',
     'blessed',
