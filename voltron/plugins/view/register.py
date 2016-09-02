@@ -395,7 +395,7 @@ class RegisterView (TerminalView):
 
     @classmethod
     def configure_subparser(cls, subparsers):
-        sp = subparsers.add_parser('register', help='register values', aliases=('r', 'reg'))
+        sp = subparsers.add_parser('registers', help='register values', aliases=('r', 'reg', 'register'))
         VoltronView.add_generic_arguments(sp)
         sp.set_defaults(func=RegisterView)
         g = sp.add_mutually_exclusive_group()
