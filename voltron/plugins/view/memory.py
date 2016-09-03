@@ -12,6 +12,8 @@ class MemoryView(TerminalView):
     printable_filter = ''.join([(len(repr(chr(x))) == 3) and chr(x) or '.' for x in range(256)])
 
     async = True
+    last_memory = None
+    last_address = 0
 
     @classmethod
     def configure_subparser(cls, subparsers):
@@ -23,6 +25,7 @@ class MemoryView(TerminalView):
                            default=False)
         group.add_argument('--bytes', '-b', action='store', type=int, help='bytes per line (default 16)', default=16)
         sp.add_argument('--reverse', '-v', action='store_true', help='reverse the output', default=False)
+        sp.add_argument('--track', '-t', action='store_true', help='track and highlight changes', default=None)
         group = sp.add_mutually_exclusive_group(required=False)
         group.add_argument('--address', '-a', action='store',
                            help='address (in hex or decimal) from which to start reading memory')
@@ -85,13 +88,21 @@ class MemoryView(TerminalView):
                     chunk = m_res.memory[c:c + self.args.bytes]
                     addr_str = self.colour(self.format_address(m_res.address + c, size=target['addr_size'], pad=False),
                                            self.config.format.addr_colour)
-                    if self.args.deref:
-                        info_str = ''
-                        if len(chunk) == target['addr_size']:
-                            memory_str = ' '.join(["%02X" % x for x in six.iterbytes(chunk)])
-                            info_str = self.format_deref(m_res.deref.pop(0))
+
+                    if self.args.track and self.last_memory and self.last_address == m_res.address:
+                        bytes = []
+                        for i, x in enumerate(six.iterbytes(chunk)):
+                            if x != self.last_memory[c + i]:
+                                bytes.append(self.colour("%02X" % x, 'red'))
+                            else:
+                                bytes.append("%02X" % x)
+                        memory_str = ' '.join(bytes)
                     else:
                         memory_str = ' '.join(["%02X" % x for x in six.iterbytes(chunk)])
+
+                    if self.args.deref:
+                            info_str = self.format_deref(m_res.deref.pop(0))
+                    else:
                         info_str = ''
                     ascii_str = ''.join(["%s" % ((x <= 127 and self.printable_filter[x]) or '.') for x in six.iterbytes(chunk)])
                     divider = self.colour('|', self.config.format.divider_colour)
@@ -103,6 +114,11 @@ class MemoryView(TerminalView):
                 log.error("Error reading memory: {}".format(m_res.message))
                 self.body = self.colour(m_res.message, 'red')
                 self.info = ''
+
+            # Store the memory
+            if self.args.track:
+                self.last_address = m_res.address
+                self.last_memory = m_res.memory
         else:
             self.body = self.colour("Failed to get targets", 'red')
 
