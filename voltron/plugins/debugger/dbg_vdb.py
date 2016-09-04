@@ -1,7 +1,5 @@
 from __future__ import print_function
 
-import re
-import shlex
 import struct
 import string
 import logging

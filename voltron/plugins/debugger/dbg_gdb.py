@@ -4,7 +4,6 @@ import logging
 import threading
 import re
 import struct
-import six
 
 from voltron.api import *
 from voltron.plugin import *
@@ -622,6 +621,7 @@ if HAVE_GDB:
                 gdb.events.stop.connect(self.stop_handler)
                 gdb.events.exited.connect(self.stop_and_exit_handler)
                 gdb.events.cont.connect(self.cont_handler)
+                self.registered = True
 
         def unregister_hooks(self):
             if self.registered:

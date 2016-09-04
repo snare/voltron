@@ -9,6 +9,7 @@ import voltron
 
 log = logging.getLogger('plugin')
 
+
 class PluginManager(object):
     """
     Collects and validates API, debugger and view plugins. Provides methods to

@@ -6,12 +6,9 @@ import logging
 import pprint
 import re
 import signal
-import time
 import argparse
-import traceback
 import subprocess
 import socket
-import threading
 from blessed import Terminal
 
 try:
