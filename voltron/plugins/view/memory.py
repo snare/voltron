@@ -24,7 +24,8 @@ class MemoryView(TerminalView):
                            default=False)
         group.add_argument('--bytes', '-b', action='store', type=int, help='bytes per line (default 16)', default=16)
         sp.add_argument('--reverse', '-v', action='store_true', help='reverse the output', default=False)
-        sp.add_argument('--track', '-t', action='store_true', help='track and highlight changes', default=None)
+        sp.add_argument('--track', '-t', action='store_true', help='track and highlight changes', default=True)
+        sp.add_argument('--no-track', '-T', action='store_false', help='track and highlight changes')
         group = sp.add_mutually_exclusive_group(required=False)
         group.add_argument('--address', '-a', action='store',
                            help='address (in hex or decimal) from which to start reading memory')
@@ -91,8 +92,10 @@ class MemoryView(TerminalView):
                     if self.args.track and self.last_memory and self.last_address == m_res.address:
                         bytes = []
                         for i, x in enumerate(six.iterbytes(chunk)):
-                            if x != self.last_memory[c + i]:
-                                bytes.append(self.colour("%02X" % x, 'red'))
+                            # python 3 fuckery. might be a better way to do this but i cbf digging into it atm
+                            xx = chr(x) if isinstance(self.last_memory[c + i], six.string_types) else x
+                            if xx != self.last_memory[c + i]:
+                                bytes.append(self.colour("%02X" % x, self.config.format.value_colour_mod))
                             else:
                                 bytes.append("%02X" % x)
                         memory_str = ' '.join(bytes)
@@ -139,10 +142,12 @@ class MemoryView(TerminalView):
             if t == "pointer":
                 fmtd.append(self.format_address(item, size=size, pad=False))
             elif t == "string":
-                item = item.replace('\n', '\\n')
+                for r in ['\n', '\r', '\v']:
+                    item = item.replace(r, '\\{:x}'.format(ord(r)))
                 fmtd.append(self.colour('"' + item + '"', self.config.format.string_colour))
             elif t == "unicode":
-                item = item.replace('\n', '\\n')
+                for r in ['\n', '\r', '\v']:
+                    item = item.replace(r, '\\{:x}'.format(ord(r)))
                 fmtd.append(self.colour('u"' + item + '"', self.config.format.string_colour))
             elif t == "symbol":
                 fmtd.append(self.colour('`' + item + '`', self.config.format.symbol_colour))
@@ -163,6 +168,8 @@ class StackView(MemoryView):
         sp = subparsers.add_parser('stack', help='display a chunk of stack memory', aliases=('s', 'st'))
         VoltronView.add_generic_arguments(sp)
         sp.set_defaults(func=StackView)
+        sp.add_argument('--track', '-t', action='store_true', help='track and highlight changes', default=True)
+        sp.add_argument('--no-track', '-T', action='store_false', help='track and highlight changes')
 
     def build_requests(self):
         self.args.reverse = True
