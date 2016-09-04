@@ -169,7 +169,7 @@ If you use this and don't hate it, buy me a beer at a conference some time. This
 Credits
 -------
 
-Thanks to Azimuth Security for letting me spend time working on this.
+Thanks to my former employers Assurance and Azimuth Security for giving me time to spend working on this.
 
 Props to [richo](http://github.com/richo) for all his contributions to Voltron.
 
