@@ -178,3 +178,5 @@ Props to [richo](http://github.com/richo) for all his contributions to Voltron.
 Thanks to [Willi](http://github.com/williballenthin) for implementing the VDB support.
 
 Voltron now uses [Capstone](http://www.capstone-engine.org) for disassembly as well as the debugger hosts' internal disassembly mechanism. [Capstone](http://www.capstone-engine.org) is a powerful, open source, multi-architecture disassembler upon which the next generation of reverse engineering and debugging tools are being built. Check it out.
+
+Thanks to [grazfather](http://github.com/grazfather) for ongoing contributions.
