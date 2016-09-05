@@ -25,7 +25,7 @@ class MemoryView(TerminalView):
         group.add_argument('--bytes', '-b', action='store', type=int, help='bytes per line (default 16)', default=16)
         sp.add_argument('--reverse', '-v', action='store_true', help='reverse the output', default=False)
         sp.add_argument('--track', '-t', action='store_true', help='track and highlight changes', default=True)
-        sp.add_argument('--no-track', '-T', action='store_false', help='track and highlight changes')
+        sp.add_argument('--no-track', '-T', action='store_false', help='don\'t track and highlight changes')
         group = sp.add_mutually_exclusive_group(required=False)
         group.add_argument('--address', '-a', action='store',
                            help='address (in hex or decimal) from which to start reading memory')
@@ -169,7 +169,7 @@ class StackView(MemoryView):
         VoltronView.add_generic_arguments(sp)
         sp.set_defaults(func=StackView)
         sp.add_argument('--track', '-t', action='store_true', help='track and highlight changes', default=True)
-        sp.add_argument('--no-track', '-T', action='store_false', help='track and highlight changes')
+        sp.add_argument('--no-track', '-T', action='store_false', help='don\'t track and highlight changes')
 
     def build_requests(self):
         self.args.reverse = True
