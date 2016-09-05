@@ -83,7 +83,18 @@ setup(
     install_requires=requirements,
     package_data={'voltron': ['config/*']},
     entry_points={
-        'console_scripts': ['voltron=voltron:main']
+        'console_scripts': ['voltron=voltron:main'],
+        'pygments.lexers': [
+            'lldb_intel = voltron.lexers:LLDBIntelLexer',
+            'lldb_att = voltron.lexers:LLDBATTLexer',
+            'gdb_intel = voltron.lexers:GDBIntelLexer',
+            'gdb_att = voltron.lexers:GDBATTLexer',
+            'vdb_intel = voltron.lexers:VDBIntelLexer',
+            'vdb_att = voltron.lexers:VDBATTLexer',
+            'windbg_intel = voltron.lexers:WinDbgIntelLexer',
+            'windbg_att = voltron.lexers:WinDbgATTLexer',
+            'capstone_intel = voltron.lexers:CapstoneIntelLexer',
+        ],
     },
     zip_safe=False
 )

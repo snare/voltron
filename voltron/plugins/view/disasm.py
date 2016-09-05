@@ -55,7 +55,7 @@ class DisasmView(TerminalView):
             if have_pygments:
                 try:
                     host = 'capstone' if self.args.use_capstone else res.host
-                    lexer = all_lexers['{}_{}'.format(host, res.flavor)]()
+                    lexer = get_lexer_by_name('{}_{}'.format(host, res.flavor))
                     disasm = pygments.highlight(disasm, lexer, pygments.formatters.TerminalFormatter())
                 except Exception as e:
                     log.warning('Failed to highlight disasm: ' + str(e))

@@ -1,16 +1,17 @@
 import re
 
 from pygments.lexer import RegexLexer, include, bygroups, using, DelegatingLexer
+from pygments.lexers import get_lexer_by_name
 from pygments.token import *
 
 
-class LLDBIntelLexer(RegexLexer):
+class DisassemblyLexer(RegexLexer):
     """
     For Nasm (Intel) disassembly from LLDB.
 
     Based on the NasmLexer included with Pygments
     """
-    name = 'LLDBIntel'
+    name = 'LLDB Intel syntax disassembly'
     aliases = ['lldb_intel']
     filenames = []
     mimetypes = []
@@ -77,6 +78,46 @@ class LLDBIntelLexer(RegexLexer):
             (type, Keyword.Type)
         ],
     }
+
+
+class LLDBIntelLexer(DisassemblyLexer):
+    name = 'LLDB Intel syntax disassembly'
+    aliases = ['lldb_intel']
+
+
+class LLDBATTLexer(DisassemblyLexer):
+    name = 'LLDB AT&T syntax disassembly'
+    aliases = ['lldb_att']
+
+
+class GDBATTLexer(DisassemblyLexer):
+    name = 'GDB AT&T syntax disassembly'
+    aliases = ['gdb_att']
+
+
+class GDBIntelLexer(DisassemblyLexer):
+    name = 'GDB Intel syntax disassembly'
+    aliases = ['gdb_intel']
+
+
+class VDBATTLexer(DisassemblyLexer):
+    name = 'VDB AT&T syntax disassembly'
+    aliases = ['vdb_att']
+
+
+class WinDbgATTLexer(DisassemblyLexer):
+    name = 'WinDbg ATT syntax disassembly'
+    aliases = ['windbg_att']
+
+
+class WinDbgIntelLexer(DisassemblyLexer):
+    name = 'WinDbg Intel syntax disassembly'
+    aliases = ['windbg_intel']
+
+
+class CapstoneIntelLexer(DisassemblyLexer):
+    name = 'Capstone Intel syntax disassembly'
+    aliases = ['capstone_intel']
 
 
 class VDBIntelLexer(RegexLexer):
@@ -160,18 +201,3 @@ class VDBIntelLexer(RegexLexer):
             (type, Keyword.Type)
         ],
     }
-
-
-class WinDbgIntelLexer(VDBIntelLexer):
-    name = 'WinDbgIntel'
-    aliases = ['windbg_intel']
-
-
-
-all_lexers = {
-    'lldb_intel': LLDBIntelLexer,
-    'gdb_intel': LLDBIntelLexer,
-    'vdb_intel': VDBIntelLexer,
-    # 'windbg_intel': WinDbgIntelLexer,
-    'capstone_intel': LLDBIntelLexer
-}
