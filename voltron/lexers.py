@@ -33,6 +33,8 @@ class DisassemblyLexer(RegexLexer):
     flags = re.IGNORECASE | re.MULTILINE
     tokens = {
         'root': [
+            (identifier + '`' + identifier, Name.Function),
+            ('->', Generic.Prompt),
             include('whitespace'),
             (r'^\s*%', Comment.Preproc, 'preproc'),
             (identifier + ':', Name.Label),
