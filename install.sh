@@ -67,13 +67,13 @@ fi
 
 if [ -n "${LLDB}" ]; then
     # Find the Python version used by LLDB
-    PYVER=$(lldb -Qxbo 'script import platform; print(".".join(platform.python_version_tuple()[:2]))'|tail -1)
-    PYTHON=$(lldb -Qxbo 'script import sys; print(sys.executable)'|tail -1)
+    PYVER=$(lldb -Qxb --one-line 'script import platform; print(".".join(platform.python_version_tuple()[:2]))'|tail -1)
+    PYTHON=$(lldb -Qxb --one-line 'script import sys; print(sys.executable)'|tail -1)
     PYTHON="${PYTHON}${PYVER}"
     if [ -z $USER_MODE ]; then
-        LLDB_SITE_PACKAGES=$(lldb -Qxbo 'script import site; print(site.getsitepackages()[0])'|tail -1)
+        LLDB_SITE_PACKAGES=$(lldb -Qxb --one-line 'script import site; print(site.getsitepackages()[0])'|tail -1)
     else
-        LLDB_SITE_PACKAGES=$(lldb -Qxbo 'script import site; print(site.getusersitepackages())'|tail -1)
+        LLDB_SITE_PACKAGES=$(lldb -Qxb --one-line 'script import site; print(site.getusersitepackages())'|tail -1)
     fi
 
     install_apt
