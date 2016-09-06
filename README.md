@@ -47,7 +47,7 @@ Installation
 ------------
 
 Download the source and run the install script:
-    
+
     $ git clone https://github.com/snare/voltron
     $ cd voltron
     $ ./install.sh
@@ -70,7 +70,6 @@ Quick Start
     GDB:
 
         source /path/to/voltron/entry.py
-        set disassembly-flavor intel
 
 2. Start your debugger and initialise Voltron manually if necessary.
 
@@ -92,9 +91,9 @@ Quick Start
         $ ./vdbbin target_binary
         > script /path/to/voltron/entry.py
 
-    WinDbg/CDB (requires [PyKD](https://pykd.codeplex.com/)):
+    WinDbg/CDB is only supported run via Bash with a Linux userland. The author tests with [Git Bash](https://git-for-windows.github.io) and [ConEmu](http://conemu.github.io). PyKD and Voltron can be loaded in one command when launching the debugger:
 
-        > cdb -c '.load C:\path\to\pykd.pyd ; !py --global C:\path\to\voltron\entry.py' target_binary
+        $ cdb -c '.load C:\path\to\pykd.pyd ; !py --global C:\path\to\voltron\entry.py' target_binary
 
 3. In another terminal (I use iTerm panes) start one of the UI views. On LLDB and WinDbg the views will update immediately. On GDB and VDB they will not update until the inferior stops (at a breakpoint, after a step, etc):
 
@@ -156,8 +155,6 @@ More information about WinDbg/CDB support [here](https://github.com/snare/voltro
 ### Misc
 
 1. The authors primarily use Voltron with the most recent version of LLDB on macOS. We will try to test everything on as many platforms and architectures as possible before releases, but LLDB/macOS/x64 is going to be by far the most frequently-used combination. Hopefully Voltron doesn't set your pets on fire, but YMMV.
-
-2. Intel is the only disassembly flavour currently supported for syntax highlighting.
 
 License
 -------
