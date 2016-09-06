@@ -46,7 +46,7 @@ def setup():
 
     # start debugger
     start_debugger()
-    time.sleep(5)
+    time.sleep(10)
 
 
 def teardown():
