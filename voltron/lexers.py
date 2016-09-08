@@ -43,7 +43,7 @@ class DisassemblyLexer(RegexLexer):
                 'instruction-args'),
             (declkw, Keyword.Declaration, 'instruction-args'),
             (identifier, Name.Function, 'instruction-args'),
-            (hexn, Number.Hex),
+            (r' *' + hexn, Name),
             (r'[:]', Text),
             (r'^->', Error),
             (r'[\r\n]+', Text)
