@@ -63,7 +63,9 @@ requirements = [
     'requests',
     'requests_unixsocket',
     'six',
-    'pysigset'
+    'pysigset',
+    'pygments',
+    'pygments-style-solarized'
 ]
 if sys.platform == 'win32':
     requirements.append('cursor')

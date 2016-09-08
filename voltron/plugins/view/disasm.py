@@ -1,13 +1,9 @@
 from voltron.view import *
 from voltron.plugin import *
 from voltron.api import *
-try:
-    from voltron.lexers import *
-    import pygments
-    import pygments.formatters
-    have_pygments = True
-except ImportError:
-    have_pygments = False
+from voltron.lexers import *
+import pygments
+import pygments.formatters
 
 
 class DisasmView(TerminalView):
@@ -51,17 +47,17 @@ class DisasmView(TerminalView):
             disasm = res.disassembly
             disasm = '\n'.join(disasm.split('\n')[:self.body_height()])
 
-            # Pygmentize output
-            if have_pygments:
-                try:
-                    host = 'capstone' if self.args.use_capstone else res.host
-                    lexer = get_lexer_by_name('{}_{}'.format(host, res.flavor))
-                    disasm = pygments.highlight(disasm, lexer, pygments.formatters.get_formatter_by_name(
-                                                self.config.format.pygments_formatter,
-                                                style=self.config.format.pygments_style))
-                except Exception as e:
-                    log.warning('Failed to highlight disasm: ' + str(e))
-                    log.info(self.config.format)
+            # Highlight output
+            try:
+                host = 'capstone' if self.args.use_capstone else res.host
+                lexer = get_lexer_by_name('{}_{}'.format(host, res.flavor))
+                disasm = pygments.highlight(disasm, lexer, pygments.formatters.get_formatter_by_name(
+                                            self.config.format.pygments_formatter,
+                                            style=self.config.format.pygments_style))
+            except Exception as e:
+                log.warning('Failed to highlight disasm: ' + str(e))
+                log.info(self.config.format)
+
             # Build output
             self.body = disasm.rstrip()
         else:
