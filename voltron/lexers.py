@@ -24,11 +24,11 @@ class DisassemblyLexer(RegexLexer):
     floatn = decn + r'\.e?' + decn
     string = r'"(\\"|[^"\n])*"|' + r"'(\\'|[^'\n])*'|" + r"`(\\`|[^`\n])*`"
     declkw = r'(?:res|d)[bwdqt]|times'
-    register = (r'r[0-9]+?[bwd]{0,1}|'
+    register = (r'r[0-9]+[bwd]{0,1}|'
                 r'[a-d][lh]|[er]?[a-d]x|[er]?[sbi]p|[er]?[sd]i|[c-gs]s|st[0-7]|'
-                r'mm[0-7]|cr[0-4]|dr[0-367]|tr[3-7]|.mm\d*')
+                r'mm[0-7]|cr[0-4]|dr[0-367]|tr[3-7]|.mm\d+')
     wordop = r'seg|wrt|strict'
-    type = r'byte|[dq]?word|ptr'
+    type = r'byte|[dq]?word|ptr|xmmword|opaque'
 
     flags = re.IGNORECASE | re.MULTILINE
     tokens = {
@@ -42,13 +42,14 @@ class DisassemblyLexer(RegexLexer):
                 bygroups(Name.Constant, Keyword.Declaration, Keyword.Declaration),
                 'instruction-args'),
             (declkw, Keyword.Declaration, 'instruction-args'),
-            (identifier, Name.Function, 'instruction-args'),
-            (r' *' + hexn, Name),
+            (identifier, Keyword.Declaration, 'instruction-args'),
+            (r' *' + hexn, Name.Label),
             (r'[:]', Text),
             (r'^->', Error),
             (r'[\r\n]+', Text)
         ],
         'instruction-args': [
+            (register, Name.Builtin),
             (string, String),
             (hexn, Number.Hex),
             (octn, Number.Oct),
@@ -56,7 +57,6 @@ class DisassemblyLexer(RegexLexer):
             (floatn, Number.Float),
             (decn, Number.Integer),
             include('punctuation'),
-            (register, Name.Builtin),
             (identifier, Name.Variable),
             (r'[\r\n]+', Text, '#pop'),
             include('whitespace')

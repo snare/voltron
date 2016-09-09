@@ -65,7 +65,6 @@ requirements = [
     'six',
     'pysigset',
     'pygments',
-    'pygments-style-solarized'
 ]
 if sys.platform == 'win32':
     requirements.append('cursor')
@@ -97,6 +96,9 @@ setup(
             'windbg_att = voltron.lexers:WinDbgATTLexer',
             'capstone_intel = voltron.lexers:CapstoneIntelLexer',
         ],
+        'pygments.styles': [
+            'volarized = voltron.styles:VolarizedStyle',
+        ]
     },
     zip_safe=False
 )

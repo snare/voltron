@@ -82,8 +82,8 @@ class MemoryView(TerminalView):
         if m_res and m_res.is_success:
             for c in range(0, m_res.bytes, self.args.bytes):
                 chunk = m_res.memory[c:c + self.args.bytes]
-                yield (Name, self.format_address(m_res.address + c, size=target['addr_size'], pad=False))
-                yield (Text, ': ')
+                yield (Name.Label, self.format_address(m_res.address + c, size=target['addr_size'], pad=False))
+                yield (Name.Label, ': ')
 
                 # Hex bytes
                 for i, x in enumerate(six.iterbytes(chunk)):
