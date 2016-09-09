@@ -592,23 +592,6 @@ class RegisterView (TerminalView):
             addr_str = prefix + addr_str
         return addr_str
 
-    def format_deref(self, deref, size=8):
-        fmtd = []
-        for t, item in deref:
-            if t == "pointer":
-                fmtd.append(self.format_address(item, size=size, pad=False))
-            elif t == "string":
-                item = item.replace('\n', '\\n')
-                fmtd.append(self.colour('"' + item + '"', self.config.format.string_colour))
-            elif t == "unicode":
-                item = item.replace('\n', '\\n')
-                fmtd.append(self.colour('u"' + item + '"', self.config.format.string_colour))
-            elif t == "symbol":
-                fmtd.append(self.colour('`' + item + '`', self.config.format.symbol_colour))
-            elif t == "circular":
-                fmtd.append(self.colour('(circular)', self.config.format.divider_colour))
-        return self.colour(' => ', self.config.format.divider_colour).join(fmtd)
-
     def format_flags(self, val):
         values = {}
 
