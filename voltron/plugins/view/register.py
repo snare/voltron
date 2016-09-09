@@ -1,8 +1,10 @@
 import six
 import struct
 import logging
+import pygments
 
-from numbers import Number
+from pygments.token import *
+from numbers import Number as NumberType
 from voltron.core import STRTYPES
 from voltron.view import *
 from voltron.plugin import *
@@ -388,7 +390,7 @@ class RegisterView (TerminalView):
         }
     }
     FLAG_BITS = {'c': 0, 'p': 2, 'a': 4, 'z': 6, 's': 7, 't': 8, 'i': 9, 'd': 10, 'o': 11}
-    FLAG_TEMPLATE = "[ {o} {d} {i} {t} {s} {z} {a} {p} {c} ]"
+    FLAG_TEMPLATE = "{o} {d} {i} {t} {s} {z} {a} {p} {c}"
     XMM_INDENT = 7
     last_regs = None
     last_flags = None
@@ -442,6 +444,17 @@ class RegisterView (TerminalView):
     def render(self, results):
         error = None
         t_res, d_res, r_res = results
+        formatter = pygments.formatters.get_formatter_by_name(self.config.format.pygments_formatter,
+                                                              style=self.config.format.pygments_style)
+
+        def format(tok, tik=None):
+            if tik:
+                tok = (tok, tik)
+            if isinstance(tok, tuple):
+                return pygments.format([tok], formatter)
+            else:
+                return pygments.format(tok, formatter)
+        self.f = format
 
         if t_res and t_res.is_error:
             error = t_res.message
@@ -471,6 +484,7 @@ class RegisterView (TerminalView):
             template = '\n'.join(map(lambda x: self.TEMPLATES[arch][self.config.orientation][x], self.config.sections))
 
             # Process formatting settings
+            addr_size = t_res.targets[0]['addr_size']
             data = defaultdict(lambda: 'n/a')
             data.update(r_res.registers)
             formats = self.FORMAT_INFO[arch]
@@ -486,7 +500,7 @@ class RegisterView (TerminalView):
                     if fmt['label_func'] != None:
                         formatted[reg + 'l'] = getattr(self, fmt['label_func'])(str(label))
                     if fmt['label_colour_en']:
-                        formatted[reg + 'l'] = self.colour(formatted[reg + 'l'], fmt['label_colour'])
+                        formatted[reg + 'l'] = format(Name.Label, formatted[reg + 'l'])
 
                     # Format the value
                     val = data[reg]
@@ -494,21 +508,20 @@ class RegisterView (TerminalView):
                         temp = fmt['value_format'].format(0)
                         if len(val) < len(temp):
                             val += (len(temp) - len(val)) * ' '
-                        formatted_reg = self.colour(val, fmt['value_colour'])
+                        formatted_reg = format(Text, val)
                     else:
-                        colour = fmt['value_colour']
+                        token = Text
                         if self.last_regs is None or self.last_regs is not None and val != self.last_regs[reg]:
-                            colour = fmt['value_colour_mod']
+                            token = Generic.Error
                         formatted_reg = val
-                        if fmt['value_format'] != None and isinstance(formatted_reg, Number):
+                        if fmt['value_format'] != None and isinstance(formatted_reg, NumberType):
                             formatted_reg = fmt['value_format'].format(formatted_reg)
                         if fmt['value_func'] != None:
                             if isinstance(fmt['value_func'], STRTYPES):
                                 formatted_reg = getattr(self, fmt['value_func'])(formatted_reg)
                             else:
                                 formatted_reg = fmt['value_func'](formatted_reg)
-                        if fmt['value_colour_en']:
-                            formatted_reg = self.colour(formatted_reg, colour)
+                        formatted_reg = format(token, formatted_reg)
                     if fmt['format_name'] == None:
                         formatted[reg] = formatted_reg
                     else:
@@ -516,22 +529,35 @@ class RegisterView (TerminalView):
 
                     # Format the info
                     if self.args.info:
-                        arrow = self.colour(' => ', self.config.format.divider_colour)
                         info = ""
                         try:
                             l = {2: 'H', 4: 'L', 8: 'Q'}[t_res.targets[0]['addr_size']]
-                            f = '{}{}'.format(('<' if t_res.targets[0]['byte_order'] == 'little' else '>'), l)
-                            chunk = struct.pack(f, data[reg])
+                            x = '{}{}'.format(('<' if t_res.targets[0]['byte_order'] == 'little' else '>'), l)
+                            chunk = struct.pack(x, data[reg])
                             printable_filter = ''.join([(len(repr(chr(x))) == 3) and chr(x) or '.' for x in range(256)])
                             ascii_str = ''.join(["%s" % ((x <= 127 and printable_filter[x]) or '.') for x in six.iterbytes(chunk)])
-                            pipe = self.colour('|', self.config.format.divider_colour)
+                            pipe = format(Punctuation, '|')
                             info += ' ' + pipe + ' ' + ascii_str + ' ' + pipe
                         except:
                             pass
                         try:
-                            d = self.format_deref(r_res.deref[reg][1:])
-                            if d:
-                                info += arrow + d
+                            fmtd = [(Punctuation, ' => ')]
+                            for t, item in r_res.deref[reg][1:]:
+                                if t == "pointer":
+                                    fmtd.append((Number.Hex, self.format_address(item, size=addr_size, pad=False)))
+                                elif t == "string":
+                                    item = item.replace('\n', '\\n')
+                                    fmtd.append((String.Double, '"' + item + '"'))
+                                elif t == "unicode":
+                                    item = item.replace('\n', '\\n')
+                                    fmtd.append((String.Double, 'u"' + item + '"'))
+                                elif t == "symbol":
+                                    fmtd.append((Name.Function, '`' + item + '`'))
+                                elif t == "circular":
+                                    fmtd.append((Text, '(circular)'))
+                                fmtd.append((Punctuation, ' => '))
+                            if len(r_res.deref[reg][1:]):
+                                info += format(fmtd[:-1])
                         except KeyError:
                             pass
                         except IndexError:
@@ -548,7 +574,7 @@ class RegisterView (TerminalView):
             self.last_regs = data
         else:
             # Set body to error message if appropriate
-            self.body = self.colour(error, 'red')
+            self.body = format(Error, error)
 
         # Prepare headers and footers
         height, width = self.window_size()
@@ -601,10 +627,10 @@ class RegisterView (TerminalView):
             log.debug("Flag {} value {} (for flags 0x{})".format(flag, values[flag], val))
             formatted[flag] = str.upper(flag) if values[flag] else flag
             if self.last_flags is not None and self.last_flags[flag] != values[flag]:
-                colour = fmt['value_colour_mod']
+                token = Generic.Error
             else:
-                colour = fmt['value_colour']
-            formatted[flag] = self.colour(formatted[flag], colour)
+                token = Text
+            formatted[flag] = self.f(token, formatted[flag])
 
         # Store the flag values for comparison
         self.last_flags = values
@@ -612,7 +638,7 @@ class RegisterView (TerminalView):
         # Format with template
         flags = self.FLAG_TEMPLATE.format(**formatted)
 
-        return flags
+        return self.f(Text, '[ ') + flags + self.f(Text, ' ]')
 
     def format_jump(self, val):
         # Grab flag bits
@@ -730,11 +756,11 @@ class RegisterView (TerminalView):
 
         # Colour
         if j is not None:
-            jump = self.colour(jump, self.config.format.value_colour_mod)
+            jump = self.f(Generic.Error, jump)
         else:
-            jump = self.colour(jump, self.config.format.value_colour)
+            jump = self.f(Text, jump)
 
-        return '[' + jump + ']'
+        return self.f(Text, '[') + jump + self.f(Text, ']')
 
     def format_xmm(self, val):
         if self.config.orientation == 'vertical':
