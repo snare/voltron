@@ -65,7 +65,7 @@ class APIMemoryRequest(APIRequest):
             if self.address:
                 addr = self.address
             elif self.command:
-                output = voltron.debugger.command(self.args.command)
+                output = voltron.debugger.command(self.command)
                 if output:
                     for item in reversed(output.split()):
                         log.debug("checking item: {}".format(item))
