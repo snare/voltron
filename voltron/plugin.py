@@ -32,6 +32,11 @@ class PluginManager(object):
         for p in voltron.env.plugins:
             self.register_plugin(p)
 
+    def register_command_plugins(self):
+        for p in voltron.env.plugins:
+            if issubclass(p, CommandPlugin):
+                self.register_plugin(p)
+
     @property
     def api_plugins(self):
         return self._api_plugins
@@ -289,6 +294,10 @@ class CommandPlugin(VoltronPlugin):
     """
     plugin_type = 'command'
     name = None
+
+
+class VoltronCommand(object):
+    pass
 
 
 #

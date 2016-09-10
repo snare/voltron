@@ -519,9 +519,10 @@ if HAVE_LLDB:
 
             # method invocation creator
             def create_invocation(obj):
-                def invoke(debugger, command, result, env_dict):
+                @staticmethod
+                def invoker(debugger, command, result, env_dict):
                     obj.invoke(*command.split())
-                return invoke
+                return invoker
 
             # store the invocation in `voltron.commands` to pass to LLDB
             setattr(voltron.commands, name, create_invocation(cls()))

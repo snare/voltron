@@ -98,6 +98,9 @@ try:
         voltron.debugger = plugin.adaptor_class(*args)
         voltron.command = plugin.command_class(*args)
 
+        # register command plugins now that we have a debugger host loaded
+        pm.register_command_plugins()
+
         # create and start the voltron server
         voltron.server = Server()
         if host != "gdb":
