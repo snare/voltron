@@ -35,9 +35,9 @@ function install_apt {
     if uname | grep -i Linux &>/dev/null; then
         sudo apt-get update
         if echo $PYVER|grep "3\."; then
-            sudo apt-get -y install libreadline6-dev python3-dev python3-setuptools python3-yaml
+            sudo apt-get -y install libreadline6-dev python3-dev python3-setuptools python3-yaml python3-pip
         else
-            sudo apt-get -y install libreadline6-dev python-dev python-setuptools python-yaml
+            sudo apt-get -y install libreadline6-dev python-dev python-setuptools python-yaml python-pip
         fi
     fi
 }
