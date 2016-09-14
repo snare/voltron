@@ -512,7 +512,7 @@ class RegisterView (TerminalView):
                     else:
                         token = Text
                         if self.last_regs is None or self.last_regs is not None and val != self.last_regs[reg]:
-                            token = Generic.Error
+                            token = Error
                         formatted_reg = val
                         if fmt['value_format'] != None and isinstance(formatted_reg, NumberType):
                             formatted_reg = fmt['value_format'].format(formatted_reg)
@@ -610,7 +610,7 @@ class RegisterView (TerminalView):
             log.debug("Flag {} value {} (for flags 0x{})".format(flag, values[flag], val))
             formatted[flag] = str.upper(flag) if values[flag] else flag
             if self.last_flags is not None and self.last_flags[flag] != values[flag]:
-                token = Generic.Error
+                token = Error
             else:
                 token = Text
             formatted[flag] = self.f(token, formatted[flag])
@@ -739,7 +739,7 @@ class RegisterView (TerminalView):
 
         # Colour
         if j is not None:
-            jump = self.f(Generic.Error, jump)
+            jump = self.f(Error, jump)
         else:
             jump = self.f(Text, jump)
 

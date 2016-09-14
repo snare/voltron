@@ -1,5 +1,5 @@
 from pygments.style import Style
-from pygments.token import Token, Comment, Name, Keyword, Generic, Number, Operator, String, Punctuation
+from pygments.token import Token, Comment, Name, Keyword, Generic, Number, Operator, String, Punctuation, Error
 
 BASE03 = '#002b36'
 BASE02 = '#073642'
@@ -95,4 +95,6 @@ class VolarizedStyle(Style):
 
         Token: BASE1,
         Token.Other: ORANGE,
+
+        Error: RED
     }
