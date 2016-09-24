@@ -72,7 +72,7 @@ if sys.platform == 'win32':
 
 setup(
     name="voltron",
-    version="0.1.6",
+    version="0.1.7",
     author="snare",
     author_email="snare@ho.ax",
     description="A debugger UI",
