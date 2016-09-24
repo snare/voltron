@@ -1,9 +1,7 @@
 import logging
 
-try:
-    from pygments.lexers import get_lexer_by_name
-except:
-    get_lexer_by_name = None
+import pygments
+from pygments.lexers import get_lexer_by_name
 
 from voltron.view import *
 from voltron.plugin import *
