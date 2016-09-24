@@ -15,6 +15,15 @@ LLDB=$(command -v lldb)
 
 set -ex
 
+if [ -z "${LLDB}" ]; then
+    for i in `seq 4 8`; do
+        LLDB=$(command -v lldb-3.$i)
+        if [ -n "${LLDB}" ]; then
+            break
+        fi
+    done
+fi
+
 while getopts ":ud" opt; do
   case $opt in
     u)
@@ -44,16 +53,16 @@ function install_apt {
 
 if [ -n "${GDB}" ]; then
     # Find the Python version used by GDB
-    PYVER=$(gdb -batch -q --nx -ex 'pi import platform; print(".".join(platform.python_version_tuple()[:2]))')
-    PYTHON=$(gdb -batch -q --nx -ex 'pi import sys; print(sys.executable)')
+    PYVER=$(${GDB} -batch -q --nx -ex 'pi import platform; print(".".join(platform.python_version_tuple()[:2]))')
+    PYTHON=$(${GDB} -batch -q --nx -ex 'pi import sys; print(sys.executable)')
     PYTHON="${PYTHON}${PYVER}"
 
     install_apt
 
     if [ -z $USER_MODE ]; then
-        GDB_SITE_PACKAGES=$(gdb -batch -q --nx -ex 'pi import site; print(site.getsitepackages()[0])')
+        GDB_SITE_PACKAGES=$(${GDB} -batch -q --nx -ex 'pi import site; print(site.getsitepackages()[0])')
     else
-        GDB_SITE_PACKAGES=$(gdb -batch -q --nx -ex 'pi import site; print(site.getusersitepackages())')
+        GDB_SITE_PACKAGES=$(${GDB} -batch -q --nx -ex 'pi import site; print(site.getusersitepackages())')
     fi
 
     # Install Voltron and dependencies
@@ -67,13 +76,13 @@ fi
 
 if [ -n "${LLDB}" ]; then
     # Find the Python version used by LLDB
-    PYVER=$(lldb -Qxb --one-line 'script import platform; print(".".join(platform.python_version_tuple()[:2]))'|tail -1)
-    PYTHON=$(lldb -Qxb --one-line 'script import sys; print(sys.executable)'|tail -1)
+    PYVER=$(${LLDB} -Qxb --one-line 'script import platform; print(".".join(platform.python_version_tuple()[:2]))'|tail -1)
+    PYTHON=$(${LLDB} -Qxb --one-line 'script import sys; print(sys.executable)'|tail -1)
     PYTHON="${PYTHON}${PYVER}"
     if [ -z $USER_MODE ]; then
-        LLDB_SITE_PACKAGES=$(lldb -Qxb --one-line 'script import site; print(site.getsitepackages()[0])'|tail -1)
+        LLDB_SITE_PACKAGES=$(${LLDB} -Qxb --one-line 'script import site; print(site.getsitepackages()[0])'|tail -1)
     else
-        LLDB_SITE_PACKAGES=$(lldb -Qxb --one-line 'script import site; print(site.getusersitepackages())'|tail -1)
+        LLDB_SITE_PACKAGES=$(${LLDB} -Qxb --one-line 'script import site; print(site.getusersitepackages())'|tail -1)
     fi
 
     install_apt
