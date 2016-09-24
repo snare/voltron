@@ -18,11 +18,11 @@ Built-in views are provided for:
 
 The author's setup looks something like this:
 
-![voltron example LLDB](http://i.imgur.com/p3XcagJ.png)
+![voltron example LLDB](http://i.imgur.com/9nukztA.png)
 
 Any debugger command can be split off into a view and highlighted with a specified Pygments lexer:
 
-![command views](http://i.imgur.com/mqptE3Z.png)
+![command views](http://i.imgur.com/RbYQYXp.png)
 
 More screenshots are [here](https://github.com/snare/voltron/wiki/Screenshots).
 
