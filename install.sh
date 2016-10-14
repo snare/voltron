@@ -13,7 +13,7 @@ SUDO='sudo'
 GDB=$(command -v gdb)
 LLDB=$(command -v lldb)
 
-set -ex
+set -x
 
 if [ -z "${LLDB}" ]; then
     for i in `seq 4 8`; do
@@ -53,9 +53,9 @@ function install_apt {
 
 if [ -n "${GDB}" ]; then
     # Find the Python version used by GDB
-    PYVER=$(${GDB} -batch -q --nx -ex 'pi import platform; print(".".join(platform.python_version_tuple()[:2]))')
-    PYTHON=$(${GDB} -batch -q --nx -ex 'pi import sys; print(sys.executable)')
-    PYTHON="${PYTHON}${PYVER}"
+    GDB_PYVER=$(${GDB} -batch -q --nx -ex 'pi import platform; print(".".join(platform.python_version_tuple()[:2]))')
+    GDB_PYTHON=$(${GDB} -batch -q --nx -ex 'pi import sys; print(sys.executable)')
+    GDB_PYTHON="${GDB_PYTHON}${GDB_PYVER}"
 
     install_apt
 
@@ -66,19 +66,20 @@ if [ -n "${GDB}" ]; then
     fi
 
     # Install Voltron and dependencies
-    ${SUDO} ${PYTHON} -m pip install $USER_MODE $DEV_MODE -U .
+    ${SUDO} ${GDB_PYTHON} -m pip install $USER_MODE $DEV_MODE -U .
 
     # Add Voltron to gdbinit
-    if ! grep voltron ~/.gdbinit &>/dev/null; then
-        echo "source $GDB_SITE_PACKAGES/voltron/entry.py" >> ~/.gdbinit
+    if ! grep voltron "${HOME}/.gdbinit" &>/dev/null; then
+        GDB_INIT_FILE="${HOME}/.gdbinit"
+        echo "source $GDB_SITE_PACKAGES/voltron/entry.py" >> ${GDB_INIT_FILE}
     fi
 fi
 
 if [ -n "${LLDB}" ]; then
     # Find the Python version used by LLDB
-    PYVER=$(${LLDB} -Qxb --one-line 'script import platform; print(".".join(platform.python_version_tuple()[:2]))'|tail -1)
-    PYTHON=$(${LLDB} -Qxb --one-line 'script import sys; print(sys.executable)'|tail -1)
-    PYTHON="${PYTHON}${PYVER}"
+    LLDB_PYVER=$(${LLDB} -Qxb --one-line 'script import platform; print(".".join(platform.python_version_tuple()[:2]))'|tail -1)
+    LLDB_PYTHON=$(${LLDB} -Qxb --one-line 'script import sys; print(sys.executable)'|tail -1)
+    LLDB_PYTHON="${LLDB_PYTHON}${LLDB_PYVER}"
     if [ -z $USER_MODE ]; then
         LLDB_SITE_PACKAGES=$(${LLDB} -Qxb --one-line 'script import site; print(site.getsitepackages()[0])'|tail -1)
     else
@@ -91,13 +92,13 @@ if [ -n "${LLDB}" ]; then
         echo "Skipping installation for LLDB - same site-packages directory"
     else
         # Install Voltron and dependencies
-        ${SUDO} ${PYTHON} -m pip install $USER_MODE $DEV_MODE -U .
+        ${SUDO} ${LLDB_PYTHON} -m pip install $USER_MODE $DEV_MODE -U .
     fi
 
     # Add Voltron to lldbinit
-    if ! grep voltron ~/.lldbinit &>/dev/null; then
-        INIT_FILE='~/.lldbinit'
-        echo "command script import $LLDB_SITE_PACKAGES/voltron/entry.py" >> ~/.lldbinit
+    if ! grep voltron "${HOME}/.lldbinit" &>/dev/null; then
+        LLDB_INIT_FILE="${HOME}/.gdbinit"
+        echo "command script import $LLDB_SITE_PACKAGES/voltron/entry.py" >> ${LLDB_INIT_FILE}
     fi
 fi
 
@@ -121,9 +122,9 @@ set +x
 echo "=============================================================="
 if [ -n "${GDB}" ]; then
     echo "Installed for GDB (${GDB}):"
-    echo "  Python:             $PYTHON"
+    echo "  Python:             $GDB_PYTHON"
     echo "  Packages directory: $GDB_SITE_PACKAGES"
-    if [ -n "${INIT_FILE}" ]; then
+    if [ -n "${GDB_INIT_FILE}" ]; then
         echo "  Added voltron to:   ~/.gdbinit"
     else
         echo "  Already loaded in:  ~/.gdbinit"
@@ -131,9 +132,9 @@ if [ -n "${GDB}" ]; then
 fi
 if [ -n "${LLDB}" ]; then
     echo "Installed for LLDB (${LLDB}):"
-    echo "  Python:             $PYTHON"
+    echo "  Python:             $LLDB_PYTHON"
     echo "  Packages directory: $LLDB_SITE_PACKAGES"
-    if [ -n "${INIT_FILE}" ]; then
+    if [ -n "${LLDB_INIT_FILE}" ]; then
         echo "  Added voltron to:   ~/.lldbinit"
     else
         echo "  Already loaded in:  ~/.lldbinit"
