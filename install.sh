@@ -97,7 +97,7 @@ if [ -n "${LLDB}" ]; then
 
     # Add Voltron to lldbinit
     if ! grep voltron "${HOME}/.lldbinit" &>/dev/null; then
-        LLDB_INIT_FILE="${HOME}/.gdbinit"
+        LLDB_INIT_FILE="${HOME}/.lldbinit"
         echo "command script import $LLDB_SITE_PACKAGES/voltron/entry.py" >> ${LLDB_INIT_FILE}
     fi
 fi
