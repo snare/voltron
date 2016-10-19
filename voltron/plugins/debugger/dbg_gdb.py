@@ -693,7 +693,6 @@ if HAVE_GDB:
 
         def exit_handler(self, event):
             log.debug('Inferior exited')
-            voltron.server.stop()
             voltron.debugger.busy = False
 
         def stop_and_exit_handler(self, event):
@@ -704,8 +703,6 @@ if HAVE_GDB:
 
         def cont_handler(self, event):
             log.debug('Inferior continued')
-            if not voltron.server.is_running:
-                voltron.server.start()
             voltron.debugger.busy = True
 
 

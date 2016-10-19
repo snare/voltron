@@ -103,8 +103,7 @@ try:
 
         # create and start the voltron server
         voltron.server = Server()
-        if host != "gdb":
-            voltron.server.start()
+        voltron.server.start()
 
         print(blessed.Terminal().bold_red("Voltron loaded."))
         if host == 'lldb' and not voltron.command.registered:

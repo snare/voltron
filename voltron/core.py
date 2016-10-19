@@ -18,6 +18,7 @@ from werkzeug.serving import BaseWSGIServer, ThreadedWSGIServer, WSGIRequestHand
 from werkzeug.wsgi import DispatcherMiddleware, SharedDataMiddleware
 from requests import ConnectionError
 
+
 # import pysigset
 
 from .api import *
@@ -40,6 +41,8 @@ else:
     else:
         from six.moves.socketserver import UnixStreamServer, ThreadingMixIn
     from six.moves.BaseHTTPServer import HTTPServer
+
+ThreadingMixIn.daemon_threads = True
 
 try:
     from voltron_web import app as ui_app
@@ -150,6 +153,7 @@ class Server(object):
             log.debug("Starting listener for {} socket on {}".format(name, str(arg)))
             s = cls(*arg)
             t = threading.Thread(target=s.serve_forever)
+            t.daemon = True
             t.start()
             self.threads.append(t)
             self.listeners.append(s)
@@ -374,6 +378,7 @@ class ClientThread(threading.Thread):
         self.response = None
         self.exception = None
         self.client = client
+        self.daemon = True
         super(ClientThread, self).__init__(*args, **kwargs)
 
     def run(self):
