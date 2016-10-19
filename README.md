@@ -31,7 +31,7 @@ Support
 
 `voltron` supports LLDB, GDB, VDB and WinDbg/CDB (via [PyKD](https://pykd.codeplex.com/)) and runs on macOS, Linux and Windows.
 
-WinDbg support is new, please [open an issue](https://github.com/snare/voltron/issues) if you have problems.
+WinDbg support is still fairly new, please [open an issue](https://github.com/snare/voltron/issues) if you have problems.
 
 The following architectures are supported:
 
@@ -95,7 +95,7 @@ Quick Start
 
         $ cdb -c '.load C:\path\to\pykd.pyd ; !py --global C:\path\to\voltron\entry.py' target_binary
 
-3. In another terminal (I use iTerm panes) start one of the UI views. On LLDB and WinDbg the views will update immediately. On GDB and VDB they will not update until the inferior stops (at a breakpoint, after a step, etc):
+3. In another terminal (I use iTerm panes) start one of the UI views. On LLDB, WinDbg and GDB the views will update immediately. On VDB they will not update until the inferior stops (at a breakpoint, after a step, etc):
 
         $ voltron view register
         $ voltron view stack
@@ -138,11 +138,7 @@ If you're experiencing an `ImportError` loading Voltron, please ensure you've fo
 
 ### GDB
 
-1. There is no clean way to hook GDB's exit, only the inferior's exit, so the Voltron server is started and stopped along with the inferior. This results in views showing "Connection refused" before the inferior has been started.
-
-2. Due to a limitation in the GDB API, the views are only updated each time the debugger is stopped (e.g. by hitting a breakpoint), so view contents are not populated immediately when the view is connected, only when the first breakpoint is hit.
-
-3. If the stack view is causing GDB to hang then it must be launched **after** the debugger has been launched, the inferior started, and the debugger stopped (e.g. a breakpoint hit). This has been fixed, but this note will remain until another release is issued.
+There is no clean way to hook GDB's exit, only the inferior's exit, so the Voltron server is started and stopped along with the inferior. This results in views showing "Connection refused" before the inferior has been started.
 
 ### LLDB
 
@@ -154,7 +150,7 @@ More information about WinDbg/CDB support [here](https://github.com/snare/voltro
 
 ### Misc
 
-1. The authors primarily use Voltron with the most recent version of LLDB on macOS. We will try to test everything on as many platforms and architectures as possible before releases, but LLDB/macOS/x64 is going to be by far the most frequently-used combination. Hopefully Voltron doesn't set your pets on fire, but YMMV.
+The authors primarily use Voltron with the most recent version of LLDB on macOS. We will try to test everything on as many platforms and architectures as possible before releases, but LLDB/macOS/x64 is going to be by far the most frequently-used combination. Hopefully Voltron doesn't set your pets on fire, but YMMV.
 
 License
 -------
