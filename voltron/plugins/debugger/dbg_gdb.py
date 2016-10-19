@@ -674,9 +674,9 @@ if HAVE_GDB:
 
         def stop_handler(self, event):
             self.adaptor.update_state()
+            voltron.debugger.busy = False
             voltron.server.dispatch_queue()
             log.debug('Inferior stopped')
-            voltron.debugger.busy = False
 
         def exit_handler(self, event):
             log.debug('Inferior exited')
@@ -684,9 +684,9 @@ if HAVE_GDB:
 
         def stop_and_exit_handler(self, event):
             log.debug('Inferior stopped and exited')
+            voltron.debugger.busy = False
             self.stop_handler(event)
             self.exit_handler(event)
-            voltron.debugger.busy = False
 
         def cont_handler(self, event):
             log.debug('Inferior continued')
