@@ -144,7 +144,6 @@ if HAVE_GDB:
 
             return d
 
-        @lock_host
         @post_event
         def target(self, target_id=0):
             """
@@ -157,7 +156,6 @@ if HAVE_GDB:
             """
             return self._target()
 
-        @lock_host
         @post_event
         def targets(self, target_ids=None):
             """
@@ -170,7 +168,6 @@ if HAVE_GDB:
             return [self._target()]
 
         @validate_target
-        @lock_host
         @post_event
         def state(self, target_id=0):
             """
@@ -180,7 +177,6 @@ if HAVE_GDB:
 
         @validate_busy
         @validate_target
-        @lock_host
         @post_event
         def registers(self, target_id=0, thread_id=None, registers=[]):
             """
@@ -222,7 +218,6 @@ if HAVE_GDB:
 
         @validate_busy
         @validate_target
-        @lock_host
         @post_event
         def stack_pointer(self, target_id=0, thread_id=None):
             """
@@ -239,7 +234,6 @@ if HAVE_GDB:
 
         @validate_busy
         @validate_target
-        @lock_host
         @post_event
         def program_counter(self, target_id=0, thread_id=None):
             """
@@ -262,7 +256,6 @@ if HAVE_GDB:
 
         @validate_busy
         @validate_target
-        @lock_host
         @post_event
         def memory(self, address, length, target_id=0):
             """
@@ -278,7 +271,6 @@ if HAVE_GDB:
 
         @validate_busy
         @validate_target
-        @lock_host
         @post_event
         def disassemble(self, target_id=0, address=None, count=16):
             """
@@ -299,7 +291,6 @@ if HAVE_GDB:
 
         @validate_busy
         @validate_target
-        @lock_host
         @post_event
         def dereference(self, pointer, target_id=0):
             """
@@ -358,7 +349,6 @@ if HAVE_GDB:
 
             return chain
 
-        @lock_host
         @post_event
         def command(self, command=None):
             """
@@ -373,7 +363,6 @@ if HAVE_GDB:
 
             return res
 
-        @lock_host
         @post_event
         def disassembly_flavor(self):
             """
@@ -384,7 +373,6 @@ if HAVE_GDB:
             flavor = re.search('flavor is "(.*)"', gdb.execute("show disassembly-flavor", to_string=True)).group(1)
             return flavor
 
-        @lock_host
         @post_event
         def breakpoints(self, target_id=0):
             """
@@ -438,7 +426,6 @@ if HAVE_GDB:
 
             return breakpoints
 
-        @lock_host
         @post_event
         def backtrace(self, target_id=0, thread_id=None):
             """

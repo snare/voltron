@@ -378,7 +378,6 @@ class ClientThread(threading.Thread):
         self.response = None
         self.exception = None
         self.client = client
-        self.daemon = True
         super(ClientThread, self).__init__(*args, **kwargs)
 
     def run(self):
