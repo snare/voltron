@@ -4,6 +4,7 @@ import logging
 import threading
 import re
 import struct
+from six.moves.queue import Queue
 
 from voltron.api import *
 from voltron.plugin import *
@@ -18,6 +19,40 @@ except ImportError:
 log = logging.getLogger('debugger')
 
 if HAVE_GDB:
+
+    def post_event(func):
+        """
+        Decorator to wrap a GDB adaptor method in a mechanism to run the method
+        on the main thread at the next possible time.
+        """
+        def inner(self, *args, **kwargs):
+            if self.use_post_event:
+                # create ephemeral queue
+                q = Queue()
+
+                # create an invocation that calls the decorated function
+                class Invocation(object):
+                    def __call__(killme):
+                        # when the invocation is called, we call the function and stick the result into the queue
+                        log.debug("calling invocation {}({}, {})".format(func, args, kwargs))
+                        res = func(self, *args, **kwargs)
+                        log.debug("got res = {}".format(res))
+                        q.put(res)
+                        log.debug("pushed")
+
+                # post this invocation to be called on the main thread at the next opportunity
+                gdb.post_event(Invocation())
+
+                # now we wait until there's something in the queue, which indicates that the invocation has run and return
+                # the result that was pushed onto the queue by the invocation
+                log.debug("waiting for queue")
+                res = q.get()
+                log.debug("returning")
+                return res
+            else:
+                return func(self, *args, **kwargs)
+
+        return inner
 
     class GDBAdaptor(DebuggerAdaptor):
         archs = {
@@ -35,6 +70,7 @@ if HAVE_GDB:
         }
         max_frame = 64
         max_string = 128
+        use_post_event = True
 
         """
         The interface with an instance of GDB
@@ -43,7 +79,18 @@ if HAVE_GDB:
             self.listeners = []
             self.host_lock = threading.RLock()
             self.host = gdb
+            self.busy = False
 
+        def target_is_busy(self, target_id=0):
+            """
+            Returns True or False indicating if the inferior is busy.
+
+            The busy flag is set by the stop and continue handlers registered
+            in the debugger command class.
+            """
+            return self.busy
+
+        @post_event
         def version(self):
             """
             Get the debugger's version.
@@ -98,6 +145,7 @@ if HAVE_GDB:
             return d
 
         @lock_host
+        @post_event
         def target(self, target_id=0):
             """
             Return information about the current inferior.
@@ -110,6 +158,7 @@ if HAVE_GDB:
             return self._target()
 
         @lock_host
+        @post_event
         def targets(self, target_ids=None):
             """
             Return information about the debugger's current targets.
@@ -122,6 +171,7 @@ if HAVE_GDB:
 
         @validate_target
         @lock_host
+        @post_event
         def state(self, target_id=0):
             """
             Get the state of a given target.
@@ -131,11 +181,13 @@ if HAVE_GDB:
         @validate_busy
         @validate_target
         @lock_host
+        @post_event
         def registers(self, target_id=0, thread_id=None, registers=[]):
             """
             Get the register values for a given target/thread.
             """
             arch = self.get_arch()
+            log.debug("xxx")
 
             # if we got 'sp' or 'pc' in registers, change it to whatever the right name is for the current arch
             if arch in self.reg_names:
@@ -171,6 +223,7 @@ if HAVE_GDB:
         @validate_busy
         @validate_target
         @lock_host
+        @post_event
         def stack_pointer(self, target_id=0, thread_id=None):
             """
             Get the value of the stack pointer register.
@@ -187,9 +240,16 @@ if HAVE_GDB:
         @validate_busy
         @validate_target
         @lock_host
+        @post_event
         def program_counter(self, target_id=0, thread_id=None):
             """
             Get the value of the program counter register.
+            """
+            return self._program_counter(target_id, thread_id)
+
+        def _program_counter(self, target_id=0, thread_id=None):
+            """
+            Implementation of getting PC to avoid recursive decorators
             """
             arch = self.get_arch()
             if arch in self.reg_names:
@@ -203,6 +263,7 @@ if HAVE_GDB:
         @validate_busy
         @validate_target
         @lock_host
+        @post_event
         def memory(self, address, length, target_id=0):
             """
             Get the register values for .
@@ -218,25 +279,7 @@ if HAVE_GDB:
         @validate_busy
         @validate_target
         @lock_host
-        def stack(self, length, target_id=0, thread_id=None):
-            """
-            Get the register values for .
-
-            `length` is the number of bytes to read
-            `target_id` is a target ID (or None for the first target)
-            `thread_id` is a thread ID (or None for the selected thread)
-            """
-            # get the stack pointer
-            sp_name, sp = self.stack_pointer(target_id=target_id, thread_id=thread_id)
-
-            # read memory
-            memory = self.memory(sp, length, target_id=target_id)
-
-            return memory
-
-        @validate_busy
-        @validate_target
-        @lock_host
+        @post_event
         def disassemble(self, target_id=0, address=None, count=16):
             """
             Get a disassembly of the instructions at the given address.
@@ -247,7 +290,7 @@ if HAVE_GDB:
             """
             # make sure we have an address
             if address == None:
-                pc_name, address = self.program_counter(target_id=target_id)
+                pc_name, address = self._program_counter(target_id=target_id)
 
             # disassemble
             output = gdb.execute('x/{}i 0x{:x}'.format(count, address), to_string=True)
@@ -257,57 +300,66 @@ if HAVE_GDB:
         @validate_busy
         @validate_target
         @lock_host
+        @post_event
         def dereference(self, pointer, target_id=0):
             """
             Recursively dereference a pointer for display
             """
-            fmt = ('<' if self.get_byte_order() == 'little' else '>') + {2: 'H', 4: 'L', 8: 'Q'}[self.get_addr_size()]
+            if isinstance(pointer, six.integer_types):
+                fmt = ('<' if self.get_byte_order() == 'little' else '>') + {2: 'H', 4: 'L', 8: 'Q'}[self.get_addr_size()]
 
-            addr = pointer
-            chain = []
-
-            # recursively dereference
-            while True:
-                try:
-                    mem = gdb.selected_inferior().read_memory(addr, self.get_addr_size())
-                    # log.debug("read mem: {}".format(mem))
-                    (ptr,) = struct.unpack(fmt, mem)
-                    if ptr in [x[1] for x in chain]:
+                addr = pointer
+                chain = []
+                # recursively dereference
+                while True:
+                    try:
+                        log.debug("lol")
+                        mem = gdb.selected_inferior().read_memory(addr, self.get_addr_size())
+                        log.debug("read mem: {}".format(mem))
+                        (ptr,) = struct.unpack(fmt, mem)
+                        if ptr in [x[1] for x in chain]:
+                            break
+                        chain.append(('pointer', addr))
+                        addr = ptr
+                    except gdb.MemoryError:
+                        log.exception("Dereferencing pointer 0x{:X}".format(addr))
                         break
-                    chain.append(('pointer', addr))
-                    addr = ptr
-                except gdb.MemoryError:
-                    log.exception("Dereferencing pointer 0x{:X}".format(addr))
-                    break
+                    except OverflowError:
+                        log.exception("Dereferencing pointer 0x{:X}".format(addr))
+                        break
 
-            # get some info for the last pointer
-            # first try to resolve a symbol context for the address
-            if len(chain):
-                p, addr = chain[-1]
-                output = gdb.execute('info symbol 0x{:x}'.format(addr), to_string=True)
-                log.debug('output = {}'.format(output))
-                if 'No symbol matches' not in output:
-                    chain.append(('symbol', output.strip()))
-                    log.debug("symbol context: {}".format(str(chain[-1])))
-                else:
-                    log.debug("no symbol context, trying as a string")
-                    mem = gdb.selected_inferior().read_memory(addr, 2)
-                    if ord(mem[0]) <= 127 and ord(mem[0]) != 0:
-                        a = []
-                        for i in range(0, self.max_string):
-                            mem = gdb.selected_inferior().read_memory(addr + i, 1)
-                            if ord(mem[0]) == 0 or ord(mem[0]) > 127:
-                                break
-                            if isinstance(mem, memoryview):
-                                a.append(mem.tobytes().decode('latin1'))
-                            else:
-                                a.append(str(mem))
-                        chain.append(('string', ''.join(a)))
+                # get some info for the last pointer
+                # first try to resolve a symbol context for the address
+                if len(chain):
+                    p, addr = chain[-1]
+                    output = gdb.execute('info symbol 0x{:x}'.format(addr), to_string=True)
+                    log.debug('output = {}'.format(output))
+                    if 'No symbol matches' not in output:
+                        chain.append(('symbol', output.strip()))
+                        log.debug("symbol context: {}".format(str(chain[-1])))
+                    else:
+                        log.debug("no symbol context, trying as a string")
+                        mem = gdb.selected_inferior().read_memory(addr, 2)
+                        if ord(mem[0]) <= 127 and ord(mem[0]) != 0:
+                            a = []
+                            for i in range(0, self.max_string):
+                                mem = gdb.selected_inferior().read_memory(addr + i, 1)
+                                if ord(mem[0]) == 0 or ord(mem[0]) > 127:
+                                    break
+                                if isinstance(mem, memoryview):
+                                    a.append(mem.tobytes().decode('latin1'))
+                                else:
+                                    a.append(str(mem))
+                            chain.append(('string', ''.join(a)))
 
-            log.debug("chain: {}".format(chain))
+                log.debug("chain: {}".format(chain))
+            else:
+                chain = []
+
             return chain
 
         @lock_host
+        @post_event
         def command(self, command=None):
             """
             Execute a command in the debugger.
@@ -322,6 +374,7 @@ if HAVE_GDB:
             return res
 
         @lock_host
+        @post_event
         def disassembly_flavor(self):
             """
             Return the disassembly flavor setting for the debugger.
@@ -332,6 +385,7 @@ if HAVE_GDB:
             return flavor
 
         @lock_host
+        @post_event
         def breakpoints(self, target_id=0):
             """
             Return a list of breakpoints.
@@ -385,6 +439,7 @@ if HAVE_GDB:
             return breakpoints
 
         @lock_host
+        @post_event
         def backtrace(self, target_id=0, thread_id=None):
             """
             Return a list of stack frames.
@@ -408,7 +463,7 @@ if HAVE_GDB:
             and that views can use non-blocking API requests without queueing
             requests to be dispatched next time the debugger stops.
             """
-            return []
+            return ['async']
 
         #
         # Private functions
@@ -634,20 +689,24 @@ if HAVE_GDB:
             self.adaptor.update_state()
             voltron.server.dispatch_queue()
             log.debug('Inferior stopped')
+            voltron.debugger.busy = False
 
         def exit_handler(self, event):
             log.debug('Inferior exited')
             voltron.server.stop()
+            voltron.debugger.busy = False
 
         def stop_and_exit_handler(self, event):
             log.debug('Inferior stopped and exited')
             self.stop_handler(event)
             self.exit_handler(event)
+            voltron.debugger.busy = False
 
         def cont_handler(self, event):
             log.debug('Inferior continued')
             if not voltron.server.is_running:
                 voltron.server.start()
+            voltron.debugger.busy = True
 
 
     class GDBAdaptorPlugin(DebuggerAdaptorPlugin):

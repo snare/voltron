@@ -552,8 +552,8 @@ class Client(object):
                     # synchronous requests
                     self.update()
                 else:
-                    # async requests, block using a version request until the debugger stops again
-                    res = self.perform_request('version', block=True)
+                    # async requests, block using a null request until the debugger stops again
+                    res = self.perform_request('null', block=True)
                     if res.is_success:
                         self.server_version = res
                         self.update()

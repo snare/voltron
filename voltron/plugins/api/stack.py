@@ -35,7 +35,7 @@ class APIStackRequest(APIRequest):
     def dispatch(self):
         try:
             sp_name, sp = voltron.debugger.stack_pointer(target_id=self.target_id)
-            memory = voltron.debugger.stack(self.length, target_id=self.target_id)
+            memory = voltron.debugger.memory(address=sp, length=self.length, target_id=self.target_id)
             res = APIStackResponse()
             res.memory = memory
             res.stack_pointer = sp
