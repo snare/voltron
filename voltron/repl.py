@@ -34,6 +34,25 @@ class REPLClient(Client):
         except Exception as e:
             print("Exception reading memory: {}".format(repr(e)))
 
+    def __setitem__(self, key, value):
+        try:
+            d = {}
+            if isinstance(key, slice):
+                d['address'] = key.start
+                d['value'] = ((key.stop - key.start) * value)[:key.stop - key.start]
+            else:
+                d['address'] = key
+                d['value'] = value
+
+            res = self.perform_request('write_memory', **d)
+
+            if res.is_success:
+                return None
+            else:
+                print("Error writing memory: {}".format(res.message))
+        except Exception as e:
+            print("Exception writing memory: {}".format(repr(e)))
+
     def __call__(self, command):
         try:
             res = self.perform_request('command', command=command)

@@ -263,7 +263,7 @@ if HAVE_GDB:
         @post_event
         def memory(self, address, length, target_id=0):
             """
-            Get the register values for .
+            Read memory from the inferior.
 
             `address` is the address at which to start reading
             `length` is the number of bytes to read
@@ -272,6 +272,19 @@ if HAVE_GDB:
             log.debug('Reading 0x{:x} bytes of memory at 0x{:x}'.format(length, address))
             memory = bytes(gdb.selected_inferior().read_memory(address, length))
             return memory
+
+        @validate_busy
+        @validate_target
+        @post_event
+        def write_memory(self, address, data, target_id=0):
+            """
+            Write to the inferior's memory.
+
+            `address` is the address at which to start write
+            `data` is the data to write
+            """
+            log.debug('Writing 0x{:x} bytes of memory at 0x{:x}'.format(len(data), address))
+            memory = bytes(gdb.selected_inferior().write_memory(address, data))
 
         @validate_busy
         @validate_target
@@ -308,9 +321,7 @@ if HAVE_GDB:
                 # recursively dereference
                 while True:
                     try:
-                        log.debug("lol")
                         mem = gdb.selected_inferior().read_memory(addr, self.get_addr_size())
-                        log.debug("read mem: {}".format(mem))
                         (ptr,) = struct.unpack(fmt, mem)
                         if ptr in [x[1] for x in chain]:
                             break
