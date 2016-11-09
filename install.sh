@@ -69,8 +69,8 @@ if [ -n "${GDB}" ]; then
     ${SUDO} ${GDB_PYTHON} -m pip install $USER_MODE $DEV_MODE -U .
 
     # Add Voltron to gdbinit
-    if ! grep voltron "${HOME}/.gdbinit" &>/dev/null; then
-        GDB_INIT_FILE="${HOME}/.gdbinit"
+    GDB_INIT_FILE="${HOME}/.gdbinit"
+    if ! grep "voltron/entry.py" $GDB_INIT_FILE &>/dev/null; then
         echo "source $GDB_SITE_PACKAGES/voltron/entry.py" >> ${GDB_INIT_FILE}
     fi
 fi
@@ -96,8 +96,8 @@ if [ -n "${LLDB}" ]; then
     fi
 
     # Add Voltron to lldbinit
-    if ! grep voltron "${HOME}/.lldbinit" &>/dev/null; then
-        LLDB_INIT_FILE="${HOME}/.lldbinit"
+    LLDB_INIT_FILE="${HOME}/.lldbinit"
+    if ! grep "voltron/entry.py" $LLDB_INIT_FILE &>/dev/null; then
         echo "command script import $LLDB_SITE_PACKAGES/voltron/entry.py" >> ${LLDB_INIT_FILE}
     fi
 fi
