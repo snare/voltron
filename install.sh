@@ -16,7 +16,7 @@ LLDB=$(command -v lldb)
 set -x
 
 if [ -z "${LLDB}" ]; then
-    for i in `seq 4 8`; do
+    for i in `seq 6 8`; do
         LLDB=$(command -v lldb-3.$i)
         if [ -n "${LLDB}" ]; then
             break
@@ -24,7 +24,7 @@ if [ -z "${LLDB}" ]; then
     done
 fi
 
-while getopts ":ud" opt; do
+while getopts ":uds" opt; do
   case $opt in
     u)
       USER_MODE='--user'
@@ -33,6 +33,9 @@ while getopts ":ud" opt; do
     d)
       DEV_MODE="-e"
       ;;
+    s)
+      SKIP_UPDATE='-s'
+      ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
       exit 1
@@ -40,9 +43,13 @@ while getopts ":ud" opt; do
   esac
 done
 
+set -e
+
 function install_apt {
     if uname | grep -i Linux &>/dev/null; then
-        sudo apt-get update
+        if [ -z "${SKIP_UPDATE}" ]; then
+            sudo apt-get update
+        fi
         if echo $PYVER|grep "3\."; then
             sudo apt-get -y install libreadline6-dev python3-dev python3-setuptools python3-yaml python3-pip
         else
@@ -66,13 +73,17 @@ if [ -n "${GDB}" ]; then
     fi
 
     # Install Voltron and dependencies
-    ${SUDO} ${GDB_PYTHON} -m pip install $USER_MODE $DEV_MODE -U .
+    ${SUDO} ${GDB_PYTHON} -m pip install -U $USER_MODE $DEV_MODE .
 
     # Add Voltron to gdbinit
     GDB_INIT_FILE="${HOME}/.gdbinit"
-    if ! grep "voltron/entry.py" $GDB_INIT_FILE &>/dev/null; then
-        echo "source $GDB_SITE_PACKAGES/voltron/entry.py" >> ${GDB_INIT_FILE}
+    sed -i.bak '/voltron/d' ${GDB_INIT_FILE}
+    if [ -z $DEV_MODE ]; then
+        GDB_ENTRY_FILE="$GDB_SITE_PACKAGES/voltron/entry.py"
+    else
+        GDB_ENTRY_FILE="$(pwd)/voltron/entry.py"
     fi
+    echo "source $GDB_ENTRY_FILE" >> ${GDB_INIT_FILE}
 fi
 
 if [ -n "${LLDB}" ]; then
@@ -92,14 +103,18 @@ if [ -n "${LLDB}" ]; then
         echo "Skipping installation for LLDB - same site-packages directory"
     else
         # Install Voltron and dependencies
-        ${SUDO} ${LLDB_PYTHON} -m pip install $USER_MODE $DEV_MODE -U .
+        ${SUDO} ${LLDB_PYTHON} -m pip install -U $USER_MODE $DEV_MODE .
     fi
 
     # Add Voltron to lldbinit
     LLDB_INIT_FILE="${HOME}/.lldbinit"
-    if ! grep "voltron/entry.py" $LLDB_INIT_FILE &>/dev/null; then
-        echo "command script import $LLDB_SITE_PACKAGES/voltron/entry.py" >> ${LLDB_INIT_FILE}
+    sed -i.bak '/voltron/d' ${LLDB_INIT_FILE}
+    if [ -z $DEV_MODE ]; then
+        LLDB_ENTRY_FILE="$LLDB_SITE_PACKAGES/voltron/entry.py"
+    else
+        LLDB_ENTRY_FILE="$(pwd)/voltron/entry.py"
     fi
+    echo "command script import $LLDB_ENTRY_FILE" >> ${LLDB_INIT_FILE}
 fi
 
 if [ -z "${GDB}" ] && [ -z "${LLDB}" ]; then
@@ -115,7 +130,7 @@ if [ -z "${GDB}" ] && [ -z "${LLDB}" ]; then
     install_apt
 
     # Install Voltron and dependencies
-    ${SUDO} ${PYTHON} -m pip install $USER_MODE $DEV_MODE -U .
+    ${SUDO} ${PYTHON} -m pip install -U $USER_MODE $DEV_MODE .
 fi
 
 set +x
@@ -124,21 +139,15 @@ if [ -n "${GDB}" ]; then
     echo "Installed for GDB (${GDB}):"
     echo "  Python:             $GDB_PYTHON"
     echo "  Packages directory: $GDB_SITE_PACKAGES"
-    if [ -n "${GDB_INIT_FILE}" ]; then
-        echo "  Added voltron to:   ~/.gdbinit"
-    else
-        echo "  Already loaded in:  ~/.gdbinit"
-    fi
+    echo "  Added voltron to:   $GDB_INIT_FILE"
+    echo "  Entry point:        $GDB_ENTRY_FILE"
 fi
 if [ -n "${LLDB}" ]; then
     echo "Installed for LLDB (${LLDB}):"
     echo "  Python:             $LLDB_PYTHON"
     echo "  Packages directory: $LLDB_SITE_PACKAGES"
-    if [ -n "${LLDB_INIT_FILE}" ]; then
-        echo "  Added voltron to:   ~/.lldbinit"
-    else
-        echo "  Already loaded in:  ~/.lldbinit"
-    fi
+    echo "  Added voltron to:   $LLDB_INIT_FILE"
+    echo "  Entry point:        $LLDB_ENTRY_FILE"
 fi
 if [ -z "${GDB}" ] && [ -z "${LLDB}" ]; then
     echo "Couldn't find any debuggers. Installed using the Python in your path:"
