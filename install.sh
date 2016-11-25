@@ -12,6 +12,7 @@
 SUDO='sudo'
 GDB=$(command -v gdb)
 LLDB=$(command -v lldb)
+APT_GET=$(command -v apt-get)
 
 set -x
 
@@ -46,7 +47,7 @@ done
 set -e
 
 function install_apt {
-    if uname | grep -i Linux &>/dev/null; then
+    if [ -n "${APT_GET}" ]; then
         if [ -z "${SKIP_UPDATE}" ]; then
             sudo apt-get update
         fi
