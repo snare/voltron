@@ -1,3 +1,4 @@
+import sys
 import logging
 import six
 import pygments
@@ -99,8 +100,12 @@ class MemoryView(TerminalView):
                         byte_array.append((Text, n))
 
                 if self.args.words:
-                    for x in reversed(byte_array):
-                        yield x
+                    if sys.byteorder == 'little':
+                        for x in reversed(byte_array):
+                            yield x
+                    else:
+                        for x in byte_array:
+                            yield x
                     yield (Text, ' ')
                 else:
                     for x in byte_array:
