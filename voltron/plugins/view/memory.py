@@ -61,7 +61,7 @@ class MemoryView(TerminalView):
         else:
             args = {'register': 'sp'}
 
-        if self.args.deref or self.args.words:
+        if self.args.deref:
             args['words'] = height
             args['offset'] = self.scroll_offset if self.args.reverse else -self.scroll_offset
         else:
@@ -71,7 +71,7 @@ class MemoryView(TerminalView):
         # get memory and target info
         return [
             api_request('targets'),
-            api_request('memory', deref=(self.args.deref is True), **args)
+            api_request('memory', deref=self.args.deref is True, **args)
         ]
 
     def generate_tokens(self, results):
