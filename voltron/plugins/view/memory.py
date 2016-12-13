@@ -61,7 +61,7 @@ class MemoryView(TerminalView):
         else:
             args = {'register': 'sp'}
 
-        if self.args.deref:
+        if self.args.deref or self.args.words:
             args['words'] = height
             args['offset'] = self.scroll_offset if self.args.reverse else -self.scroll_offset
         else:
@@ -71,7 +71,7 @@ class MemoryView(TerminalView):
         # get memory and target info
         return [
             api_request('targets'),
-            api_request('memory', deref=self.args.deref is True, **args)
+            api_request('memory', deref=(self.args.deref is True), **args)
         ]
 
     def generate_tokens(self, results):
@@ -157,7 +157,7 @@ class MemoryView(TerminalView):
         if t_res and t_res.is_success and len(t_res.targets) > 0:
             target = t_res.targets[0]
 
-            if self.args.deref:
+            if self.args.deref or self.args.words:
                 self.args.bytes = target['addr_size']
 
             f = pygments.formatters.get_formatter_by_name(self.config.format.pygments_formatter,
@@ -210,6 +210,7 @@ class StackView(MemoryView):
     def build_requests(self):
         self.args.reverse = True
         self.args.deref = True
+        self.args.words = False
         self.args.register = 'sp'
         self.args.command = None
         self.args.address = None
