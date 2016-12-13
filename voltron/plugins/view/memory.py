@@ -29,6 +29,7 @@ class MemoryView(TerminalView):
         sp.add_argument('--reverse', '-v', action='store_true', help='reverse the output', default=False)
         sp.add_argument('--track', '-t', action='store_true', help='track and highlight changes', default=True)
         sp.add_argument('--no-track', '-T', action='store_false', help='don\'t track and highlight changes')
+        sp.add_argument('--words', '-w', action='store_true', help='display data as a column of machine words', default=False)
         group = sp.add_mutually_exclusive_group(required=False)
         group.add_argument('--address', '-a', action='store',
                            help='address (in hex or decimal) from which to start reading memory')
@@ -86,25 +87,47 @@ class MemoryView(TerminalView):
                 yield (Name.Label, ': ')
 
                 # Hex bytes
+                byte_array = []
                 for i, x in enumerate(six.iterbytes(chunk)):
                     n = "%02X" % x
                     if self.args.track and self.last_memory and self.last_address == m_res.address:
                         if x != six.indexbytes(self.last_memory, c + i):
-                            yield (Error, n)
+                            #yield (Error, n)
+                            byte_array.append((Error, n))
                         else:
-                            yield (Text, n)
+                            #yield (Text, n)
+                            byte_array.append((Text, n))
                     else:
-                        yield (Text, n)
+                        #yield (Text, n)
+                        byte_array.append((Text, n))
+                    #yield (Text, ' ')
+
+                if self.args.words:
+                    for x in reversed(byte_array):
+                        yield x
                     yield (Text, ' ')
+                else:
+                    for x in byte_array:
+                        yield x
+                        yield (Text, ' ')
 
                 # ASCII representation
+                ascii_array = []
                 yield (Punctuation, '| ')
                 for i, x in enumerate(six.iterbytes(chunk)):
                     token = String.Char
                     if self.args.track and self.last_memory and self.last_address == m_res.address:
                         if x != six.indexbytes(self.last_memory, c + i):
                             token = Error
-                    yield (token, ((x <= 127 and self.printable_filter[x]) or '.'))
+                    #yield (token, ((x <= 127 and self.printable_filter[x]) or '.'))
+                    ascii_array.append((token, ((x <= 127 and self.printable_filter[x]) or '.')))
+
+                if self.args.words:
+                    for x in reversed(ascii_array):
+                        yield x
+                else:
+                    for x in ascii_array:
+                        yield x
                 yield (Punctuation, ' | ')
 
                 # Deref chain
