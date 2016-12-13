@@ -108,21 +108,13 @@ class MemoryView(TerminalView):
                         yield (Text, ' ')
 
                 # ASCII representation
-                ascii_array = []
                 yield (Punctuation, '| ')
                 for i, x in enumerate(six.iterbytes(chunk)):
                     token = String.Char
                     if self.args.track and self.last_memory and self.last_address == m_res.address:
                         if x != six.indexbytes(self.last_memory, c + i):
                             token = Error
-                    ascii_array.append((token, ((x <= 127 and self.printable_filter[x]) or '.')))
-
-                if self.args.words:
-                    for x in reversed(ascii_array):
-                        yield x
-                else:
-                    for x in ascii_array:
-                        yield x
+                    yield (token, ((x <= 127 and self.printable_filter[x]) or '.'))
                 yield (Punctuation, ' | ')
 
                 # Deref chain
