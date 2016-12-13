@@ -92,15 +92,11 @@ class MemoryView(TerminalView):
                     n = "%02X" % x
                     if self.args.track and self.last_memory and self.last_address == m_res.address:
                         if x != six.indexbytes(self.last_memory, c + i):
-                            #yield (Error, n)
                             byte_array.append((Error, n))
                         else:
-                            #yield (Text, n)
                             byte_array.append((Text, n))
                     else:
-                        #yield (Text, n)
                         byte_array.append((Text, n))
-                    #yield (Text, ' ')
 
                 if self.args.words:
                     for x in reversed(byte_array):
@@ -119,7 +115,6 @@ class MemoryView(TerminalView):
                     if self.args.track and self.last_memory and self.last_address == m_res.address:
                         if x != six.indexbytes(self.last_memory, c + i):
                             token = Error
-                    #yield (token, ((x <= 127 and self.printable_filter[x]) or '.'))
                     ascii_array.append((token, ((x <= 127 and self.printable_filter[x]) or '.')))
 
                 if self.args.words:
