@@ -29,6 +29,7 @@ class MemoryView(TerminalView):
         sp.add_argument('--reverse', '-v', action='store_true', help='reverse the output', default=False)
         sp.add_argument('--track', '-t', action='store_true', help='track and highlight changes', default=True)
         sp.add_argument('--no-track', '-T', action='store_false', help='don\'t track and highlight changes')
+        sp.add_argument('--words', '-w', action='store_true', help='display data as a column of machine words', default=False)
         group = sp.add_mutually_exclusive_group(required=False)
         group.add_argument('--address', '-a', action='store',
                            help='address (in hex or decimal) from which to start reading memory')
@@ -86,16 +87,27 @@ class MemoryView(TerminalView):
                 yield (Name.Label, ': ')
 
                 # Hex bytes
+                byte_array = []
                 for i, x in enumerate(six.iterbytes(chunk)):
                     n = "%02X" % x
                     if self.args.track and self.last_memory and self.last_address == m_res.address:
                         if x != six.indexbytes(self.last_memory, c + i):
-                            yield (Error, n)
+                            byte_array.append((Error, n))
                         else:
-                            yield (Text, n)
+                            byte_array.append((Text, n))
                     else:
-                        yield (Text, n)
+                        byte_array.append((Text, n))
+
+                if self.args.words:
+                    if target['byte_order']  =='little':
+                        byte_array.reverse()
+                    for x in byte_array:
+                        yield x
                     yield (Text, ' ')
+                else:
+                    for x in byte_array:
+                        yield x
+                        yield (Text, ' ')
 
                 # ASCII representation
                 yield (Punctuation, '| ')
@@ -139,7 +151,7 @@ class MemoryView(TerminalView):
         if t_res and t_res.is_success and len(t_res.targets) > 0:
             target = t_res.targets[0]
 
-            if self.args.deref:
+            if self.args.deref or self.args.words:
                 self.args.bytes = target['addr_size']
 
             f = pygments.formatters.get_formatter_by_name(self.config.format.pygments_formatter,
@@ -192,6 +204,7 @@ class StackView(MemoryView):
     def build_requests(self):
         self.args.reverse = True
         self.args.deref = True
+        self.args.words = False
         self.args.register = 'sp'
         self.args.command = None
         self.args.address = None
