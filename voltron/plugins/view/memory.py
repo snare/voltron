@@ -100,11 +100,9 @@ class MemoryView(TerminalView):
 
                 if self.args.words:
                     if target['byte_order']  =='little':
-                        for x in reversed(byte_array):
-                            yield x
-                    else:
-                        for x in byte_array:
-                            yield x
+                        byte_array.reverse()
+                    for x in byte_array:
+                        yield x
                     yield (Text, ' ')
                 else:
                     for x in byte_array:
