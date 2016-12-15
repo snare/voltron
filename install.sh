@@ -66,7 +66,7 @@ if [ -n "${GDB}" ]; then
     GDB_PYTHON=$(${GDB} -batch -q --nx -ex 'pi import sys; print(sys.executable)')
     GDB_PYTHON="${GDB_PYTHON}${GDB_PYVER}"
 
-    install_apt($GDB_PYVER)
+    install_apt $GDB_PYVER
 
     if [ -z $USER_MODE ]; then
         GDB_SITE_PACKAGES=$(${GDB} -batch -q --nx -ex 'pi import site; print(site.getsitepackages()[0])')
@@ -99,7 +99,7 @@ if [ -n "${LLDB}" ]; then
         LLDB_SITE_PACKAGES=$(${LLDB} -Qxb --one-line 'script import site; print(site.getusersitepackages())'|tail -1)
     fi
 
-    install_apt($LLDB_PYVER)
+    install_apt $LLDB_PYVER
 
     if [ "$LLDB_SITE_PACKAGES" == "$GDB_SITE_PACKAGES" ]; then
         echo "Skipping installation for LLDB - same site-packages directory"
@@ -129,7 +129,7 @@ if [ -z "${GDB}" ] && [ -z "${LLDB}" ]; then
         PYTHON_SITE_PACKAGES=$(${PYTHON} -c 'import site; print(site.getusersitepackages())')
     fi
 
-    install_apt($PYVER)
+    install_apt $PYVER
 
     # Install Voltron and dependencies
     ${SUDO} ${PYTHON} -m pip install -U $USER_MODE $DEV_MODE .
