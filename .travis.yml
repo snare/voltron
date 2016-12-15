@@ -26,13 +26,13 @@ addons:
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update ; brew install python ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update -qq ; sudo apt-get install lldb-3.4 ; fi
 
 install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install mock pexpect nose ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip install mock pexpect nose  --user; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install . ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip install . --user; fi
+  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install mock pexpect nose ; fi
+  # - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip install mock pexpect nose  --user; fi
+  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install . ; fi
+  # - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip install . --user; fi
+  - ./install.sh -u
 
 script:
   - python --version
