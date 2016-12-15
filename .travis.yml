@@ -14,7 +14,7 @@ addons:
     packages:
       - build-essential
       - gdb
-      - python3.4-pip
+      - lldb-3.6
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update ; brew install python ; fi
