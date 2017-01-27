@@ -78,7 +78,10 @@ if [ -n "${GDB}" ]; then
 
     # Add Voltron to gdbinit
     GDB_INIT_FILE="${HOME}/.gdbinit"
-    sed -i.bak '/voltron/d' ${GDB_INIT_FILE}
+    if [ -e ${GDB_INIT_FILE} ]; then
+        sed -i.bak '/voltron/d' ${GDB_INIT_FILE}
+    fi
+
     if [ -z $DEV_MODE ]; then
         GDB_ENTRY_FILE="$GDB_SITE_PACKAGES/voltron/entry.py"
     else
@@ -109,7 +112,10 @@ if [ -n "${LLDB}" ]; then
 
     # Add Voltron to lldbinit
     LLDB_INIT_FILE="${HOME}/.lldbinit"
-    sed -i.bak '/voltron/d' ${LLDB_INIT_FILE}
+    if [ -e ${LLDB_INIT_FILE} ]; then
+        sed -i.bak '/voltron/d' ${LLDB_INIT_FILE}
+    fi
+
     if [ -z $DEV_MODE ]; then
         LLDB_ENTRY_FILE="$LLDB_SITE_PACKAGES/voltron/entry.py"
     else
