@@ -13,6 +13,8 @@ SUDO='sudo'
 GDB=$(command -v gdb)
 LLDB=$(command -v lldb)
 APT_GET=$(command -v apt-get)
+YUM_YUM=$(command -v yum)
+YUM_DNF=$(command -v dnf)
 
 set -x
 
@@ -59,13 +61,42 @@ function install_apt {
     fi
 }
 
+function install_yum {
+    local CMD=""
+    if [ -n "${YUM_DNF}" ]; then
+        CMD=$YUM_DNF
+    else
+        if [ -n "${YUM_YUM}" ]; then
+            CMD=$YUM_YUM
+	fi
+    fi
+
+    if [ "${CMD}" != "" ]; then
+        local PARAMS="--assumeyes"
+        if [ -z "${SKIP_UPDATE}" ]; then
+            PARAMS="$PARAMS --refresh"
+        fi
+
+        if echo $PYVER|grep "3\."; then
+            sudo $CMD $PARAMS install readline-devel python3-devel python3-setuptools python3-yaml python3-pip
+        else
+            sudo $CMD $PARAMS install readline-devel python-devel python-setuptools python-yaml python-pip
+        fi
+    fi
+}
+
+function install_packages {
+    install_apt
+    install_yum
+}
+
 if [ -n "${GDB}" ]; then
     # Find the Python version used by GDB
     GDB_PYVER=$(${GDB} -batch -q --nx -ex 'pi import platform; print(".".join(platform.python_version_tuple()[:2]))')
     GDB_PYTHON=$(${GDB} -batch -q --nx -ex 'pi import sys; print(sys.executable)')
     GDB_PYTHON="${GDB_PYTHON}${GDB_PYVER}"
 
-    install_apt
+    install_packages
 
     if [ -z $USER_MODE ]; then
         GDB_SITE_PACKAGES=$(${GDB} -batch -q --nx -ex 'pi import site; print(site.getsitepackages()[0])')
@@ -101,7 +132,7 @@ if [ -n "${LLDB}" ]; then
         LLDB_SITE_PACKAGES=$(${LLDB} -Qxb --one-line 'script import site; print(site.getusersitepackages())'|tail -1)
     fi
 
-    install_apt
+    install_packages
 
     if [ "$LLDB_SITE_PACKAGES" == "$GDB_SITE_PACKAGES" ]; then
         echo "Skipping installation for LLDB - same site-packages directory"
@@ -134,7 +165,7 @@ if [ -z "${GDB}" ] && [ -z "${LLDB}" ]; then
         PYTHON_SITE_PACKAGES=$(${PYTHON} -c 'import site; print(site.getusersitepackages())')
     fi
 
-    install_apt
+    install_packages
 
     # Install Voltron and dependencies
     ${SUDO} ${PYTHON} -m pip install -U $USER_MODE $DEV_MODE .
