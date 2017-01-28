@@ -5,16 +5,21 @@
 #
 # Adapted from pwndbg's install script.
 #
-# Usage: ./install.sh [ -u -d ]
+# Usage: ./install.sh [ -u -d ] [ -b BACKEND ]
 #   -u      Install to user's site-packages directory
 #   -d      Install in developer mode (-e flag passed to pip)
-#
+#   -b      Select backend ("", "gdb", "lldb", or "gdb,lldb") to install for
 SUDO='sudo'
 GDB=$(command -v gdb)
 LLDB=$(command -v lldb)
 APT_GET=$(command -v apt-get)
 YUM_YUM=$(command -v yum)
 YUM_DNF=$(command -v dnf)
+
+[[ -z "${GDB}" ]]
+BACKEND_GDB=$?
+[[ -z "${LLDB}" ]]
+BACKEND_LLDB=$?
 
 set -x
 
@@ -27,7 +32,7 @@ if [ -z "${LLDB}" ]; then
     done
 fi
 
-while getopts ":uds" opt; do
+while getopts ":udsb:" opt; do
   case $opt in
     u)
       USER_MODE='--user'
@@ -39,12 +44,29 @@ while getopts ":uds" opt; do
     s)
       SKIP_UPDATE='-s'
       ;;
+    b)
+      [[ ! "${OPTARG}" =~ "gdb" ]]
+      BACKEND_GDB=$?
+      
+      [[ ! "${OPTARG}" =~ "lldb" ]]
+      BACKEND_LLDB=$?
+      ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
       exit 1
       ;;
   esac
 done
+
+if [ "${BACKEND_GDB}" -eq 1 ] && [ -z "${GDB}" ]; then
+    echo "Requested to install voltron for gdb, but gdb not present on the system"
+    exit 1
+fi
+if [ "${BACKEND_LLDB}" -eq 1 ] && [ -z "${LLDB}" ]; then
+    echo "Requested to install voltron for lldb, but lldb not present on the system"
+    exit 1
+fi
+
 
 set -e
 
@@ -90,7 +112,8 @@ function install_packages {
     install_yum
 }
 
-if [ -n "${GDB}" ]; then
+
+if [ "${BACKEND_GDB}" -eq 1 ]; then
     # Find the Python version used by GDB
     GDB_PYVER=$(${GDB} -batch -q --nx -ex 'pi import platform; print(".".join(platform.python_version_tuple()[:2]))')
     GDB_PYTHON=$(${GDB} -batch -q --nx -ex 'pi import sys; print(sys.executable)')
@@ -121,7 +144,7 @@ if [ -n "${GDB}" ]; then
     echo "source $GDB_ENTRY_FILE" >> ${GDB_INIT_FILE}
 fi
 
-if [ -n "${LLDB}" ]; then
+if [ "${BACKEND_LLDB}" -eq 1 ]; then
     # Find the Python version used by LLDB
     LLDB_PYVER=$(${LLDB} -Qxb --one-line 'script import platform; print(".".join(platform.python_version_tuple()[:2]))'|tail -1)
     LLDB_PYTHON=$(${LLDB} -Qxb --one-line 'script import sys; print(sys.executable)'|tail -1)
@@ -155,7 +178,7 @@ if [ -n "${LLDB}" ]; then
     echo "command script import $LLDB_ENTRY_FILE" >> ${LLDB_INIT_FILE}
 fi
 
-if [ -z "${GDB}" ] && [ -z "${LLDB}" ]; then
+if [ "${BACKEND_GDB}" -ne 1 ] && [ "${BACKEND_LLDB}" -ne 1 ]; then
     # Find system Python
     PYTHON=$(command -v python)
     PYVER=$(${PYTHON} -c 'import platform; print(".".join(platform.python_version_tuple()[:2]))')
@@ -173,22 +196,28 @@ fi
 
 set +x
 echo "=============================================================="
-if [ -n "${GDB}" ]; then
+if [ "${BACKEND_GDB}" -eq 1 ]; then
     echo "Installed for GDB (${GDB}):"
     echo "  Python:             $GDB_PYTHON"
     echo "  Packages directory: $GDB_SITE_PACKAGES"
     echo "  Added voltron to:   $GDB_INIT_FILE"
     echo "  Entry point:        $GDB_ENTRY_FILE"
 fi
-if [ -n "${LLDB}" ]; then
+if [ "${BACKEND_LLDB}" -eq 1 ]; then
     echo "Installed for LLDB (${LLDB}):"
     echo "  Python:             $LLDB_PYTHON"
     echo "  Packages directory: $LLDB_SITE_PACKAGES"
     echo "  Added voltron to:   $LLDB_INIT_FILE"
     echo "  Entry point:        $LLDB_ENTRY_FILE"
 fi
-if [ -z "${GDB}" ] && [ -z "${LLDB}" ]; then
-    echo "Couldn't find any debuggers. Installed using the Python in your path:"
+if [ "${BACKEND_GDB}" -ne 1 ] && [ "${BACKEND_LLDB}" -ne 1 ]; then
+    if [ -z "${GDB}" ] && [ -z "${LLDB}" ]; then
+        echo -n "Couldn't find any debuggers. "
+    else
+        echo -n "No debuggers selected. "
+    fi
+
+    echo "Installed using the Python in your path:"
     echo "  Python:             $PYTHON"
     echo "  Packages directory: $PYTHON_SITE_PACKAGES"
     echo "  Did not add Voltron to any debugger init files."
