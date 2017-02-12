@@ -117,7 +117,7 @@ if [ "${BACKEND_GDB}" -eq 1 ]; then
     # Find the Python version used by GDB
     GDB_PYVER=$(${GDB} -batch -q --nx -ex 'pi import platform; print(".".join(platform.python_version_tuple()[:2]))')
     GDB_PYTHON=$(${GDB} -batch -q --nx -ex 'pi import sys; print(sys.executable)')
-    GDB_PYTHON="${GDB_PYTHON}${GDB_PYVER}"
+    GDB_PYTHON="${GDB_PYTHON/%$GDB_PYVER/}${GDB_PYVER}"
 
     install_packages
 
@@ -148,7 +148,7 @@ if [ "${BACKEND_LLDB}" -eq 1 ]; then
     # Find the Python version used by LLDB
     LLDB_PYVER=$(${LLDB} -Qxb --one-line 'script import platform; print(".".join(platform.python_version_tuple()[:2]))'|tail -1)
     LLDB_PYTHON=$(${LLDB} -Qxb --one-line 'script import sys; print(sys.executable)'|tail -1)
-    LLDB_PYTHON="${LLDB_PYTHON}${LLDB_PYVER}"
+    LLDB_PYTHON="${LLDB_PYTHON/%$LLDB_PYVER/}${LLDB_PYVER}"
     if [ -z $USER_MODE ]; then
         LLDB_SITE_PACKAGES=$(${LLDB} -Qxb --one-line 'script import site; print(site.getsitepackages()[0])'|tail -1)
     else
