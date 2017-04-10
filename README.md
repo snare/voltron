@@ -54,9 +54,13 @@ Download the source and run the install script:
     $ cd voltron
     $ ./install.sh
 
-If you want to install Python packages into the user `site-packages` directory, use the `-u` flag:
+By default, the install script will install into the user's `site-packages` directory. If you want to install into the system `site-packages`, use the `-s` flag:
 
-    $ ./install.sh -u
+    $ ./install.sh -s
+
+You can also install into a virtual environment (for LLDB only) like this:
+
+    $ ./install.sh -v /path/to/venv -b lldb
 
 If you are on Windows without a shell, have problems installing, or would prefer to install manually, please see the [manual installation documentation](https://github.com/snare/voltron/wiki/Installation).
 
