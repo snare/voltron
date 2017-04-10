@@ -3,25 +3,41 @@
 # Install Voltron for whichever debuggers are detected (only GDB and LLDB so
 # far).
 #
-# Adapted from pwndbg's install script.
-#
-# Usage: ./install.sh [ -u -d ] [ -b BACKEND ]
-#   -u      Install to user's site-packages directory
-#   -d      Install in developer mode (-e flag passed to pip)
-#   -b      Select backend ("", "gdb", "lldb", or "gdb,lldb") to install for
-SUDO='sudo'
+
+function usage {
+    cat <<END
+Voltron installer script.
+
+This script will attempt to find GDB/LLDB, infer the correct Python to use, and
+install Voltron. By default it will attempt to detect a single version of each
+GDB  and LLDB, and will install into the user's site-packages directory. The
+options below can be used to change this behaviour.
+
+Usage: ./install.sh [ -s -d -S ] [ -v virtualenv ] [ -b BACKEND ]
+  -s            Install to system's site-packages directory
+  -d            Install in developer mode (-e flag passed to pip)
+  -v venv       Install into a virtualenv (only for LLDB)
+  -b debugger   Select debugger backend ("", "gdb", "lldb", or "gdb,lldb") for
+                which to install
+  -S            Skip package manager (apt/yum) update
+END
+    exit 1
+}
+
 GDB=$(command -v gdb)
 LLDB=$(command -v lldb)
 APT_GET=$(command -v apt-get)
 YUM_YUM=$(command -v yum)
 YUM_DNF=$(command -v dnf)
 
+# Default to --user install without sudo
+USER_MODE='--user'
+SUDO=''
+
 [[ -z "${GDB}" ]]
 BACKEND_GDB=$?
 [[ -z "${LLDB}" ]]
 BACKEND_LLDB=$?
-
-set -x
 
 if [ -z "${LLDB}" ]; then
     for i in `seq 6 8`; do
@@ -32,16 +48,20 @@ if [ -z "${LLDB}" ]; then
     done
 fi
 
-while getopts ":udsb:" opt; do
+while getopts ":dsSb:v:" opt; do
   case $opt in
-    u)
-      USER_MODE='--user'
-      SUDO=''
+    s)
+      USER_MODE=''
+      SUDO=$(command -v sudo)
       ;;
     d)
       DEV_MODE="-e"
       ;;
-    s)
+    v)
+      VENV="${OPTARG}"
+      SUDO=''
+      ;;
+    S)
       SKIP_UPDATE='-s'
       ;;
     b)
@@ -52,8 +72,7 @@ while getopts ":udsb:" opt; do
       BACKEND_LLDB=$?
       ;;
     \?)
-      echo "Invalid option: -$OPTARG" >&2
-      exit 1
+      usage
       ;;
   esac
 done
@@ -67,8 +86,7 @@ if [ "${BACKEND_LLDB}" -eq 1 ] && [ -z "${LLDB}" ]; then
     exit 1
 fi
 
-
-set -e
+set -ex
 
 function install_apt {
     if [ -n "${APT_GET}" ]; then
@@ -112,7 +130,6 @@ function install_packages {
     install_yum
 }
 
-
 if [ "${BACKEND_GDB}" -eq 1 ]; then
     # Find the Python version used by GDB
     GDB_PYVER=$(${GDB} -batch -q --nx -ex 'pi import platform; print(".".join(platform.python_version_tuple()[:2]))')
@@ -149,7 +166,16 @@ if [ "${BACKEND_LLDB}" -eq 1 ]; then
     LLDB_PYVER=$(${LLDB} -Qxb --one-line 'script import platform; print(".".join(platform.python_version_tuple()[:2]))'|tail -1)
     LLDB_PYTHON=$(${LLDB} -Qxb --one-line 'script import sys; print(sys.executable)'|tail -1)
     LLDB_PYTHON="${LLDB_PYTHON/%$LLDB_PYVER/}${LLDB_PYVER}"
-    if [ -z $USER_MODE ]; then
+
+    ${LLDB_PYTHON} -m pip install --user --upgrade six    
+
+    if [ -n "${VENV}" ]; then
+        echo "Creating virtualenv..."
+        ${LLDB_PYTHON} -m pip install --user virtualenv
+        ${LLDB_PYTHON} -m virtualenv "${VENV}"
+        LLDB_PYTHON="${VENV}/bin/python"
+        LLDB_SITE_PACKAGES=$(find "${VENV}" -name site-packages)
+    elif [ -z "${USER_MODE}" ]; then
         LLDB_SITE_PACKAGES=$(${LLDB} -Qxb --one-line 'script import site; print(site.getsitepackages()[0])'|tail -1)
     else
         LLDB_SITE_PACKAGES=$(${LLDB} -Qxb --one-line 'script import site; print(site.getusersitepackages())'|tail -1)
@@ -170,10 +196,14 @@ if [ "${BACKEND_LLDB}" -eq 1 ]; then
         sed -i.bak '/voltron/d' ${LLDB_INIT_FILE}
     fi
 
-    if [ -z $DEV_MODE ]; then
+    if [ -z "${DEV_MODE}" ]; then
         LLDB_ENTRY_FILE="$LLDB_SITE_PACKAGES/voltron/entry.py"
     else
         LLDB_ENTRY_FILE="$(pwd)/voltron/entry.py"
+    fi
+
+    if [ -n "${VENV}" ]; then
+        echo "script import sys;sys.path.append('${LLDB_SITE_PACKAGES}')" >> ${LLDB_INIT_FILE}
     fi
     echo "command script import $LLDB_ENTRY_FILE" >> ${LLDB_INIT_FILE}
 fi
