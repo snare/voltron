@@ -396,7 +396,7 @@ if HAVE_LLDB:
                 ci.HandleCommand(str(command), res, False)
                 if res.Succeeded():
                     output = res.GetOutput()
-                    return output.strip() if output else None
+                    return output.strip() if output else ""
                 else:
                     raise Exception(res.GetError().strip())
             else:
