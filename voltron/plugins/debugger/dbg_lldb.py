@@ -395,7 +395,8 @@ if HAVE_LLDB:
                 ci = self.host.GetCommandInterpreter()
                 ci.HandleCommand(str(command), res, False)
                 if res.Succeeded():
-                    return res.GetOutput().strip()
+                    output = res.GetOutput()
+                    return output.strip() if output else ""
                 else:
                     raise Exception(res.GetError().strip())
             else:
