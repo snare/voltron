@@ -252,3 +252,28 @@ if [ "${BACKEND_GDB}" -ne 1 ] && [ "${BACKEND_LLDB}" -ne 1 ]; then
     echo "  Packages directory: $PYTHON_SITE_PACKAGES"
     echo "  Did not add Voltron to any debugger init files."
 fi
+
+found_exe() {
+	VALUE=$(echo "${PATH}" | sed $'s/:/\\\n/g' | while read -r line; do 
+		if [ -x "${line}/voltron" ]; then 
+			echo "1"
+			break
+		fi
+	done)
+	[ -z "$VALUE" ] && echo "0" || echo "1"
+}
+
+if [ "${BACKEND_GDB}" -eq 1 ] || [ "${BACKEND_LLDB}" -eq 1 ]; then
+	if [ "$(found_exe)" -eq "0"  ]; then 
+		PREFIX_DIR=${PYTHON_SITE_PACKAGES%lib*}
+		if ! [ "${PREFIX_DIR}" == "${PYTHON_SITE_PACKAGES}" ]; then 
+			BIN_DIR=${PREFIX_DIR}bin
+			if [ -e "${BIN_DIR}/voltron" ]; then
+				printf "\nIf have issues of comand not found, one of the following lines should help.\n"
+				printf "  export PATH=\"\$PATH:%s\" >> ~/.bashrc" "$BIN_DIR"
+				printf "  export PATH=\"\$PATH:%s\" >> ~/.zshrc" "$BIN_DIR"
+			fi
+		fi
+	fi
+fi
+
