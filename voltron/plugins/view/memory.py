@@ -100,10 +100,12 @@ class MemoryView(TerminalView):
 
                 if self.args.words:
                     if target['byte_order']  =='little':
-                        byte_array.reverse()
-                    for x in byte_array:
-                        yield x
-                    yield (Text, ' ')
+                        byte_array_words = [byte_array[i:i+ target['addr_size']] for i in range(0, self.args.bytes, target['addr_size'])]
+                        for word in byte_array_words:
+                            word.reverse()
+                            for x in word:
+                                yield x
+                            yield (Text, ' ')
                 else:
                     for x in byte_array:
                         yield x
@@ -151,7 +153,7 @@ class MemoryView(TerminalView):
         if t_res and t_res.is_success and len(t_res.targets) > 0:
             target = t_res.targets[0]
 
-            if self.args.deref or self.args.words:
+            if self.args.deref:
                 self.args.bytes = target['addr_size']
 
             f = pygments.formatters.get_formatter_by_name(self.config.format.pygments_formatter,
