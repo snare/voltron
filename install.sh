@@ -59,6 +59,7 @@ while getopts ":dsSb:v:" opt; do
       ;;
     v)
       VENV="${OPTARG}"
+      USER_MODE=''
       SUDO=''
       ;;
     S)
