@@ -26,10 +26,11 @@ class MemoryView(TerminalView):
                            help='display the data in a column one CPU word wide and dereference any valid pointers',
                            default=False)
         group.add_argument('--bytes', '-b', action='store', type=int, help='bytes per line (default 16)', default=16)
+        group.add_argument('--words', '-w', action='store', type=int, help='display data as machine words (default 1 word per line)', default=1)
         sp.add_argument('--reverse', '-v', action='store_true', help='reverse the output', default=False)
         sp.add_argument('--track', '-t', action='store_true', help='track and highlight changes', default=True)
         sp.add_argument('--no-track', '-T', action='store_false', help='don\'t track and highlight changes')
-        sp.add_argument('--words', '-w', action='store_true', help='display data as a column of machine words', default=False)
+        
         group = sp.add_mutually_exclusive_group(required=False)
         group.add_argument('--address', '-a', action='store',
                            help='address (in hex or decimal) from which to start reading memory')
@@ -81,8 +82,9 @@ class MemoryView(TerminalView):
             target = t_res.targets[0]
 
         if m_res and m_res.is_success:
-            for c in range(0, m_res.bytes, self.args.bytes):
-                chunk = m_res.memory[c:c + self.args.bytes]
+            bytes_per_chunk = self.args.words*target['addr_size'] if self.args.words else self.args.bytes
+            for c in range(0, m_res.bytes, bytes_per_chunk):
+                chunk = m_res.memory[c:c + bytes_per_chunk]
                 yield (Name.Label, self.format_address(m_res.address + c, size=target['addr_size'], pad=False))
                 yield (Name.Label, ': ')
 
@@ -100,7 +102,7 @@ class MemoryView(TerminalView):
 
                 if self.args.words:
                     if target['byte_order']  =='little':
-                        byte_array_words = [byte_array[i:i+ target['addr_size']] for i in range(0, self.args.bytes, target['addr_size'])]
+                        byte_array_words = [byte_array[i:i+ target['addr_size']] for i in range(0, bytes_per_chunk, target['addr_size'])]
                         for word in byte_array_words:
                             word.reverse()
                             for x in word:
@@ -153,7 +155,7 @@ class MemoryView(TerminalView):
         if t_res and t_res.is_success and len(t_res.targets) > 0:
             target = t_res.targets[0]
 
-            if self.args.deref:
+            if self.args.deref or self.args.words:
                 self.args.bytes = target['addr_size']
 
             f = pygments.formatters.get_formatter_by_name(self.config.format.pygments_formatter,
