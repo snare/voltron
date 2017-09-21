@@ -26,7 +26,7 @@ class MemoryView(TerminalView):
                            help='display the data in a column one CPU word wide and dereference any valid pointers',
                            default=False)
         group.add_argument('--bytes', '-b', action='store', type=int, help='bytes per line (default 16)', default=16)
-        group.add_argument('--words', '-w', action='store', type=int, help='display data as machine words (default 1 word per line)', default=0)
+        group.add_argument('--words', '-w', action='store', type=int, help='machine words per line', default=0)
         sp.add_argument('--reverse', '-v', action='store_true', help='reverse the output', default=False)
         sp.add_argument('--track', '-t', action='store_true', help='track and highlight changes', default=True)
         sp.add_argument('--no-track', '-T', action='store_false', help='don\'t track and highlight changes')
