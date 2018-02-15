@@ -196,11 +196,11 @@ class StackView(MemoryView):
         sp = subparsers.add_parser('stack', help='display a chunk of stack memory', aliases=('s', 'st'))
         VoltronView.add_generic_arguments(sp)
         sp.set_defaults(func=StackView)
+        sp.add_argument('--reverse', '-v', action='store_false', help='(un)reverse the output', default=True)
         sp.add_argument('--track', '-t', action='store_true', help='track and highlight changes', default=True)
         sp.add_argument('--no-track', '-T', action='store_false', help='don\'t track and highlight changes')
 
     def build_requests(self):
-        self.args.reverse = True
         self.args.deref = True
         self.args.words = False
         self.args.register = 'sp'
