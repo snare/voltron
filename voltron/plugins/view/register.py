@@ -415,7 +415,7 @@ class RegisterView (TerminalView):
         sp.add_argument('--fpu', '-p', dest="sections", action='append_const', const="fpu", help='show fpu registers')
         sp.add_argument('--no-fpu', '-P', dest="sections", action='append_const', const="no_fpu",
                         help='hide fpu registers')
-        sp.add_argument('--hide-info', '-I',dest="hide_info", action='store_true', help='show info (pointer derefs, ascii) for registers',
+        sp.add_argument('--hide-info', '-I',dest="hide_info", action='store_true', help='hide extra info (pointer derefs, ascii) for registers',
                         default=False)
 
     def __init__(self, *args, **kwargs):
