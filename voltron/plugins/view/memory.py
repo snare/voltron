@@ -90,13 +90,11 @@ class MemoryView(TerminalView):
                 byte_array = []
                 for i, x in enumerate(six.iterbytes(chunk)):
                     n = "%02X" % x
+                    token = Text if x else Comment
                     if self.args.track and self.last_memory and self.last_address == m_res.address:
                         if x != six.indexbytes(self.last_memory, c + i):
-                            byte_array.append((Error, n))
-                        else:
-                            byte_array.append((Text, n))
-                    else:
-                        byte_array.append((Text, n))
+                            token = Error
+                    byte_array.append((token, n))
 
                 if self.args.words:
                     if target['byte_order']  =='little':
@@ -112,7 +110,7 @@ class MemoryView(TerminalView):
                 # ASCII representation
                 yield (Punctuation, '| ')
                 for i, x in enumerate(six.iterbytes(chunk)):
-                    token = String.Char
+                    token = String.Char if x else Comment
                     if self.args.track and self.last_memory and self.last_address == m_res.address:
                         if x != six.indexbytes(self.last_memory, c + i):
                             token = Error
