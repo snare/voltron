@@ -415,8 +415,8 @@ class RegisterView (TerminalView):
         sp.add_argument('--fpu', '-p', dest="sections", action='append_const', const="fpu", help='show fpu registers')
         sp.add_argument('--no-fpu', '-P', dest="sections", action='append_const', const="no_fpu",
                         help='hide fpu registers')
-        sp.add_argument('--info', '-i', action='store_true', help='show info (pointer derefs, ascii) for registers',
-                        default=True)
+        sp.add_argument('--hide-info', '-I',dest="hide_info", action='store_true', help='show info (pointer derefs, ascii) for registers',
+                        default=False)
 
     def __init__(self, *args, **kwargs):
         super(RegisterView, self).__init__(*args, **kwargs)
@@ -528,7 +528,7 @@ class RegisterView (TerminalView):
                         formatted[fmt['format_name']] = formatted_reg
 
                     # Format the info
-                    if self.args.info:
+                    if not self.args.hide_info:
                         info = ""
                         try:
                             l = {2: 'H', 4: 'L', 8: 'Q'}[t_res.targets[0]['addr_size']]
