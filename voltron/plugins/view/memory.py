@@ -26,10 +26,11 @@ class MemoryView(TerminalView):
                            help='display the data in a column one CPU word wide and dereference any valid pointers',
                            default=False)
         group.add_argument('--bytes', '-b', action='store', type=int, help='bytes per line (default 16)', default=16)
+        group.add_argument('--words', '-w', action='store', type=int, help='machine words per line', default=0)
         sp.add_argument('--reverse', '-v', action='store_true', help='reverse the output', default=False)
         sp.add_argument('--track', '-t', action='store_true', help='track and highlight changes', default=True)
         sp.add_argument('--no-track', '-T', action='store_false', help='don\'t track and highlight changes')
-        sp.add_argument('--words', '-w', action='store_true', help='display data as a column of machine words', default=False)
+        
         group = sp.add_mutually_exclusive_group(required=False)
         group.add_argument('--address', '-a', action='store',
                            help='address (in hex or decimal) from which to start reading memory')
@@ -65,7 +66,7 @@ class MemoryView(TerminalView):
             args['words'] = height
             args['offset'] = self.scroll_offset if self.args.reverse else -self.scroll_offset
         else:
-            args['length'] = height * self.args.bytes
+            args['length'] = height * self.args.bytes * 2
             args['offset'] = self.scroll_offset * self.args.bytes * (1 if self.args.reverse else -1)
 
         # get memory and target info
@@ -81,8 +82,9 @@ class MemoryView(TerminalView):
             target = t_res.targets[0]
 
         if m_res and m_res.is_success:
-            for c in range(0, m_res.bytes, self.args.bytes):
-                chunk = m_res.memory[c:c + self.args.bytes]
+            bytes_per_chunk = self.args.words*target['addr_size'] if self.args.words else self.args.bytes
+            for c in range(0, m_res.bytes, bytes_per_chunk):
+                chunk = m_res.memory[c:c + bytes_per_chunk]
                 yield (Name.Label, self.format_address(m_res.address + c, size=target['addr_size'], pad=False))
                 yield (Name.Label, ': ')
 
@@ -98,10 +100,12 @@ class MemoryView(TerminalView):
 
                 if self.args.words:
                     if target['byte_order']  =='little':
-                        byte_array.reverse()
-                    for x in byte_array:
-                        yield x
-                    yield (Text, ' ')
+                        byte_array_words = [byte_array[i:i+ target['addr_size']] for i in range(0, bytes_per_chunk, target['addr_size'])]
+                        for word in byte_array_words:
+                            word.reverse()
+                            for x in word:
+                                yield x
+                            yield (Text, ' ')
                 else:
                     for x in byte_array:
                         yield x
