@@ -334,8 +334,8 @@ if HAVE_LLDB:
         @validate_target
         @lock_host
         def source_location(self, target_id=0, address=None):
-	    if target_id is None:
-		target_id=0
+            if target_id is None:
+                target_id=0
             if address == None:
                 pc_name, address = self.program_counter(target_id=target_id)
             t = self.host.GetTargetAtIndex(target_id or 0)
