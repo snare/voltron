@@ -42,7 +42,7 @@ def setup():
     voltron.setup_env()
 
     # compile test inferior
-    pexpect.run("cc -o tests/inferior tests/inferior.c")
+    pexpect.run("cc -g -o tests/inferior tests/inferior.c")
 
     # start debugger
     start_debugger()
@@ -124,6 +124,13 @@ def test_memory():
     assert res.status == 'success'
     assert len(res.memory) > 0
 
+def test_source_location():
+    res = client.perform_request('source_location', address=registers['rip'])
+    assert res.status == 'success'
+    assert not res.output is None
+    file, line = res.output
+    assert os.path.basename(file) == 'inferior.c'
+    assert line == 12
 
 def test_state_stopped():
     res = client.perform_request('state')
