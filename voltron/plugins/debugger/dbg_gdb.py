@@ -306,6 +306,23 @@ if HAVE_GDB:
 
             return output
 
+        @post_event
+        def source_location(self, target_id=0, address=None):
+            """
+            Get the source file name and line number of the given address.
+            This requires symbols to be loaded for the target.
+
+            `address` is the code address to resolve filename and
+            line number from. If None, the current program counter is used
+            """
+            if address == None:
+                pc_name, address = self._program_counter(target_id=target_id)
+            m = re.match('Line\\s+(\\d+)\\s+of\\s+"([^"]+)"', gdb.execute('info line *0x{:x}'.format(address), to_string=True))
+            if m != None:
+                file, line = m.group(2,1)
+                return (file, int(line))
+            return None
+
         @validate_busy
         @validate_target
         @post_event
