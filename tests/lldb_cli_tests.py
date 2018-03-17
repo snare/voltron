@@ -196,6 +196,12 @@ def test_disassemble():
     assert len(res.disassembly) > 0
     assert 'push' in res.disassembly
 
+def test_source_location():
+    restart()
+    time.sleep(1)
+    res = client.perform_request('source_location', address=registers['rip'])
+    assert res.status == 'success'
+    assert res.output is None
 
 def test_dereference():
     restart()
