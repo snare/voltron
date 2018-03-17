@@ -561,7 +561,11 @@ if HAVE_GDB:
             return vals
 
         def get_register_x86_64(self, reg):
-            return int(gdb.parse_and_eval('(long long)$'+reg)) & 0xFFFFFFFFFFFFFFFF
+            # Encountered some errors debugging Rust code with symbols
+            # Output was 0xdeadbeef <_some_func>
+            # With this hack, everything works, and nothing breaks
+            val = re.match('(^(?:0x[0-9a-fA-F]+)|(?:-?[0-9]+))', str(gdb.parse_and_eval('$'+reg))).group(1)
+            return int(val, 0) & 0xFFFFFFFFFFFFFFFF
 
         def get_registers_x86(self):
             # Get regular registers
