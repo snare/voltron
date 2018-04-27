@@ -33,24 +33,20 @@ class MemoryStrideView(TerminalView):
 
 
     async = True
+    prev_last_memory = None
     last_memory = None
     last_address = 0
     last_length = 0
-    view_style = {'hex_or_dec':'hex', 'word_size':4, 'unsigned':True}
+    view_style = {'hex_or_dec':'hex', 'word_size':4, 'unsigned':False}
 
     @classmethod
     def configure_subparser(cls, subparsers):
         sp = subparsers.add_parser('memorystride', help='display a chunk of memory', aliases=('ms', 'mems','memstride'))
         VoltronView.add_generic_arguments(sp)
         group = sp.add_mutually_exclusive_group(required=False)
-        group.add_argument('--deref', '-d', action='store_true',
-                           help='display the data in a column one CPU word wide and dereference any valid pointers',
-                           default=False)
         group.add_argument('--bytes', '-b', action='store', type=int, help='bytes per line (default 16)', default=16)
-        group.add_argument('--words', '-w', action='store', type=int, help='machine words per line', default=0)
-        group.add_argument('--stride', '-s', action='store', type=int, help='bytes between lines (default 128)', default=128)
-        group.add_argument('--rows', '-o', action='store', type=int, help='Lines to print (default 32)', default=32)
-        group.add_argument('--max', action='store', type=int, help='Lines to print (default 0)', default=0)
+        sp.add_argument('--stride', '-s', action='store', type=int, help='bytes between lines (default 128)', default=128)
+        sp.add_argument('--max', action='store', type=int, help='Lines to print (default 0)', default=0)
         sp.add_argument('--reverse', '-v', action='store_true', help='reverse the output', default=False)
         sp.add_argument('--track', '-t', action='store_true', help='track and highlight changes', default=True)
         sp.add_argument('--no-track', '-T', action='store_false', help='don\'t track and highlight changes')
@@ -83,11 +79,15 @@ class MemoryStrideView(TerminalView):
                     addr = int(self.args.address, 10)
                 except:
                     addr = int(self.args.address, 16)
+            # force address be 4-byte aligned
+            addr = int(addr/4)*4
             args = {'address': addr}
+
         else:
             args = {'register': 'sp'}
 
-        args['words'] = self.args.stride*self.args.rows
+
+        args['length'] = self.args.stride*height
         args['offset'] = self.scroll_offset*self.args.stride if self.args.reverse else -self.scroll_offset*self.args.stride
         if self.args.max:
             args['length'] = self.args.max
@@ -95,7 +95,7 @@ class MemoryStrideView(TerminalView):
         # get memory and target info
         return [
             api_request('targets'),
-            api_request('memory', deref=self.args.deref is True, **args)
+            api_request('memory', deref=False, **args)
         ]
 
     def generate_tokens(self, results):
@@ -106,9 +106,11 @@ class MemoryStrideView(TerminalView):
 
         if m_res and m_res.is_success:
             bytes_per_chunk = self.args.stride
-            row_len = self.args.words*self.view_style['word_size'] if self.args.words else self.args.bytes
+            row_len = self.args.bytes
             m_res.memory = binascii.unhexlify(m_res.memory)
-            read_bytes = min(self.args.max, m_res.bytes)
+            read_bytes = m_res.bytes
+            if(self.args.max):
+                read_bytes = min(self.args.max, m_res.bytes)
             for c in range(0, read_bytes, bytes_per_chunk):
                 chunk = m_res.memory[c:c + row_len]
                 yield (Name.Label, self.format_address(m_res.address + c, size=target['addr_size'], pad=False))
@@ -116,7 +118,6 @@ class MemoryStrideView(TerminalView):
 
                 # Hex bytes
                 byte_array = []
-                #raw_byte_array = []
                 for i, x in enumerate(six.iterbytes(chunk)):
                     n = "%02X" % x
                     token = Text if x else Comment #Set color white or teal
@@ -127,7 +128,6 @@ class MemoryStrideView(TerminalView):
                             if x != six.indexbytes(self.last_memory, byte_addr - self.last_address):
                                 token = Error #Set color to red
                     byte_array.append((token, n))
-                    #raw_byte_array.append(x)
 
 
                 byte_array_words = [byte_array[i:i+ self.view_style['word_size']] for i in range(0, row_len, self.view_style['word_size'])]
@@ -185,9 +185,6 @@ class MemoryStrideView(TerminalView):
         if t_res and t_res.is_success and len(t_res.targets) > 0:
             target = t_res.targets[0]
 
-            if self.args.deref or self.args.words:
-                self.args.bytes = target['addr_size']
-
             f = pygments.formatters.get_formatter_by_name(self.config.format.pygments_formatter,
                                                           style=self.config.format.pygments_style)
 
@@ -202,6 +199,8 @@ class MemoryStrideView(TerminalView):
 
             # Store the memory
             if self.args.track:
+                #Annoying hack so viewing changes still see deltas
+                self.prev_last_memory = self.last_memory
                 self.last_address = m_res.address
                 self.last_memory = m_res.memory
                 self.last_length = m_res.bytes
@@ -209,7 +208,7 @@ class MemoryStrideView(TerminalView):
             self.body = self.colour("Failed to get targets", 'red')
 
         if not self.title:
-            self.title = "[memory]"
+            self.title = "[memoryStride (" + str(self.args.stride) + ") ]"
 
         super(MemoryStrideView, self).render(results)
 
@@ -245,12 +244,17 @@ class MemoryStrideView(TerminalView):
         except:
             raise
 
-    #@requires_async
-    def toggle_signed(self):
-        self.view_style['unsigned'] = not self.view_style['unsigned']
+    def kybd_update(self):
+        # Annoying hack so viewing changes still see deltas
+        self.last_memory = self.prev_last_memory
         self.client.update()
 
-    #@requires_async
+    @requires_async
+    def toggle_signed(self):
+        self.view_style['unsigned'] = not self.view_style['unsigned']
+        self.kybd_update()
+
+    @requires_async
     def toggle_length(self):
         x = int(math.log(self.view_style['word_size'], 2))
         x = (x+1)%4
@@ -259,37 +263,35 @@ class MemoryStrideView(TerminalView):
         if self.args.bytes % self.view_style['word_size'] != 0:
             # force bytes to be an even multiple of the word_size
             self.args.bytes &= ~(self.view_style['word_size'] - 1)
-        self.client.update()
+        self.kybd_update()
 
     @requires_async
     def dec_mode(self):
         self.view_style['hex_or_dec'] = 'dec'
-        self.client.update()
+        self.kybd_update()
 
     @requires_async
     def hex_mode(self):
         self.view_style['hex_or_dec'] = 'hex'
-        self.client.update()
+        self.kybd_update()
 
     @requires_async
     def inc_row_len(self):
-        if self.args.words:
-            self.args.words += 1
-        else:
-            self.args.bytes += self.view_style['word_size']
-            #force bytes to be an even multiple of the word_size
-            self.args.bytes &= ~(self.view_style['word_size']-1)
-        self.client.update()
+        x = self.args.bytes + self.view_style['word_size']
+        #force bytes to be an even multiple of the word_size
+        x &= ~(self.view_style['word_size']-1)
+        if x <= self.args.stride:
+            self.args.bytes = x
+        self.kybd_update()
 
     @requires_async
     def dec_row_len(self):
-        if self.args.words:
-            self.args.words -= 1
-        else:
-            self.args.bytes -= self.view_style['word_size']
-            #force bytes to be an even multiple of the word_size
-            self.args.bytes &= ~(self.view_style['word_size']-1)
-        self.client.update()
+        x = self.args.bytes - self.view_style['word_size']
+        #force bytes to be an even multiple of the word_size
+        x &= ~(self.view_style['word_size']-1)
+        if x > 0:
+            self.args.bytes = x
+        self.kybd_update()
 
 
 class MemoryStrideViewPlugin(ViewPlugin):
