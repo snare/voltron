@@ -46,6 +46,18 @@ if [ -z "${LLDB}" ]; then
             break
         fi
     done
+    for i in `seq 4 6`; do
+        LLDB=$(command -v lldb-$i.0)
+        if [ -n "${LLDB}" ]; then
+            break
+        fi
+    done
+    for i in `sec 7 8`; do
+        LLDB=$(command -v lldb-$i)
+        if [ -n "${LLDB}" ]; then
+            break
+        fi
+    done
 fi
 
 while getopts ":dsSb:v:" opt; do
@@ -53,6 +65,7 @@ while getopts ":dsSb:v:" opt; do
     s)
       USER_MODE=''
       SUDO=$(command -v sudo)
+      SUDO="${SUDO} -H"
       ;;
     d)
       DEV_MODE="-e"
@@ -68,7 +81,7 @@ while getopts ":dsSb:v:" opt; do
     b)
       [[ ! "${OPTARG}" =~ "gdb" ]]
       BACKEND_GDB=$?
-      
+
       [[ ! "${OPTARG}" =~ "lldb" ]]
       BACKEND_LLDB=$?
       ;;
@@ -127,8 +140,12 @@ function install_yum {
 }
 
 function install_packages {
-    install_apt
-    install_yum
+    if cat /etc/*release | grep -i '\(ubuntu\|debian\)' 2>&1 > /dev/null; then
+        install_apt
+    fi
+    if cat /etc/*release | grep -i '\(cent\|redhat\|fedora\)' 2>&1 > /dev/null; then
+        install_yum
+    fi
 }
 
 if [ "${BACKEND_GDB}" -eq 1 ]; then
