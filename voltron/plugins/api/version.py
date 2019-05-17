@@ -33,7 +33,7 @@ class APIVersionResponse(APISuccessResponse):
         "data": {
             "api_version":  1.0,
             "host_version": 'lldb-something',
-            "capabilities": ["async"]
+            "capabilities": ["_async"]
         }
     }
     """

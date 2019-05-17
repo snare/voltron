@@ -543,8 +543,8 @@ class Client(object):
                 if not self.server_version:
                     self.server_version = self.perform_request('version')
 
-                    # if the server supports async mode, use it, as some views may only work in async mode
-                    if self.server_version.capabilities and 'async' in self.server_version.capabilities:
+                    # if the server supports _async mode, use it, as some views may only work in async mode
+                    if self.server_version.capabilities and '_async' in self.server_version.capabilities:
                         self.update()
                         self.block = False
                     elif self.supports_blocking:
@@ -556,7 +556,7 @@ class Client(object):
                     # synchronous requests
                     self.update()
                 else:
-                    # async requests, block using a null request until the debugger stops again
+                    # _async requests, block using a null request until the debugger stops again
                     res = self.perform_request('null', block=True)
                     if res.is_success:
                         self.server_version = res

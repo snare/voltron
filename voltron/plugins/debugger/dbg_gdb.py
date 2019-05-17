@@ -460,12 +460,12 @@ if HAVE_GDB:
             """
             Return a list of the debugger's capabilities.
 
-            Thus far only the 'async' capability is supported. This indicates
+            Thus far only the '_async' capability is supported. This indicates
             that the debugger host can be queried from a background thread,
             and that views can use non-blocking API requests without queueing
             requests to be dispatched next time the debugger stops.
             """
-            return ['async']
+            return ['_async']
 
         #
         # Private functions
