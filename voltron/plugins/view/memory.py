@@ -13,7 +13,7 @@ log = logging.getLogger("view")
 class MemoryView(TerminalView):
     printable_filter = ''.join([(len(repr(chr(x))) == 3) and chr(x) or '.' for x in range(256)])
 
-    async = True
+    asynchronous = True
     last_memory = None
     last_address = 0
 
