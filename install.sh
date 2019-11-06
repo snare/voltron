@@ -186,11 +186,8 @@ if [ "${BACKEND_GDB}" -eq 1 ]; then
 fi
 
 if [ "${BACKEND_LLDB}" -eq 1 ]; then
-    # Find the Python version used by LLDB
-    LLDB_PYVER=$(${LLDB} -Qxb --one-line 'script import platform; print(".".join(platform.python_version_tuple()[:2]))'|tail -1)
-    LLDB_PYTHON=$(${LLDB} -Qxb --one-line 'script import sys; print(sys.executable)'|tail -1)
-    LLDB_PYTHON="${LLDB_PYTHON/%$LLDB_PYVER/}${LLDB_PYVER}"
 
+    LLDB_PYTHON=$(get_lldb_python_exe)
     ${LLDB_PYTHON} -m pip install --user --upgrade six    
 
     if [ -n "${VENV}" ]; then
