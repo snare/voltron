@@ -197,9 +197,9 @@ if [ "${BACKEND_LLDB}" -eq 1 ]; then
         LLDB_PYTHON="${VENV}/bin/python"
         LLDB_SITE_PACKAGES=$(find "${VENV}" -name site-packages)
     elif [ -z "${USER_MODE}" ]; then
-        LLDB_SITE_PACKAGES=$(${LLDB} -Qxb --one-line 'script import site; print(site.getsitepackages()[0])'|tail -1)
+        LLDB_SITE_PACKAGES=$(${LLDB} -Q -x -b --one-line 'script import site; print(site.getsitepackages()[0])'|tail -1)
     else
-        LLDB_SITE_PACKAGES=$(${LLDB} -Qxb --one-line 'script import site; print(site.getusersitepackages())'|tail -1)
+        LLDB_SITE_PACKAGES=$(${LLDB} -Q -x -b --one-line 'script import site; print(site.getusersitepackages())'|tail -1)
     fi
 
     install_packages
