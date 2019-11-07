@@ -87,6 +87,15 @@ if [ "${BACKEND_LLDB}" -eq 1 ] && [ -z "${LLDB}" ]; then
     exit 1
 fi
 
+function quit {
+    if [ $# -gt 1 ];
+    then
+        echo "$1"
+        shift
+    fi
+    exit $1
+}
+
 set -ex
 
 function install_apt {
