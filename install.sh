@@ -34,6 +34,11 @@ YUM_DNF=$(command -v dnf)
 USER_MODE='--user'
 SUDO=''
 
+#Old versions of pip default to pypi.python.org and fail to install anything
+PYPI_URL="https://pypi.org/simple"
+PIP_MIN_VER="10.0"
+PIP_BOOTSTRAP_URL="https://bootstrap.pypa.io/get-pip.py"
+
 [[ -z "${GDB}" ]]
 BACKEND_GDB=$?
 [[ -z "${LLDB}" ]]
@@ -140,6 +145,36 @@ function install_packages {
     install_yum
 }
 
+function curl_get_pip {
+    echo "Attempting to curl pip bootstrapt script from $PIP_BOOTSTRAP_URL"
+    curl "$PIP_BOOTSTRAP_URL" | ${SUDO} ${LLDB_PYTHON} - --upgrade "$USER_MODE" || return $?
+}
+
+function ensure_pip {
+    # Check if pip is installed already
+    ${LLDB_PYTHON} -m pip --version >/dev/null 2>&1
+    if [ $? -ne 0 ];
+    then
+        # If not, attempt to install it using ensurepip
+        echo "Attempting to install pip using 'ensurepip'."
+        ${SUDO} ${LLDB_PYTHON} -m ensurepip $USER_MODE || return $?
+    fi
+    # Some really old pip installations default to the old pypi.python.org, which no longer works.
+    echo "Attempting to upgrade pip."
+    ${SUDO} ${LLDB_PYTHON} -m pip install "pip>=$PIP_MIN_VER" $USER_MODE -U --index-url "$PYPI_URL"
+    if [ $? != 0 ];
+    then
+        # We may still fail here due to TLS incompatibility
+        # TLS 1.x got turned off 2018-04-11
+        # https://status.python.org/incidents/hdx7w97m5hr8
+        # Curl may be new enough to support TLS 1.2, so try to curl the pip installer from pypa.io
+        # It's able to download and install pip without TLS errors somehow
+        echo "Failed to upgrade pip."
+        echo "Attempting to fall back to installation via curl."
+        curl_get_pip || return $?
+    fi
+}
+
 function get_lldb_python_exe {
     # Find the Python version used by LLDB
     local lldb_pyver=$(${LLDB} -Q -x -b --one-line 'script import platform; print(".".join(platform.python_version_tuple()[:2]))'|tail -1)
@@ -196,8 +231,9 @@ fi
 
 if [ "${BACKEND_LLDB}" -eq 1 ]; then
 
-    LLDB_PYTHON=$(get_lldb_python_exe)
-    ${LLDB_PYTHON} -m pip install --user --upgrade six    
+    LLDB_PYTHON=$(get_lldb_python_exe) || quit "Failed to locate python interpreter." 1
+    ensure_pip || quit "Failed to install pip." 1
+    ${LLDB_PYTHON} -m pip install --user --upgrade six || quit "Failed to install or upgrade 'six' python package." 1
 
     if [ -n "${VENV}" ]; then
         echo "Creating virtualenv..."
@@ -206,18 +242,18 @@ if [ "${BACKEND_LLDB}" -eq 1 ]; then
         LLDB_PYTHON="${VENV}/bin/python"
         LLDB_SITE_PACKAGES=$(find "${VENV}" -name site-packages)
     elif [ -z "${USER_MODE}" ]; then
-        LLDB_SITE_PACKAGES=$(${LLDB} -Q -x -b --one-line 'script import site; print(site.getsitepackages()[0])'|tail -1)
+        LLDB_SITE_PACKAGES=$(${LLDB} -Q -x -b --one-line 'script import site; print(site.getsitepackages()[0])'|tail -1) || quit "Failed to locate site-packages." 1
     else
-        LLDB_SITE_PACKAGES=$(${LLDB} -Q -x -b --one-line 'script import site; print(site.getusersitepackages())'|tail -1)
+        LLDB_SITE_PACKAGES=$(${LLDB} -Q -x -b --one-line 'script import site; print(site.getusersitepackages())'|tail -1) || quit "Failed to locate site-packages." 1
     fi
 
-    install_packages
+    install_packages || quit "Failed to install packages." 1
 
     if [ "$LLDB_SITE_PACKAGES" == "$GDB_SITE_PACKAGES" ]; then
         echo "Skipping installation for LLDB - same site-packages directory"
     else
         # Install Voltron and dependencies
-        ${SUDO} ${LLDB_PYTHON} -m pip install -U $USER_MODE $DEV_MODE .
+        ${SUDO} ${LLDB_PYTHON} -m pip install -U $USER_MODE $DEV_MODE . || quit "Failed to install voltron." 1
     fi
 
     # Add Voltron to lldbinit
