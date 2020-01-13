@@ -10,6 +10,8 @@ from voltron.api import *
 from voltron.plugin import *
 from voltron.dbg import *
 
+from voltron.plugins.debugger import xrange
+
 try:
     import lldb
     HAVE_LLDB = True
