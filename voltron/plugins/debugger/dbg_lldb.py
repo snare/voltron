@@ -16,6 +16,10 @@ try:
 except ImportError:
     HAVE_LLDB = False
 
+if not hasattr(__builtins__, "xrange"):
+    xrange = range
+
+
 log = logging.getLogger('debugger')
 
 MAX_DEREF = 16
