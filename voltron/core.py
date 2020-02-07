@@ -15,7 +15,9 @@ import six
 import voltron
 from flask import Flask, Response, make_response, redirect, render_template, request
 from werkzeug.serving import BaseWSGIServer, ThreadedWSGIServer, WSGIRequestHandler
-from werkzeug.wsgi import DispatcherMiddleware, SharedDataMiddleware
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
+from werkzeug.middleware.shared_data import SharedDataMiddleware
+
 from requests import ConnectionError
 
 
