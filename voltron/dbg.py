@@ -124,7 +124,7 @@ class DebuggerAdaptor(object):
         `target_id` is a target ID (or None for the first target)
         """
         try:
-            target = self._target(target_id=target_id)
+            target = self.target(target_id=target_id)
         except Exception as e:
             log.error("Exception checking if target exists: {} {}".format(type(e), e))
             return False
@@ -138,7 +138,7 @@ class DebuggerAdaptor(object):
         `target_id` is a target ID (or None for the first target)
         """
         try:
-            target = self._target(target_id=target_id)
+            target = self.target(target_id=target_id)
         except:
             return False
         return target['state'] != "invalid"
@@ -151,7 +151,7 @@ class DebuggerAdaptor(object):
         `target_id` is a target ID (or None for the first target)
         """
         try:
-            target = self._target(target_id=target_id)
+            target = self.target(target_id=target_id)
         except:
             raise NoSuchTargetException()
         return target['state'] == "running"
@@ -204,7 +204,7 @@ class DebuggerAdaptor(object):
         """
         Disassemble with capstone.
         """
-        target = self._target(target_id)
+        target = self.target(target_id)
         if not address:
             pc_name, address = self.pc()
 
