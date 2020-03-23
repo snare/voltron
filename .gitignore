@@ -40,3 +40,12 @@ nosetests.xml
 .ropeproject
 
 .DS_Store
+
+# Pipenv
+# We're not using Pipenv, so let's ignore any Pipenv-related files.
+Pipfile
+Pipfile.lock
+
+# Pyenv
+# We're not using Pyenv.
+.python-version

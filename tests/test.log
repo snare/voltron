@@ -1,0 +1,212 @@
+INFO    gdb_cli_tests.py:40                  setup -- setting up GDB CLI tests
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.VoltronPlugin'>
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.APIPlugin'>
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.DebuggerAdaptorPlugin'>
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.ViewPlugin'>
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.WebPlugin'>
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.CommandPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'command.CommandViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'breakpoints.BreakpointsViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'backtrace.BacktraceViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'disasm.DisasmViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'memory.MemoryViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'memory.StackViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'register.RegisterViewPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'write_memory.APIWriteMemoryPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'dereference.APIDerefPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'null.APINullPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'command.APICommandPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'disassemble.APIDisassemblePlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'breakpoints.APIBreakpointsPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'state.APIStatePlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'backtrace.APIBacktracePlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'targets.APITargetsPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'stack.APIStackPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'registers.APIRegistersPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'memory.APIReadMemoryPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'version.APIVersionPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'plugins.APIPluginsPlugin'>
+DEBUG      plugin.py:75        register_plugin -- Registering debugger plugin: <class 'dbg_mock.MockAdaptorPlugin'>
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "xxx", "block": false, "timeout": 10, "data": {}}
+DEBUG   connectionpool.py:225             _new_conn -- Starting new HTTP connection (1): localhost:5555
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "version", "block": false, "timeout": 10, "data": {}}
+DEBUG   connectionpool.py:225             _new_conn -- Starting new HTTP connection (2): localhost:5555
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "registers", "block": false, "timeout": 10, "data": {"target_id": 0, "thread_id": null, "registers": []}}
+DEBUG   connectionpool.py:225             _new_conn -- Starting new HTTP connection (3): localhost:5555
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "state", "block": false, "timeout": 10, "data": {"target_id": 0}}
+DEBUG   connectionpool.py:225             _new_conn -- Starting new HTTP connection (4): localhost:5555
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "targets", "block": false, "timeout": 10, "data": {}}
+DEBUG   connectionpool.py:225             _new_conn -- Starting new HTTP connection (5): localhost:5555
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "stack", "block": false, "timeout": 10, "data": {"target_id": 0, "thread_id": null, "length": 64}}
+DEBUG   connectionpool.py:225             _new_conn -- Starting new HTTP connection (6): localhost:5555
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "command", "block": false, "timeout": 10, "data": {"command": "info reg"}}
+DEBUG   connectionpool.py:225             _new_conn -- Starting new HTTP connection (7): localhost:5555
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "disassemble", "block": false, "timeout": 10, "data": {"target_id": 0, "address": null, "count": 32, "use_capstone": null}}
+DEBUG   connectionpool.py:225             _new_conn -- Starting new HTTP connection (8): localhost:5555
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "backtrace", "block": false, "timeout": 10, "data": {}}
+DEBUG   connectionpool.py:225             _new_conn -- Starting new HTTP connection (9): localhost:5555
+INFO    gdb_cli_tests.py:40                  setup -- setting up GDB CLI tests
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.VoltronPlugin'>
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.APIPlugin'>
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.DebuggerAdaptorPlugin'>
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.ViewPlugin'>
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.WebPlugin'>
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.CommandPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'command.CommandViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'breakpoints.BreakpointsViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'backtrace.BacktraceViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'disasm.DisasmViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'memory.MemoryViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'memory.StackViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'register.RegisterViewPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'write_memory.APIWriteMemoryPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'dereference.APIDerefPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'null.APINullPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'command.APICommandPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'disassemble.APIDisassemblePlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'breakpoints.APIBreakpointsPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'state.APIStatePlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'backtrace.APIBacktracePlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'targets.APITargetsPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'stack.APIStackPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'registers.APIRegistersPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'memory.APIReadMemoryPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'version.APIVersionPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'plugins.APIPluginsPlugin'>
+DEBUG      plugin.py:75        register_plugin -- Registering debugger plugin: <class 'dbg_mock.MockAdaptorPlugin'>
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "xxx", "block": false, "timeout": 10, "data": {}}
+DEBUG   connectionpool.py:225             _new_conn -- Starting new HTTP connection (1): localhost:5555
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "version", "block": false, "timeout": 10, "data": {}}
+DEBUG   connectionpool.py:225             _new_conn -- Starting new HTTP connection (2): localhost:5555
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "registers", "block": false, "timeout": 10, "data": {"target_id": 0, "thread_id": null, "registers": []}}
+DEBUG   connectionpool.py:225             _new_conn -- Starting new HTTP connection (3): localhost:5555
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "state", "block": false, "timeout": 10, "data": {"target_id": 0}}
+DEBUG   connectionpool.py:225             _new_conn -- Starting new HTTP connection (4): localhost:5555
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "targets", "block": false, "timeout": 10, "data": {}}
+DEBUG   connectionpool.py:225             _new_conn -- Starting new HTTP connection (5): localhost:5555
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "stack", "block": false, "timeout": 10, "data": {"target_id": 0, "thread_id": null, "length": 64}}
+DEBUG   connectionpool.py:225             _new_conn -- Starting new HTTP connection (6): localhost:5555
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "command", "block": false, "timeout": 10, "data": {"command": "info reg"}}
+DEBUG   connectionpool.py:225             _new_conn -- Starting new HTTP connection (7): localhost:5555
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "disassemble", "block": false, "timeout": 10, "data": {"target_id": 0, "address": null, "count": 32, "use_capstone": null}}
+DEBUG   connectionpool.py:225             _new_conn -- Starting new HTTP connection (8): localhost:5555
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "backtrace", "block": false, "timeout": 10, "data": {}}
+DEBUG   connectionpool.py:225             _new_conn -- Starting new HTTP connection (9): localhost:5555
+INFO    gdb_cli_tests.py:40                  setup -- setting up GDB CLI tests
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.VoltronPlugin'>
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.APIPlugin'>
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.DebuggerAdaptorPlugin'>
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.ViewPlugin'>
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.WebPlugin'>
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.CommandPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'command.CommandViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'breakpoints.BreakpointsViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'backtrace.BacktraceViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'disasm.DisasmViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'memory.MemoryViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'memory.StackViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'register.RegisterViewPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'write_memory.APIWriteMemoryPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'dereference.APIDerefPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'null.APINullPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'command.APICommandPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'disassemble.APIDisassemblePlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'breakpoints.APIBreakpointsPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'state.APIStatePlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'backtrace.APIBacktracePlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'targets.APITargetsPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'stack.APIStackPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'registers.APIRegistersPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'memory.APIReadMemoryPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'version.APIVersionPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'plugins.APIPluginsPlugin'>
+DEBUG      plugin.py:75        register_plugin -- Registering debugger plugin: <class 'dbg_mock.MockAdaptorPlugin'>
+INFO    gdb_cli_tests.py:40                  setup -- setting up GDB CLI tests
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.VoltronPlugin'>
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.APIPlugin'>
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.DebuggerAdaptorPlugin'>
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.ViewPlugin'>
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.WebPlugin'>
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.CommandPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'command.CommandViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'breakpoints.BreakpointsViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'backtrace.BacktraceViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'disasm.DisasmViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'memory.MemoryViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'memory.StackViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'register.RegisterViewPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'write_memory.APIWriteMemoryPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'dereference.APIDerefPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'null.APINullPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'command.APICommandPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'disassemble.APIDisassemblePlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'breakpoints.APIBreakpointsPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'state.APIStatePlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'backtrace.APIBacktracePlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'targets.APITargetsPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'stack.APIStackPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'registers.APIRegistersPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'memory.APIReadMemoryPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'version.APIVersionPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'plugins.APIPluginsPlugin'>
+DEBUG      plugin.py:75        register_plugin -- Registering debugger plugin: <class 'dbg_mock.MockAdaptorPlugin'>
+INFO    gdb_cli_tests.py:40                  setup -- setting up GDB CLI tests
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.VoltronPlugin'>
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.APIPlugin'>
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.DebuggerAdaptorPlugin'>
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.ViewPlugin'>
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.WebPlugin'>
+DEBUG      plugin.py:89        register_plugin -- Ignoring invalid plugin: <class 'voltron.plugin.CommandPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'command.CommandViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'breakpoints.BreakpointsViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'backtrace.BacktraceViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'disasm.DisasmViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'memory.MemoryViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'memory.StackViewPlugin'>
+DEBUG      plugin.py:78        register_plugin -- Registering view plugin: <class 'register.RegisterViewPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'write_memory.APIWriteMemoryPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'dereference.APIDerefPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'null.APINullPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'command.APICommandPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'disassemble.APIDisassemblePlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'breakpoints.APIBreakpointsPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'state.APIStatePlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'backtrace.APIBacktracePlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'targets.APITargetsPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'stack.APIStackPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'registers.APIRegistersPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'memory.APIReadMemoryPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'version.APIVersionPlugin'>
+DEBUG      plugin.py:72        register_plugin -- Registering API plugin: <class 'plugins.APIPluginsPlugin'>
+DEBUG      plugin.py:75        register_plugin -- Registering debugger plugin: <class 'dbg_mock.MockAdaptorPlugin'>
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "xxx", "block": false, "timeout": 10, "data": {}}
+DEBUG   connectionpool.py:225             _new_conn -- Starting new HTTP connection (1): localhost:5555
+DEBUG   connectionpool.py:437         _make_request -- http://localhost:5555 "POST /api/request HTTP/1.1" 200 110
+DEBUG        core.py:438          send_request -- Client received message: {"type": "response", "status": "error", "data": {"code": 4098, "message": "Plugin was not found for request"}}
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "version", "block": false, "timeout": 10, "data": {}}
+DEBUG   connectionpool.py:437         _make_request -- http://localhost:5555 "POST /api/request HTTP/1.1" 200 168
+DEBUG        core.py:438          send_request -- Client received message: {"type": "response", "status": "success", "data": {"api_version": 1.1, "host_version": "GNU gdb (Ubuntu 8.1-0ubuntu3.2) 8.1.0.20180409-git", "capabilities": ["async"]}}
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "registers", "block": false, "timeout": 10, "data": {"target_id": 0, "thread_id": null, "registers": []}}
+DEBUG   connectionpool.py:437         _make_request -- http://localhost:5555 "POST /api/request HTTP/1.1" 200 2343
+DEBUG        core.py:438          send_request -- Client received message: {"type": "response", "status": "success", "data": {"registers": {"rax": 93824992233160, "rbx": 0, "rcx": 93824992233488, "rdx": 140737488344976, "rbp": 140737488344720, "rsp": 140737488344720, "rdi": 2, "rsi": 140737488344952, "rip": 93824992233164, "r8": 140737351847296, "r9": 140737351847296, "r10": 1, "r11": 0, "r12": 93824992232912, "r13": 140737488344944, "r14": 0, "r15": 0, "cs": 51, "ds": 0, "es": 0, "fs": 0, "gs": 0, "ss": 43, "rflags": 582, "st0": 0, "st1": 0, "st2": 0, "st3": 0, "st4": 0, "st5": 0, "st6": 0, "st7": 0}, "deref": {"rax": [["pointer", 93824992233160], ["symbol", "main in section .text of /home/seanballais/Code/Contributions/voltron/tests/inferior"]], "rbx": [], "rcx": [["pointer", 93824992233488], ["symbol", "__libc_csu_init in section .text of /home/seanballais/Code/Contributions/voltron/tests/inferior"]], "rdx": [["pointer", 140737488344976], ["pointer", 140737488346043], ["string", "LS_COLORS=rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca"]], "rbp": [["pointer", 140737488344720], ["pointer", 93824992233488], ["symbol", "__libc_csu_init in section .text of /home/seanballais/Code/Contributions/voltron/tests/inferior"]], "rsp": [["pointer", 140737488344720], ["pointer", 93824992233488], ["symbol", "__libc_csu_init in section .text of /home/seanballais/Code/Contributions/voltron/tests/inferior"]], "rdi": [], "rsi": [["pointer", 140737488344952], ["pointer", 140737488345978], ["string", "/home/seanballais/Code/Contributions/voltron/tests/inferior"]], "rip": [["pointer", 93824992233164], ["symbol", "main + 4 in section .text of /home/seanballais/Code/Contributions/voltron/tests/inferior"]], "r8": [["pointer", 140737351847296], ["symbol", "initial in section .bss of /lib/x86_64-linux-gnu/libc.so.6"]], "r9": [["pointer", 140737351847296], ["symbol", "initial in section .bss of /lib/x86_64-linux-gnu/libc.so.6"]], "r10": [], "r11": [], "r12": [["pointer", 93824992232912], ["symbol", "_start in section .text of /home/seanballais/Code/Contributions/voltron/tests/inferior"]], "r13": [["pointer", 140737488344944], ["string", "\u0002"]], "r14": [], "r15": [], "cs": [], "ds": [], "es": [], "fs": [], "gs": [], "ss": [], "rflags": [], "st0": [], "st1": [], "st2": [], "st3": [], "st4": [], "st5": [], "st6": [], "st7": []}}}
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "memory", "block": false, "timeout": 10, "data": {"target_id": 0, "address": 93824992233164, "length": 64, "words": null, "register": null, "command": null, "deref": null, "offset": null}}
+DEBUG   connectionpool.py:437         _make_request -- http://localhost:5555 "POST /api/request HTTP/1.1" 200 208
+DEBUG        core.py:438          send_request -- Client received message: {"type": "response", "status": "success", "data": {"address": 93824992233164, "memory": "SIPsMIl93EiJddDHRfQAAAAASMdF+AAAAADHRegAAAAAx0XsAAAAAMdF8AAAAACDfdwBfjlIi0XQSIPACEiLAA==", "bytes": 64, "deref": null}}
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "state", "block": false, "timeout": 10, "data": {"target_id": 0}}
+DEBUG   connectionpool.py:437         _make_request -- http://localhost:5555 "POST /api/request HTTP/1.1" 200 71
+DEBUG        core.py:438          send_request -- Client received message: {"type": "response", "status": "success", "data": {"state": "stopped"}}
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "targets", "block": false, "timeout": 10, "data": {}}
+DEBUG   connectionpool.py:437         _make_request -- http://localhost:5555 "POST /api/request HTTP/1.1" 200 234
+DEBUG        core.py:438          send_request -- Client received message: {"type": "response", "status": "success", "data": {"targets": [{"id": 0, "num": 1, "state": "stopped", "file": "/home/seanballais/Code/Contributions/voltron/tests/inferior", "arch": "x86_64", "byte_order": "little", "addr_size": 8}]}}
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "stack", "block": false, "timeout": 10, "data": {"target_id": 0, "thread_id": null, "length": 64}}
+DEBUG   connectionpool.py:437         _make_request -- http://localhost:5555 "POST /api/request HTTP/1.1" 200 187
+DEBUG        core.py:438          send_request -- Client received message: {"type": "response", "status": "success", "data": {"memory": "EEhVVVVVAACXW6D3/38AAAAAAAAgAAAAeNf///9/AAAAAAAAAgAAAMhGVVVVVQAAAAAAAAAAAAD10edlnkuV3A==", "stack_pointer": 140737488344720}}
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "command", "block": false, "timeout": 10, "data": {"command": "info reg"}}
+DEBUG   connectionpool.py:437         _make_request -- http://localhost:5555 "POST /api/request HTTP/1.1" 200 912
+DEBUG        core.py:438          send_request -- Client received message: {"type": "response", "status": "success", "data": {"output": "rax            0x5555555546c8\t93824992233160\nrbx            0x0\t0\nrcx            0x555555554810\t93824992233488\nrdx            0x7fffffffd790\t140737488344976\nrsi            0x7fffffffd778\t140737488344952\nrdi            0x2\t2\nrbp            0x7fffffffd690\t0x7fffffffd690\nrsp            0x7fffffffd690\t0x7fffffffd690\nr8             0x7ffff7dd0d80\t140737351847296\nr9             0x7ffff7dd0d80\t140737351847296\nr10            0x1\t1\nr11            0x0\t0\nr12            0x5555555545d0\t93824992232912\nr13            0x7fffffffd770\t140737488344944\nr14            0x0\t0\nr15            0x0\t0\nrip            0x5555555546cc\t0x5555555546cc <main+4>\neflags         0x246\t[ PF ZF IF ]\ncs             0x33\t51\nss             0x2b\t43\nds             0x0\t0\nes             0x0\t0\nfs             0x0\t0\ngs             0x0\t0\n"}}
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "disassemble", "block": false, "timeout": 10, "data": {"target_id": 0, "address": null, "count": 32, "use_capstone": null}}
+DEBUG   connectionpool.py:437         _make_request -- http://localhost:5555 "POST /api/request HTTP/1.1" 200 2059
+DEBUG        core.py:438          send_request -- Client received message: {"type": "response", "status": "success", "data": {"disassembly": "=> 0x5555555546cc <main+4>:\tsub    rsp,0x30\n   0x5555555546d0 <main+8>:\tmov    DWORD PTR [rbp-0x24],edi\n   0x5555555546d3 <main+11>:\tmov    QWORD PTR [rbp-0x30],rsi\n   0x5555555546d7 <main+15>:\tmov    DWORD PTR [rbp-0xc],0x0\n   0x5555555546de <main+22>:\tmov    QWORD PTR [rbp-0x8],0x0\n   0x5555555546e6 <main+30>:\tmov    DWORD PTR [rbp-0x18],0x0\n   0x5555555546ed <main+37>:\tmov    DWORD PTR [rbp-0x14],0x0\n   0x5555555546f4 <main+44>:\tmov    DWORD PTR [rbp-0x10],0x0\n   0x5555555546fb <main+51>:\tcmp    DWORD PTR [rbp-0x24],0x1\n   0x5555555546ff <main+55>:\tjle    0x55555555473a <main+114>\n   0x555555554701 <main+57>:\tmov    rax,QWORD PTR [rbp-0x30]\n   0x555555554705 <main+61>:\tadd    rax,0x8\n   0x555555554709 <main+65>:\tmov    rax,QWORD PTR [rax]\n   0x55555555470c <main+68>:\tlea    rsi,[rip+0x199]        # 0x5555555548ac\n   0x555555554713 <main+75>:\tmov    rdi,rax\n   0x555555554716 <main+78>:\tcall   0x5555555545a0 <strcmp@plt>\n   0x55555555471b <main+83>:\ttest   eax,eax\n   0x55555555471d <main+85>:\tjne    0x55555555473a <main+114>\n   0x55555555471f <main+87>:\tlea    rdi,[rip+0x18c]        # 0x5555555548b2\n   0x555555554726 <main+94>:\tcall   0x555555554590 <puts@plt>\n   0x55555555472b <main+99>:\tmov    edi,0x5\n   0x555555554730 <main+104>:\tcall   0x5555555545b0 <sleep@plt>\n   0x555555554735 <main+109>:\tjmp    0x5555555547fb <main+307>\n   0x55555555473a <main+114>:\tcmp    DWORD PTR [rbp-0x24],0x1\n   0x55555555473e <main+118>:\tjle    0x555555554778 <main+176>\n   0x555555554740 <main+120>:\tmov    rax,QWORD PTR [rbp-0x30]\n   0x555555554744 <main+124>:\tadd    rax,0x8\n   0x555555554748 <main+128>:\tmov    rax,QWORD PTR [rax]\n   0x55555555474b <main+131>:\tlea    rsi,[rip+0x17b]        # 0x5555555548cd\n   0x555555554752 <main+138>:\tmov    rdi,rax\n   0x555555554755 <main+141>:\tcall   0x5555555545a0 <strcmp@plt>\n   0x55555555475a <main+146>:\ttest   eax,eax\n", "formatted": null, "flavor": "intel", "host": "gdb"}}
+DEBUG        core.py:432          send_request -- Client sending request: {"type": "request", "request": "backtrace", "block": false, "timeout": 10, "data": {}}
+DEBUG   connectionpool.py:437         _make_request -- http://localhost:5555 "POST /api/request HTTP/1.1" 200 117
+DEBUG        core.py:438          send_request -- Client received message: {"type": "response", "status": "success", "data": {"frames": [{"index": 0, "addr": 93824992233164, "name": "main"}]}}
