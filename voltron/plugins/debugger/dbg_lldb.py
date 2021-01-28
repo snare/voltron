@@ -331,7 +331,7 @@ if HAVE_LLDB:
             `count` is the number of instructions to disassemble.
             """
             # make sure we have an address
-            if address == None:
+            if address is None:
                 pc_name, address = self.program_counter(target_id=target_id)
 
             # disassemble
@@ -464,12 +464,12 @@ if HAVE_LLDB:
                 locations = []
 
                 for j in range(0, b.GetNumLocations()):
-                    l = b.GetLocationAtIndex(j)
+                    loc = b.GetLocationAtIndex(j)
                     s.Clear()
-                    l.GetAddress().GetDescription(s)
+                    loc.GetAddress().GetDescription(s)
                     desc = s.GetData()
                     locations.append({
-                        'address':  l.GetLoadAddress(),
+                        'address':  loc.GetLoadAddress(),
                         'name':     desc
                     })
 
@@ -541,7 +541,6 @@ if HAVE_LLDB:
             # register the invocation as a command script handler thing
             self.host.HandleCommand("command script add -f voltron.commands.{} {}".format(name, name))
 
-
     class LLDBCommand(DebuggerCommand):
         """
         Debugger command class for LLDB
@@ -586,7 +585,6 @@ if HAVE_LLDB:
         def unregister_hooks(self):
             self.adaptor.command('target stop-hook delete {}'.format(self.hook_idx if self.hook_idx else ''))
             self.registered = False
-
 
     class LLDBAdaptorPlugin(DebuggerAdaptorPlugin):
         host = 'lldb'
