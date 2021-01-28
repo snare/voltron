@@ -1,7 +1,6 @@
-from voltron.view import *
-from voltron.plugin import *
-from voltron.api import *
-from voltron.lexers import *
+from voltron.view import TerminalView, VoltronView, log
+from voltron.plugin import api_request, ViewPlugin
+from voltron.lexers import get_lexer_by_name
 import pygments
 import pygments.formatters
 
