@@ -1,3 +1,4 @@
+import re
 ESCAPES = {
     # reset
     'reset':        0,
