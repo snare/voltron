@@ -42,3 +42,17 @@ def fmt_esc(name):
     return ESC_TEMPLATE.format(escapes()[name])
 
 FMT_ESCAPES = dict((k, fmt_esc(k)) for k in ESCAPES)
+
+
+def uncolour(text):
+    """
+    Remove ANSI color/style sequences from a string. The set of all possible
+    ANSI sequences is large, so does not try to strip every possible one. But
+    does strip some outliers by other ANSI colorizers in the wild. Those
+    include `\x1b[K` (aka EL or erase to end of line) and `\x1b[m`, a terse
+    version of the more common `\x1b[0m`.
+
+    Stolen from: https://github.com/jonathaneunice/colors/blob/master/colors/colors.py
+    """
+    text = re.sub('\x1b\\[(K|.*?m)', '', text)
+    return text
