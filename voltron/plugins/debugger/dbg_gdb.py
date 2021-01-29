@@ -63,7 +63,7 @@ if HAVE_GDB:
             'i386': 'x86', 'i386:intel': 'x86', 'i386:x64-32': 'x86', 'i386:x64-32:intel': 'x86', 'i8086': 'x86',
             'i386:x86-64': 'x86_64', 'i386:x86-64:intel': 'x86_64',
             'arm': 'arm', 'armv2': 'arm', 'armv2a': 'arm', 'armv3': 'arm', 'armv3m': 'arm', 'armv4': 'arm',
-            'armv4t': 'arm', 'armv5': 'arm', 'armv5t': 'arm', 'armv5te': 'arm',
+            'armv4t': 'arm', 'armv5': 'arm', 'armv5t': 'arm', 'armv5te': 'arm', 'armv7': 'arm', 'armv7s': 'arm',
             'powerpc:common': 'powerpc'
         }
         sizes = {
