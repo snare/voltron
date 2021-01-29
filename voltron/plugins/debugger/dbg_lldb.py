@@ -7,6 +7,7 @@ import threading
 import codecs
 from collections import namedtuple
 from voltron.api import NoSuchThreadException
+from voltron.colour import uncolour
 from voltron.plugin import voltron
 from voltron.dbg import (
     lock_host,
@@ -335,8 +336,8 @@ if HAVE_LLDB:
                 pc_name, address = self.program_counter(target_id=target_id)
 
             # disassemble
-            res = lldb.SBCommandReturnObject()
             output = self.command('disassemble -s {} -c {}'.format(address, count))
+            output = uncolour(output)
 
             return output
 
