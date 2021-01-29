@@ -1,5 +1,6 @@
 import logging
 import six
+import binascii
 import pygments
 import pygments.formatters
 from pygments.token import *
@@ -83,6 +84,7 @@ class MemoryView(TerminalView):
 
         if m_res and m_res.is_success:
             bytes_per_chunk = self.args.words*target['addr_size'] if self.args.words else self.args.bytes
+            m_res.memory = binascii.unhexlify(m_res.memory)
             for c in range(0, m_res.bytes, bytes_per_chunk):
                 chunk = m_res.memory[c:c + bytes_per_chunk]
                 yield (Name.Label, self.format_address(m_res.address + c, size=target['addr_size'], pad=False))
@@ -94,8 +96,11 @@ class MemoryView(TerminalView):
                     n = "%02X" % x
                     token = Text if x else Comment
                     if self.args.track and self.last_memory and self.last_address == m_res.address:
-                        if x != six.indexbytes(self.last_memory, c + i):
-                            token = Error
+                        try:
+                            if x != six.indexbytes(self.last_memory, c + i):
+                                token = Error
+                        except:
+                            pass
                     byte_array.append((token, n))
 
                 if self.args.words:

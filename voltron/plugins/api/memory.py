@@ -2,6 +2,7 @@ import voltron
 import logging
 import six
 import struct
+import binascii
 
 from voltron.api import *
 
@@ -108,7 +109,9 @@ class APIMemoryRequest(APIRequest):
 
             res = APIMemoryResponse()
             res.address = addr
-            res.memory = six.u(memory)
+            #don't use six.u since it processes escape sequences ie... breaks if we have 0x5C 0x37 in memory
+            #res.memory = six.u(memory)
+            res.memory = binascii.hexlify(memory)
             res.bytes = len(memory)
             res.deref = deref
         except TargetBusyException:
