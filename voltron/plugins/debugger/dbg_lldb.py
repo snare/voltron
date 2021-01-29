@@ -573,8 +573,10 @@ if HAVE_LLDB:
                     output = self.adaptor.command('target stop-hook add -o \'voltron stopped\'')
                     try:
                         # hahaha this sucks
-                        self.hook_idx = int(res.GetOutput().strip().split()[2][1:])
-                    except:
+                        log.debug("Saving hook index for unregistering.")
+                        self.hook_idx = int(output.split()[2][1:])
+                    except Exception as e:
+                        log.warning(f"Exception when saving hook index for unregistering. {e}")
                         pass
                 self.registered = True
                 if not quiet:
