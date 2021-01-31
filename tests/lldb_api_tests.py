@@ -126,6 +126,21 @@ try:
         assert 'rax' in output
         process.Destroy()
 
+    def test_resolve_variable():
+        process = target.LaunchSimple(None, None, os.getcwd())
+        output = adaptor.resolve_variable("global")
+        assert output.load_addr > 0
+        output = adaptor.resolve_variable("nonexistant")
+        assert output is None
+        process.Destroy()
+
+    def test_deref_variable():
+        process = target.LaunchSimple(None, None, os.getcwd())
+        output = adaptor.resolve_variable("global")
+        value = adaptor.read_pointer(output)
+        assert value == 0xfeedface
+        process.Destroy()
+
     def test_dereference_main():
         process = target.LaunchSimple(None, None, os.getcwd())
         regs = adaptor.registers()
