@@ -52,7 +52,7 @@ def setup():
     voltron.setup_env()
     voltron.config['server'] = {
         "listen": {
-            "tcp":     ["127.0.0.1", 5555]
+            "tcp":     ["127.0.0.1", 22222]
         }
     }
     pm = PluginManager()
@@ -76,30 +76,30 @@ def teardown():
 
 
 def test_disassemble():
-    data = requests.get('http://localhost:5555/api/disassemble?count=16').text
+    data = requests.get('http://localhost:22222/api/disassemble?count=16').text
     res = APIResponse(data=data)
     assert res.is_success
     assert res.disassembly == disassemble_response
 
 
 def test_command():
-    data = requests.get('http://localhost:5555/api/command?command=reg%20read').text
+    data = requests.get('http://localhost:22222/api/command?command=reg%20read').text
     res = APIResponse(data=data)
     assert res.is_success
     assert res.output == command_response
 
 
 def test_targets():
-    data = requests.get('http://localhost:5555/api/targets').text
+    data = requests.get('http://localhost:22222/api/targets').text
     res = api_response('targets', data=data)
     assert res.is_success
     assert res.targets == targets_response
 
 
 def test_memory():
-    data = requests.get('http://localhost:5555/api/registers').text
+    data = requests.get('http://localhost:22222/api/registers').text
     res = api_response('registers', data=data)
-    url = 'http://localhost:5555/api/memory?address={}&length=64'.format(res.registers['rip'])
+    url = 'http://localhost:22222/api/memory?address={}&length=64'.format(res.registers['rip'])
     data = requests.get(url).text
     res = api_response('memory', data=data)
     assert res.is_success
@@ -107,35 +107,35 @@ def test_memory():
 
 
 def test_registers():
-    data = requests.get('http://localhost:5555/api/registers').text
+    data = requests.get('http://localhost:22222/api/registers').text
     res = api_response('registers', data=data)
     assert res.is_success
     assert res.registers == registers_response
 
 
 def test_stack_length_missing():
-    data = requests.get('http://localhost:5555/api/stack').text
+    data = requests.get('http://localhost:22222/api/stack').text
     res = APIErrorResponse(data=data)
     assert res.is_error
     assert res.message == 'length'
 
 
 def test_stack():
-    data = requests.get('http://localhost:5555/api/stack?length=64').text
+    data = requests.get('http://localhost:22222/api/stack?length=64').text
     res = api_response('stack', data=data)
     assert res.is_success
     assert res.memory == stack_response
 
 
 def test_state():
-    data = requests.get('http://localhost:5555/api/state').text
+    data = requests.get('http://localhost:22222/api/state').text
     res = api_response('state', data=data)
     assert res.is_success
     assert res.state == state_response
 
 
 def test_version():
-    data = requests.get('http://localhost:5555/api/version').text
+    data = requests.get('http://localhost:22222/api/version').text
     res = api_response('version', data=data)
     assert res.is_success
     assert res.api_version == 1.1
@@ -143,21 +143,21 @@ def test_version():
 
 
 def test_bad_json():
-    data = requests.post('http://localhost:5555/api/request', data='xxx').text
+    data = requests.post('http://localhost:22222/api/request', data='xxx').text
     res = APIResponse(data=data)
     assert res.is_error
     assert res.code == 0x1001
 
 
 def test_bad_request():
-    data = requests.post('http://localhost:5555/api/request', data='{"type":"request","request":"no_such_request"}').text
+    data = requests.post('http://localhost:22222/api/request', data='{"type":"request","request":"no_such_request"}').text
     res = APIResponse(data=data)
     assert res.is_error
     assert res.code == 0x1002
 
 
 def test_breakpoints():
-    data = requests.get('http://localhost:5555/api/breakpoints').text
+    data = requests.get('http://localhost:22222/api/breakpoints').text
     res = api_response('breakpoints', data=data)
     assert res.is_success
     assert res.breakpoints == breakpoints_response

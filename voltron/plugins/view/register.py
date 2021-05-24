@@ -128,6 +128,7 @@ class RegisterView (TerminalView):
             }
         ],
     }
+    FORMAT_INFO['aarch64'] = FORMAT_INFO['arm64']
     TEMPLATES = {
         'x86_64': {
             'horizontal': {
@@ -389,6 +390,7 @@ class RegisterView (TerminalView):
             }
         }
     }
+    TEMPLATES['aarch64'] = TEMPLATES['arm64']
     FLAG_BITS = {'c': 0, 'p': 2, 'a': 4, 'z': 6, 's': 7, 't': 8, 'i': 9, 'd': 10, 'o': 11}
     FLAG_TEMPLATE = "{o} {d} {i} {t} {s} {z} {a} {p} {c}"
     XMM_INDENT = 7
@@ -442,11 +444,6 @@ class RegisterView (TerminalView):
         ]
 
     def render(self, results):
-        error = None
-        t_res, d_res, r_res = results
-        formatter = pygments.formatters.get_formatter_by_name(self.config.format.pygments_formatter,
-                                                              style=self.config.format.pygments_style)
-
         def format(tok, tik=None):
             if tik:
                 tok = (tok, tik)
@@ -454,6 +451,10 @@ class RegisterView (TerminalView):
                 return pygments.format([tok], formatter)
             else:
                 return pygments.format(tok, formatter)
+        error = None
+        t_res, d_res, r_res = results
+        formatter = pygments.formatters.get_formatter_by_name(self.config.format.pygments_formatter,
+                                                              style=self.config.format.pygments_style)
         self.f = format
 
         if t_res and t_res.is_error:
