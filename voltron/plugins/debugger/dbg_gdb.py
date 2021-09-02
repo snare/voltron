@@ -649,6 +649,14 @@ if HAVE_GDB:
                 arch = gdb.selected_frame().architecture().name()
             except:
                 arch = re.search('\(currently (.*)\)', gdb.execute('show architecture', to_string=True)).group(1)
+            
+            # Fix bug:
+            #       Exception getting targets from debugger: KeyError('"i386"')    
+            #         gdb: 10.2      python: 3.9.2      kali-linux(WSL2)
+            quot = ['\'','"']   
+            if len(arch) > 2 and arch[0] in quot and arch[-1] in quot:
+                arch = arch.split(quot[quot.index(arch[0])])[1]
+                
             return self.archs[arch]
 
         def get_addr_size(self):
