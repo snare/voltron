@@ -576,7 +576,7 @@ if HAVE_LLDB:
                         log.debug("Saving hook index for unregistering.")
                         self.hook_idx = int(output.split()[2][1:])
                     except Exception as e:
-                        log.warning(f"Exception when saving hook index for unregistering. {e}")
+                        log.warning("Exception when saving hook index for unregistering. {}".format(e))
                         pass
                 self.registered = True
                 if not quiet:
