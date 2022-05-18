@@ -115,6 +115,16 @@ class RegisterView (TerminalView):
                 'category':         'general',
             },
         ],
+        'arm64e': [
+            {
+                'regs':             ['pc', 'sp', 'x0', 'x1', 'x2', 'x3', 'x4', 'x5', 'x6', 'x7', 'x8', 'x9', 'x10',
+                                    'x11', 'x12', 'x13', 'x14', 'x15', 'x16', 'x17', 'x18', 'x19', 'x20',
+                                    'x21', 'x22', 'x23', 'x24', 'x25', 'x26', 'x27', 'x28', 'x29', 'x30'],
+                'label_format':     '{0:3s}',
+                'value_format':     SHORT_ADDR_FORMAT_64,
+                'category':         'general',
+            },
+        ],
         'powerpc': [
             {
                 'regs':             ['pc','msr','cr','lr', 'ctr',
@@ -313,6 +323,82 @@ class RegisterView (TerminalView):
             }
         },
         'arm64': {
+            'horizontal': {
+                'general': (
+                    "{pcl} {pc}{pcinfo}\n"
+                    "{spl} {sp}{spinfo}\n"
+                    "{x0l} {x0}{x0info}\n"
+                    "{x1l} {x1}{x1info}\n"
+                    "{x2l} {x2}{x2info}\n"
+                    "{x3l} {x3}{x3info}\n"
+                    "{x4l} {x4}{x4info}\n"
+                    "{x5l} {x5}{x5info}\n"
+                    "{x6l} {x6}{x6info}\n"
+                    "{x7l} {x7}{x7info}\n"
+                    "{x8l} {x8}{x8info}\n"
+                    "{x9l} {x9}{x9info}\n"
+                    "{x10l} {x10}{x10info}\n"
+                    "{x11l} {x11}{x11info}\n"
+                    "{x12l} {x12}{x12info}\n"
+                    "{x13l} {x13}{x13info}\n"
+                    "{x14l} {x14}{x14info}\n"
+                    "{x15l} {x15}{x15info}\n"
+                    "{x16l} {x16}{x16info}\n"
+                    "{x17l} {x17}{x17info}\n"
+                    "{x18l} {x18}{x18info}\n"
+                    "{x19l} {x19}{x19info}\n"
+                    "{x20l} {x20}{x20info}\n"
+                    "{x21l} {x21}{x21info}\n"
+                    "{x22l} {x22}{x22info}\n"
+                    "{x23l} {x23}{x23info}\n"
+                    "{x24l} {x24}{x24info}\n"
+                    "{x25l} {x25}{x25info}\n"
+                    "{x26l} {x26}{x26info}\n"
+                    "{x27l} {x27}{x27info}\n"
+                    "{x28l} {x28}{x28info}\n"
+                    "{x29l} {x29}{x29info}\n"
+                    "{x30l} {x30}{x30info}\n"
+                ),
+            },
+            'vertical': {
+                'general': (
+                    "{pcl} {pc}{pcinfo}\n"
+                    "{spl} {sp}{spinfo}\n"
+                    "{x0l} {x0}{x0info}\n"
+                    "{x1l} {x1}{x1info}\n"
+                    "{x2l} {x2}{x2info}\n"
+                    "{x3l} {x3}{x3info}\n"
+                    "{x4l} {x4}{x4info}\n"
+                    "{x5l} {x5}{x5info}\n"
+                    "{x6l} {x6}{x6info}\n"
+                    "{x7l} {x7}{x7info}\n"
+                    "{x8l} {x8}{x8info}\n"
+                    "{x9l} {x9}{x9info}\n"
+                    "{x10l} {x10}{x10info}\n"
+                    "{x11l} {x11}{x11info}\n"
+                    "{x12l} {x12}{x12info}\n"
+                    "{x13l} {x13}{x13info}\n"
+                    "{x14l} {x14}{x14info}\n"
+                    "{x15l} {x15}{x15info}\n"
+                    "{x16l} {x16}{x16info}\n"
+                    "{x17l} {x17}{x17info}\n"
+                    "{x18l} {x18}{x18info}\n"
+                    "{x19l} {x19}{x19info}\n"
+                    "{x20l} {x20}{x20info}\n"
+                    "{x21l} {x21}{x21info}\n"
+                    "{x22l} {x22}{x22info}\n"
+                    "{x23l} {x23}{x23info}\n"
+                    "{x24l} {x24}{x24info}\n"
+                    "{x25l} {x25}{x25info}\n"
+                    "{x26l} {x26}{x26info}\n"
+                    "{x27l} {x27}{x27info}\n"
+                    "{x28l} {x28}{x28info}\n"
+                    "{x29l} {x29}{x29info}\n"
+                    "{x30l} {x30}{x30info}\n"
+                ),
+            }
+        },
+        'arm64e': {
             'horizontal': {
                 'general': (
                     "{pcl} {pc}{pcinfo}\n"
