@@ -684,10 +684,10 @@ class RegisterView (TerminalView):
                 else:
                     j = (True, 's!=o')
             elif inst in ['jle', 'jng']:
-                if values['z'] or values['s'] == values['o']:
-                    j = (True, 'z || s==o')
+                if values['z'] or values['s'] != values['o']:
+                    j = (True, 'z || s!=o')
                 else:
-                    j = (False, '!z && s!=o')
+                    j = (False, '!z && s==o')
             elif inst in ['jne', 'jnz']:
                 if not values['z']:
                     j = (True, '!z')
