@@ -24,8 +24,8 @@ END
     exit 1
 }
 
-GDB=$(command -v gdb)
-LLDB=$(command -v lldb)
+: ${GDB:=$(command -v gdb)}
+: ${LLDB:=$(command -v lldb)}
 APT_GET=$(command -v apt-get)
 YUM_YUM=$(command -v yum)
 YUM_DNF=$(command -v dnf)
