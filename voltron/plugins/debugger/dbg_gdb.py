@@ -385,7 +385,7 @@ if HAVE_GDB:
 
             Returns 'intel' or 'att'
             """
-            flavor = re.search('flavor is "(.*)"', gdb.execute("show disassembly-flavor", to_string=True)).group(1)
+            flavor = re.search(r'flavor is "(.*)"', gdb.execute("show disassembly-flavor", to_string=True)).group(1)
             return flavor
 
         @post_event
@@ -418,9 +418,9 @@ if HAVE_GDB:
                         addr = int(b.location[1:], 16)
                     else:
                         output = gdb.execute('info addr {}'.format(b.location), to_string=True)
-                        m = re.match('.*is at ([^ ]*) .*', output)
+                        m = re.match(r'.*is at ([^ ]*) .*', output)
                         if not m:
-                            m = re.match('.*at address ([^ ]*)\..*', output)
+                            m = re.match(r'.*at address ([^ ]*)\..*', output)
                         if m:
                             addr = int(m.group(1), 16)
                         else:
@@ -588,7 +588,7 @@ if HAVE_GDB:
             # the old way of doing this randomly crashed gdb or threw a python exception
             regs = {}
             for line in gdb.execute('info all-registers', to_string=True).split('\n'):
-                m = re.match('^([xyz]mm\d+)\s.*uint128 = (0x[0-9a-f]+)\}', line)
+                m = re.match(r'^([xyz]mm\d+)\s.*uint128 = (0x[0-9a-f]+)\}', line)
                 if m:
                     regs[m.group(1)] = int(m.group(2), 16)
             return regs
@@ -648,7 +648,7 @@ if HAVE_GDB:
             try:
                 arch = gdb.selected_frame().architecture().name()
             except:
-                arch = re.search('\(currently (.*)\)', gdb.execute('show architecture', to_string=True)).group(1)
+                arch = re.search(r'\(currently (.*)\)', gdb.execute('show architecture', to_string=True)).group(1)
             return self.archs[arch]
 
         def get_addr_size(self):
