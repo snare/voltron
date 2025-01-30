@@ -15,7 +15,9 @@ def check_install():
     2. Installing on Linux using Python 2 when GDB is linked with Python 3
     """
     if platform.system() == 'Darwin' and sys.executable != '/usr/bin/python':
-        print("*" * 79)
+        # send warning text to stderr so we can capture version string in a shell script like
+        # version=$(python3 setup.py --version)
+        print("*" * 79, file=sys.stderr)
         print(textwrap.fill(
             "WARNING: You are not using the version of Python included with "
             "macOS. If you intend to use Voltron with the LLDB included "
@@ -25,8 +27,8 @@ def check_install():
             "other method, it may be safe to ignore this warning. See the "
             "following documentation for more detailed installation "
             "instructions: "
-            "https://github.com/snare/voltron/wiki/Installation", 79))
-        print("*" * 79)
+            "https://github.com/snare/voltron/wiki/Installation", 79), file=sys.stderr)
+        print("*" * 79, file=sys.stderr)
     elif platform.system() == 'Linux':
         try:
             output = check_output([
@@ -36,7 +38,7 @@ def check_install():
             gdb_python = int(output)
 
             if gdb_python != sys.version_info.major:
-                print("*" * 79)
+                print("*" * 79, file=sys.stderr)
                 print(textwrap.fill(
                     "WARNING: You are installing Voltron using Python {0}.x "
                     "and GDB is linked with Python {1}.x. GDB will not be "
@@ -45,8 +47,8 @@ def check_install():
                     "is installed. See the following documentation for more "
                     "detailed installation instructions: "
                     "https://github.com/snare/voltron/wiki/Installation"
-                    .format(sys.version_info.major, gdb_python), 79))
-                print("*" * 79)
+                    .format(sys.version_info.major, gdb_python), 79), file=sys.stderr)
+                print("*" * 79, file=sys.stderr)
         except:
             pass
 
