@@ -55,7 +55,7 @@ check_install()
 
 
 requirements = [
-    'scruffington>=0.3.6',
+    'scruffington>=0.3.9',
     'flask',
     'flask_restful',
     'blessed',
@@ -72,7 +72,7 @@ if sys.platform == 'win32':
 
 setup(
     name="voltron",
-    version="0.1.7",
+    version="0.1.8",
     author="snare",
     author_email="snare@ho.ax",
     description="A debugger UI",
