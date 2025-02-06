@@ -110,7 +110,7 @@ class AnsiString(object):
         return len(self.chars)
 
     def clean(self):
-        return re.sub('\033\[.{1,2}m', '', str(self))
+        return re.sub(r'\033\[.{1,2}m', '', str(self))
 
 
 def requires_async(func):

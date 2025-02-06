@@ -18,7 +18,7 @@ VDB:
 WinDbg/CDB (via PyKD):
 
     > .load pykd.pyd
-    > !py --global C:\path\to\voltron\entry.py
+    > !py --global C:\\path\\to\\voltron\\entry.py
 """
 
 log = None
@@ -36,7 +36,6 @@ except:
     pass
 
 try:
-    import logging
     import os
     import sys
     blessed = None
@@ -113,7 +112,7 @@ except Exception as e:
     msg = ("An error occurred while loading Voltron:\n\n{}"
            "\nPlease ensure Voltron is installed correctly per the documentation: "
            "https://github.com/snare/voltron/wiki/Installation").format(traceback.format_exc())
-    if blessed:
+    if 'blessed' in globals() and blessed:
         msg = blessed.Terminal().bold_red(msg)
     if log:
         log.exception("Exception raised while loading Voltron")

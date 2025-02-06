@@ -36,7 +36,7 @@ class MemoryView(TerminalView):
                            help='address (in hex or decimal) from which to start reading memory')
         group.add_argument('--command', '-c', action='store',
                            help='command to execute resulting in the address from which to start reading memory. '
-                                'voltron will do his almighty best to find an address. e.g. "print \$rip + 0x1234"',
+                                'voltron will do his almighty best to find an address. e.g. "print $rip + 0x1234"',
                            default=None)
         group.add_argument('--register', '-r', action='store',
                            help='register containing the address from which to start reading memory', default=None)
