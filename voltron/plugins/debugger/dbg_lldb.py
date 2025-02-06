@@ -279,6 +279,23 @@ if HAVE_LLDB:
         @validate_busy
         @validate_target
         @lock_host
+        def resolve_variable(self, symbol, target_id=0):
+            """
+            Resolve a symbol, returning an SBValue if found, or None if not located.
+            """
+            target = self.host.GetTargetAtIndex(target_id)
+            # Send some absurd upper bound on matches
+            candidates = target.FindGlobalVariables(symbol, 256)
+            if len(candidates) == 0:
+                return None
+            elif len(candidates) != 1:
+                raise RuntimeError("Found more than 1 location for {}".format(symbol))
+            else:
+                return candidates[0]
+
+        @validate_busy
+        @validate_target
+        @lock_host
         def memory(self, address, length, target_id=0):
             """
             Get the register values for .
@@ -340,6 +357,29 @@ if HAVE_LLDB:
             output = uncolour(output)
 
             return output
+
+        @validate_busy
+        @validate_target
+        @lock_host
+        def read_pointer(self, pointer, target_id=0):
+            """Read process memory at *pointer* returning the value pointed to.
+
+            if *pointer* is an SBValue it will automatically be lowered to an
+            address, otherwise pointer is assumed to be an *int* of pointer
+            width on the target platform
+            """
+            t = self.host.GetTargetAtIndex(target_id)
+            error = lldb.SBError()
+            if isinstance(pointer, lldb.SBValue):
+                # For convenience, do something reasonable if you hand in an
+                # SBValue, as retrieved by resolve_function, but default to
+                # doing the right thing when handed an address
+                pointer = pointer.load_addr
+            ptr = t.process.ReadPointerFromMemory(pointer, error)
+            if not error.Success():
+                raise Exception("Failed reading memory: {}".format(error.GetCString()))
+            return ptr
+
 
         @validate_busy
         @validate_target
