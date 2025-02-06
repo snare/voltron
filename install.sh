@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Install Voltron for whichever debuggers are detected (only GDB and LLDB so
 # far).
