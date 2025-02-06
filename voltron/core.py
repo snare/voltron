@@ -392,7 +392,7 @@ class Client(object):
     """
     Used by a client (ie. a view) to communicate with the server.
     """
-    def __init__(self, host='127.0.0.1', port=5555, sockfile=None, url=None,
+    def __init__(self, host='127.0.0.1', port=22222, sockfile=None, url=None,
                  build_requests=None, callback=None, supports_blocking=True):
         """
         Initialise a new client

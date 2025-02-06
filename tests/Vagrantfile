@@ -7,7 +7,7 @@ Vagrant.configure(2) do |config|
     v.linked_clone = true
   end
 
-  config.vm.network "forwarded_port", guest: 5555, host: 5556
+  config.vm.network "forwarded_port", guest: 22222, host: 5556
 
   config.vm.synced_folder "../", "/voltron"
   config.vm.synced_folder "~/shared", "/shared"

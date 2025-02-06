@@ -24,6 +24,7 @@ def validate_target(func, *args, **kwargs):
 
     Raises a NoSuchTargetException if the target does not exist.
     """
+
     def inner(self, *args, **kwargs):
         # find the target param
         target_id = None
@@ -38,6 +39,7 @@ def validate_target(func, *args, **kwargs):
 
         # call the function
         return func(self, *args, **kwargs)
+
     return inner
 
 
@@ -50,6 +52,7 @@ def validate_busy(func, *args, **kwargs):
 
     Raises a TargetBusyException if the target does not exist.
     """
+
     def inner(self, *args, **kwargs):
         # find the target param
         target_id = None
@@ -64,6 +67,7 @@ def validate_busy(func, *args, **kwargs):
 
         # call the function
         return func(self, *args, **kwargs)
+
     return inner
 
 
@@ -72,6 +76,7 @@ def lock_host(func, *args, **kwargs):
     A decorator that acquires a lock before accessing the debugger to
     avoid API locking related errors with the debugger host.
     """
+
     def inner(self, *args, **kwargs):
         self.host_lock.acquire()
         try:
@@ -81,6 +86,7 @@ def lock_host(func, *args, **kwargs):
             self.host_lock.release()
             raise e
         return res
+
     return inner
 
 
@@ -91,26 +97,28 @@ class DebuggerAdaptor(object):
     """
 
     reg_names = {
-        "x86":      {"pc": "eip", "sp": "esp"},
-        "x86_64":   {"pc": "rip", "sp": "rsp"},
-        "arm":      {"pc": "pc", "sp": "sp"},
-        "armv6":    {"pc": "pc", "sp": "sp"},
-        "armv7":    {"pc": "pc", "sp": "sp"},
-        "armv7s":   {"pc": "pc", "sp": "sp"},
-        "arm64":    {"pc": "pc", "sp": "sp"},
-        "powerpc":  {"pc": "pc", "sp": "r1"},
+        "x86": {"pc": "eip", "sp": "esp"},
+        "x86_64": {"pc": "rip", "sp": "rsp"},
+        "arm": {"pc": "pc", "sp": "sp"},
+        "armv6": {"pc": "pc", "sp": "sp"},
+        "armv7": {"pc": "pc", "sp": "sp"},
+        "armv7s": {"pc": "pc", "sp": "sp"},
+        "arm64": {"pc": "pc", "sp": "sp"},
+        "aarch64": {"pc": "pc", "sp": "sp"},
+        "powerpc": {"pc": "pc", "sp": "r1"},
     }
     cs_archs = {}
     if capstone:
         cs_archs = {
-            "x86":      (capstone.CS_ARCH_X86, capstone.CS_MODE_32),
-            "x86_64":   (capstone.CS_ARCH_X86, capstone.CS_MODE_64),
-            "arm":      (capstone.CS_ARCH_ARM, capstone.CS_MODE_ARM),
-            "armv6":    (capstone.CS_ARCH_ARM, capstone.CS_MODE_ARM),
-            "armv7":    (capstone.CS_ARCH_ARM, capstone.CS_MODE_ARM),
-            "armv7s":   (capstone.CS_ARCH_ARM, capstone.CS_MODE_ARM),
-            "arm64":    (capstone.CS_ARCH_ARM64, capstone.CS_MODE_ARM),
-            "powerpc":  (capstone.CS_ARCH_PPC, capstone.CS_MODE_32),
+            "x86": (capstone.CS_ARCH_X86, capstone.CS_MODE_32),
+            "x86_64": (capstone.CS_ARCH_X86, capstone.CS_MODE_64),
+            "arm": (capstone.CS_ARCH_ARM, capstone.CS_MODE_ARM),
+            "armv6": (capstone.CS_ARCH_ARM, capstone.CS_MODE_ARM),
+            "armv7": (capstone.CS_ARCH_ARM, capstone.CS_MODE_ARM),
+            "armv7s": (capstone.CS_ARCH_ARM, capstone.CS_MODE_ARM),
+            "arm64": (capstone.CS_ARCH_ARM64, capstone.CS_MODE_ARM),
+            "aarch64": (capstone.CS_ARCH_ARM64, capstone.CS_MODE_ARM),
+            "powerpc": (capstone.CS_ARCH_PPC, capstone.CS_MODE_32),
         }
 
     def __init__(self, *args, **kwargs):
@@ -220,10 +228,11 @@ class DebuggerAdaptor(object):
         return '\n'.join(output)
 
 
-class DebuggerCommand (object):
+class DebuggerCommand(object):
     """
     The `voltron` command in the debugger.
     """
+
     def __init__(self, *args, **kwargs):
         super(DebuggerCommand, self).__init__(*args, **kwargs)
         self.adaptor = voltron.debugger
