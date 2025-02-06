@@ -413,7 +413,7 @@ class Client(object):
         self.server_version = None
         self.block = False
         self.supports_blocking = supports_blocking
-
+        self.sw = None
     def send_request(self, request):
         """
         Send a request to the server.
@@ -571,17 +571,28 @@ class Client(object):
         """
         Run the client using a background thread.
         """
+        if not self.done and self.sw != None:
+            self.callback(error='Error: Client is already running')
+            return
+
+        if self.done and self.sw != None:
+            if self.sw.is_alive():
+                self.sw.join()
+                self.sw = None
+
         if callback:
             self.callback = callback
         if build_requests:
             self.build_requests = build_requests
 
         # spin off requester thread
+        self.done = False
         self.sw = threading.Thread(target=self.run)
         self.sw.start()
-
     def stop(self):
         """
         Stop the background thread.
         """
         self.done = True
+        self.sw.join()
+        self.sw = None

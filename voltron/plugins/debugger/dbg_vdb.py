@@ -248,6 +248,12 @@ if HAVE_VDB:
         @validate_busy
         @validate_target
         @lock_host
+        def source_location(self, target_id=0, address=None):
+            return None
+
+        @validate_busy
+        @validate_target
+        @lock_host
         def disassemble(self, target_id=0, address=None, count=16):
             """
             Get a disassembly of the instructions at the given address.

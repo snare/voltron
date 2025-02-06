@@ -262,6 +262,18 @@ if in_windbg:
         @validate_busy
         @validate_target
         @lock_host
+        def source_location(self, target_id=0, address=None):
+            if address is None:
+                pc_name, address = self.program_counter(target_id=target_id)
+            try:
+                file, line, displacement = pykd.getSourceLine(address)
+                return (file, line)
+            except:
+                return None
+
+        @validate_busy
+        @validate_target
+        @lock_host
         def dereference(self, pointer, target_id=0):
             """
             Recursively dereference a pointer for display

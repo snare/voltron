@@ -344,6 +344,24 @@ if HAVE_LLDB:
         @validate_busy
         @validate_target
         @lock_host
+        def source_location(self, target_id=0, address=None):
+            if target_id is None:
+                target_id=0
+            if address == None:
+                pc_name, address = self.program_counter(target_id=target_id)
+            t = self.host.GetTargetAtIndex(target_id or 0)
+            sbaddr = lldb.SBAddress(address, t)
+            ctx = t.ResolveSymbolContextForAddress(sbaddr, lldb.eSymbolContextEverything)
+            if ctx.IsValid() and ctx.GetSymbol().IsValid():
+                line_entry = ctx.GetLineEntry()
+                if line_entry.IsValid():
+                    file_spec = line_entry.GetFileSpec()
+                    return (file_spec.__get_fullpath__(), line_entry.GetLine())
+            return None
+
+        @validate_busy
+        @validate_target
+        @lock_host
         def dereference(self, pointer, target_id=0):
             """
             Recursively dereference a pointer for display
