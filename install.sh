@@ -177,10 +177,10 @@ function ensure_pip {
 
 function get_lldb_python_exe {
     # Find the Python version used by LLDB
-    local lldb_pyver=$(${LLDB} -Q -x -b --one-line 'script import platform; print(".".join(platform.python_version_tuple()[:2]))'|tail -1)
-    local lldb_python=$(${LLDB} -Q -x -b --one-line 'script import sys; print(sys.executable)'|tail -1)
+    local lldb_pyver=$(${LLDB} -Q -x -b --one-line 'script --language python -- import platform; print(".".join(platform.python_version_tuple()[:2]))'|tail -1)
+    local lldb_python=$(${LLDB} -Q -x -b --one-line 'script --language python -- import sys; print(sys.executable)'|tail -1)
     
-    lldb_python=$(${LLDB} -Q -x -b --one-line 'script import sys; print(sys.executable)'|tail -1)
+    lldb_python=$(${LLDB} -Q -x -b --one-line 'script --language python -- import sys; print(sys.executable)'|tail -1)
     local lldb_python_basename=$(basename "${lldb_python}")
     if [ "python" = "$lldb_python_basename" ];
     then
@@ -189,7 +189,7 @@ function get_lldb_python_exe {
     then
         # newer lldb versions report sys.path as /path/to/lldb instead of python
         # sys.exec_path still appears to be the parent path of bin/python though
-        local lldb_python_exec_prefix=$(${LLDB} -Q -x -b --one-line 'script import sys; print(sys.exec_prefix)'|tail -1)
+        local lldb_python_exec_prefix=$(${LLDB} -Q -x -b --one-line 'script --language python -- import sys; print(sys.exec_prefix)'|tail -1)
         lldb_python="$lldb_python_exec_prefix/bin/python"
         lldb_python="${lldb_python/%$lldb_pyver/}${lldb_pyver}"
     fi
@@ -269,7 +269,7 @@ if [ "${BACKEND_LLDB}" -eq 1 ]; then
     fi
 
     if [ -n "${VENV}" ]; then
-        echo "script import sys;sys.path.append('${LLDB_SITE_PACKAGES}')" >> ${LLDB_INIT_FILE}
+        echo "script --language python -- import sys;sys.path.append('${LLDB_SITE_PACKAGES}')" >> ${LLDB_INIT_FILE}
     fi
     echo "command script import $LLDB_ENTRY_FILE" >> ${LLDB_INIT_FILE}
 fi
